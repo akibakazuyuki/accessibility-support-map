@@ -286,12 +286,16 @@ details.adv summary::-webkit-details-marker{display:none}
 
 .me{width:20px;height:20px;border-radius:50%;background:#2f80ed;border:3px solid #fff;box-shadow:0 1px 6px rgba(20,60,120,.35)}
 .pin{width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(20,36,28,.3))}
-.dest{position:relative;width:max-content;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:3}
+.dest{width:max-content;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:3}
 .dest .lbl{max-width:200px;margin-bottom:4px;padding:6px 12px;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(20,40,30,.2);font-size:13px;font-weight:800;line-height:1.3;color:#1c2420;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dest svg{position:relative;z-index:1;width:46px;height:59px;filter:drop-shadow(0 4px 6px rgba(20,36,28,.35))}
-.dest .halo{position:absolute;left:50%;bottom:-9px;width:44px;height:18px;margin-left:-22px;border-radius:50%;background:rgba(23,160,88,.45);animation:halo 1.6s ease-out infinite}
+.dest .halo{position:absolute;left:50%;bottom:-9px;width:44px;height:18px;margin-left:-22px;border-radius:50%;background:rgba(229,72,77,.45);animation:halo 1.6s ease-out infinite}
 @keyframes halo{0%{transform:scale(.4);opacity:1}100%{transform:scale(1.6);opacity:0}}
 @media (prefers-reduced-motion:reduce){ .dest .halo{animation:none;opacity:.5} }
+.start{width:max-content;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:2}
+.start .lbl{margin-bottom:5px;padding:5px 10px;border-radius:12px;background:#2f80ed;color:#fff;font-size:12px;font-weight:800;line-height:1.3;white-space:nowrap;box-shadow:0 2px 8px rgba(20,60,120,.3)}
+.start .dot{display:block;width:18px;height:18px;margin-bottom:-9px;border-radius:50%;background:#fff;border:5px solid #2f80ed;box-shadow:0 1px 5px rgba(20,60,120,.35)}
+.start.is-me .dot{visibility:hidden}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
@@ -651,6 +655,12 @@ function loadArea(){
       paint:{"line-color":LEVEL_COLOR,"line-width":["interpolate",["linear"],["zoom"],14,5,18,13]}});
     map.addLayer({id:"route-unknown",type:"line",source:"route",filter:["==",["get","lv"],"unknown"],
       paint:{"line-color":"#94a3b8","line-width":["interpolate",["linear"],["zoom"],14,5,18,13],"line-dasharray":[1,0.8]}});
+    // 進む向きの矢印（白い山形）を線の上に一定間隔で
+    (function(){ var r=2, c=document.createElement("canvas"); c.width=c.height=16*r; var g=c.getContext("2d");
+      g.strokeStyle="#fff"; g.lineWidth=3*r; g.lineCap="round"; g.lineJoin="round"; g.beginPath(); g.moveTo(5*r,3*r); g.lineTo(11*r,8*r); g.lineTo(5*r,13*r); g.stroke();
+      if(!map.hasImage("route-arrow")) map.addImage("route-arrow",g.getImageData(0,0,16*r,16*r),{pixelRatio:r}); })();
+    map.addLayer({id:"route-arrows",type:"symbol",source:"route",layout:{"symbol-placement":"line","symbol-spacing":46,"icon-image":"route-arrow",
+      "icon-size":["interpolate",["linear"],["zoom"],14,0.6,18,1.1],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-ignore-placement":true}});
     addPins();
     // 車椅子OKのお店・駐車場は重なったら間引き、トイレ・エレベーター・入口は必ず出す
     // 大きさは参考画像に合わせる（ズーム16前後で直径およそ30px、車椅子OKは少し大きく）
@@ -772,6 +782,15 @@ function destInfo(ll,poi){
     if(p.k==="toilet"&&(p.t.wheelchair==="yes"||p.t.wheelchair==="designated")&&d<wd){ wc=p; wd=d; } });
   return {place:place,wc:wc,wcm:wd};
 }
+// 経路の出発地点：現在地なら青い点に「現在地」の札、範囲外なら赤羽駅に「出発」の目印
+var startMarker=null;
+function showStart(ll,isMe){
+  if(!startMarker){ var el=document.createElement("div"); el.className="start"; el.innerHTML='<span class="lbl"></span><i class="dot" aria-hidden="true"></i>';
+    startMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
+  var el=startMarker.getElement(); el.classList.toggle("is-me",isMe); el.querySelector(".lbl").textContent=isMe?"現在地":"出発：赤羽駅";
+  startMarker.setLngLat([ll[1],ll[0]]).addTo(map);
+}
+function hideStart(){ if(startMarker) startMarker.remove(); }
 // ---- 場所のシート：施設名 → あなたの条件 → アクセシビリティ6項目 → 利用者の情報 → ボタン ----
 var ADDR_CACHE={}, MUNI={"13117":"東京都北区","13119":"東京都板橋区","13121":"東京都足立区","11203":"埼玉県川口市","11222":"埼玉県戸田市"};
 // 住所：OpenStreetMap の登録があれば使い、なければ国土地理院の住所検索で町名まで出す
@@ -798,7 +817,7 @@ function placeItems(c,t,d){
   return {wheel:st3(t.wheelchair,"入れる","一部","難しい"),wc:wc,park:pk,ev:ev,ind:ind,baby:st3(t.stroller,"OK","一部","難しい"),evd:evd};
 }
 function judge(c){
-  routeTo=c; if(!area) return;
+  routeTo=c; hideStart(); if(!area) return;
   var inArea=c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
   $("closeCard").hidden=$("fav").hidden=false; showFav(c);
@@ -827,10 +846,11 @@ function judge(c){
   var status=1, issues=[], feats=[], len=0, unkLen=0, oldest="9999", unkRatio=1, b=null, mins=0;
   if(R){
     len=R.A.m+R.B.m;
-    R.path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L); len+=L.d; if(r.unk.length) unkLen+=L.d;
+    var cur=R.A.id;  // 矢印を進む向きに出すため、区間ごとに座標を出発→目的地の順にそろえる
+    R.path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L), fwd=String(L.a)===String(cur); cur=fwd?L.b:L.a; len+=L.d; if(r.unk.length) unkLen+=L.d;
       if(L.md&&L.md<oldest) oldest=L.md;
       if(r.fail.length) issues.push(["bad","合わない",r.fail.join("、"),L]); else if(r.warn.length) issues.push(["warn","注意",r.warn.join("、"),L]);
-      feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:L.c}}); });
+      feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:fwd?L.c:L.c.slice().reverse()}}); });
     unkRatio=len?unkLen/len:1;
     var fresh=oldest!=="9999"&&(Date.now()-new Date(oldest))<365*864e5, destOk=it.wheel[2]==="ok";
     if(!R.strict) status=2; else if(unkRatio>0.5) status=1; else if(unkRatio>0) status=3; else if(fresh&&destOk) status=5; else status=4;
@@ -860,7 +880,7 @@ function judge(c){
   // 詳しく見る：経路の判定と、気をつける箇所・道順・出典
   var h=R?vcard(status):vcard(1,why);
   if(!R){ out.innerHTML='<div id="detail">'+h+'</div>'; focus(c.ll); return; }
-  $("btnGo").onclick=function(){ map.getSource("route").setData({type:"FeatureCollection",features:feats}); dim(true);
+  $("btnGo").onclick=function(){ map.getSource("route").setData({type:"FeatureCollection",features:feats}); dim(true); showStart(R.o,R.oName.indexOf("現在地")===0);
     setSheet("min"); setTimeout(function(){ fitRoute(b); },320); };
   h+='<ul class="facts">';
   h+=fact("start","出発："+esc(R.oName),fmtLen(len)+"・約"+mins+"分（"+esc(P().label.replace(/（.*$/,""))+"）");
@@ -967,7 +987,7 @@ function layout(){ var wide=window.innerWidth>=900;
 if(window.ResizeObserver) new ResizeObserver(layout).observe(document.querySelector(".sheet"));
 window.addEventListener("resize",layout); layout();
 // カードを閉じてエリアの概要に戻る
-$("closeCard").onclick=function(){ routeTo=null; if(destMarker) destMarker.remove(); map.getSource("route").setData(EMPTY); overview(); };
+$("closeCard").onclick=function(){ routeTo=null; if(destMarker) destMarker.remove(); hideStart(); map.getSource("route").setData(EMPTY); overview(); };
 // 「レイヤー」：歩道の色・あなたの条件・エリアの情報・出典をまとめたパネル
 function showLayers(on){ $("layerPanel").hidden=!on; $("btnLayers").setAttribute("aria-expanded",String(on)); }
 $("btnLayers").onclick=function(e){ e.stopPropagation(); showLayers($("layerPanel").hidden); };
@@ -1143,7 +1163,7 @@ function pick(c){
   closeList(); showLayers(false); $("sheet").hidden=false; $("sheet").scrollTop=0; setSheet("mid");
   // 選んだ場所：名前の札＋大きな緑の目印＋足もとの波紋。ほかのピンと見分けられるように
   if(!destMarker){ var el=document.createElement("div"); el.className="dest";
-    el.innerHTML='<span class="lbl"></span><svg viewBox="0 0 36 46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="6" fill="#fff"/></svg><i class="halo" aria-hidden="true"></i>';
+    el.innerHTML='<span class="lbl"></span><svg viewBox="0 0 36 46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#e5484d" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="6" fill="#fff"/></svg><i class="halo" aria-hidden="true"></i>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
   destMarker.getElement().querySelector(".lbl").textContent=c.name;
   destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
