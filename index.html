@@ -877,7 +877,7 @@ function locate(){
   navigator.geolocation.getCurrentPosition(function(p){
     me=[p.coords.latitude,p.coords.longitude]; placeMe(p.coords.accuracy); say("");
     if(km(me,AKABANE)>3){ say("現在地は対象エリアの外なので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); return; }
-    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),16)});
+    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7)});
   }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
 $("btnLocate").onclick=locate;
