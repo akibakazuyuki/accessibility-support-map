@@ -1,1 +1,16 @@
-# traffic-map
+# アクセシビリティ・サポートマップ
+
+車椅子・ベビーカー・杖などで外出する人のための地図です。段差・道幅・坂・エレベーター・トイレの情報をもとに、その人の移動条件で「行けるか」を根拠つきで示すことを目指しています。まずは東京都北区の赤羽駅周辺で試験提供します。
+
+- 公開URL：https://akibakazuyuki.github.io/accessibility-support-map/
+- スマホのホーム画面に追加すると、アプリのように使えます（PWA）。
+
+## 構成
+
+- `index.html`：画面と処理のすべて（MapLibre GL JS ＋ 国土地理院ベクトルタイル）
+- `manifest.webmanifest`・`sw.js`・`icons/`：ホーム画面への追加とオフライン起動
+
+## データの出典
+
+- 地図：[国土地理院ベクトルタイル](https://github.com/gsi-cyberjapan/optimal_bvmap)
+- 場所の検索：国土地理院 地名・住所検索、OpenStreetMap（Nominatim・Photon）。© OpenStreetMap contributors（ODbL）
