@@ -13,186 +13,188 @@
 <meta name="apple-mobile-web-app-title" content="サポートマップ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
 :root{
   color-scheme:light;
-  --bg:#f4f6f5; --card:#ffffff; --soft:#eef2f1; --line:#e1e6e4;
-  --ink:#14222b; --muted:#5b6b70;
-  --brand:#0b6b7a; --brand-soft:#e3f1f2; --brand-ink:#ffffff;
-  --ok:#1f8a5b; --warn:#c77700; --bad:#d32f2f; --unk:#8d999e;
-  --focus:#f2b705;
-  --shadow:0 1px 2px rgba(16,32,40,.08),0 6px 20px rgba(16,32,40,.12);
-  --r:20px;
+  --bg:#f2f4f7; --card:#ffffff; --soft:#f3f5f9; --line:#e6e9ef;
+  --ink:#0b1220; --ink2:#334155; --muted:#64748b;
+  --brand:#3b5bfd; --brand-soft:#eef1ff; --brand-ink:#ffffff;
+  --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444; --unk:#94a3b8;
+  --focus:#3b5bfd;
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.10);
+  --font:"Inter","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font:inherit;color:inherit}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);letter-spacing:.01em;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
-:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-svg.i{width:22px;height:22px;flex:none}
+.num{font-family:"Inter",var(--font);font-feature-settings:"tnum";letter-spacing:-.02em}
 
 #map{position:fixed;inset:0;background:var(--bg)}
-.maplibregl-ctrl-attrib{background:rgba(255,255,255,.8)!important;color:var(--muted)!important;font-size:11px}
+.maplibregl-ctrl-attrib{background:rgba(255,255,255,.75)!important;color:var(--muted)!important;font-size:10px}
 .maplibregl-ctrl-attrib a{color:var(--muted)!important}
 .maplibregl-ctrl-bottom-left{bottom:calc(var(--sheet-h,150px) + 4px)}
 @media (max-width:599px){ .maplibregl-ctrl-scale{display:none} }
 .maplibregl-ctrl-scale{border-color:var(--muted);color:var(--muted);background:rgba(255,255,255,.7)}
 
-/* ---- 上部：検索と条件 ---- */
-.top{position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:10;max-width:480px}
-.search{display:flex;align-items:center;gap:4px;height:56px;background:var(--card);border-radius:28px;box-shadow:var(--shadow);padding:0 6px 0 10px}
-.search .logo{width:34px;height:34px;flex:none;border-radius:10px}
-.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0 6px;font-size:17px;outline:none}
-.search input::placeholder{color:#7d8b90}
+/* ---- 上部：検索・ジャンル ---- */
+.top{position:fixed;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));z-index:10;max-width:520px}
+.search{display:flex;align-items:center;gap:10px;height:50px;margin:0 12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:0 6px 0 14px}
+.search .si{width:20px;height:20px;color:var(--muted);flex:none}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:16px;font-weight:500;outline:none}
+.search input::placeholder{color:#8b95a7;font-weight:400}
 .search input::-webkit-search-cancel-button{display:none}
-.go{width:44px;height:44px;border-radius:50%;border:0;background:var(--brand);color:var(--brand-ink);display:flex;align-items:center;justify-content:center}
-.go svg{width:20px;height:20px}
-.chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;margin-top:10px;min-height:44px;border:0;border-radius:22px;background:var(--card);box-shadow:var(--shadow);padding:6px 14px 6px 8px;text-align:left;font-size:14px}
-.chip .ic{width:30px;height:30px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
-.chip .ic svg{width:18px;height:18px}
-.chip span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip b{font-weight:700}
-.chip small{color:var(--muted);font-size:13px;margin-left:6px}
-.chip .chev{width:16px;height:16px;color:var(--muted);flex:none}
-.drop{margin-top:8px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.search .logo{width:36px;height:36px;border-radius:10px;flex:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 12px 4px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent)}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:36px;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 2px rgba(15,23,42,.08),0 2px 8px rgba(15,23,42,.08);padding:0 14px;font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.chip .e{font-size:15px;line-height:1}
+.chip.me-chip{background:var(--ink);color:#fff;padding:0 12px 0 10px}
+.chip.me-chip svg{width:16px;height:16px}
+.chip.me-chip small{font-weight:400;opacity:.7;font-size:12px}
+.drop{margin:8px 12px 0;background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
 .drop:not(:has(:not([hidden]))){display:none}
-.sugg{list-style:none;margin:0;padding:4px 0;max-height:50vh;overflow:auto}
-.sugg button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;border:0;background:none;padding:8px 16px}
+.sugg{list-style:none;margin:0;padding:4px 0;max-height:52vh;overflow:auto}
+.sugg button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;border:0;background:none;padding:8px 14px;font-weight:600}
 .sugg button:hover{background:var(--soft)}
-.sugg li+li button{border-top:1px solid var(--line)}
-.sugg .pinic{width:32px;height:32px;border-radius:50%;background:var(--soft);color:var(--muted);display:flex;align-items:center;justify-content:center;flex:none}
-.sugg .pinic svg{width:16px;height:16px}
+.sugg li+li button{box-shadow:inset 0 1px 0 var(--line)}
+.sugg .pinic{width:34px;height:34px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
+.sugg .pinic svg{width:17px;height:17px}
 .sugg span{min-width:0}
-.sugg small{display:block;color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.msg{margin:0;padding:10px 16px;font-size:14px;color:var(--muted)}
+.sugg small{display:block;color:var(--muted);font-size:12px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted)}
 .msg:empty{display:none}
 
 /* ---- 右：操作ボタン ---- */
-.fabs{position:fixed;right:12px;bottom:calc(var(--sheet-h,150px) + 14px);z-index:10;display:flex;flex-direction:column;gap:10px;transition:bottom .2s}
-.fab{width:52px;height:52px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);color:var(--ink);display:flex;align-items:center;justify-content:center}
-.fab svg{width:24px;height:24px}
+.fabs{position:fixed;right:12px;bottom:calc(var(--sheet-h,150px) + 12px);z-index:10;display:flex;flex-direction:column;gap:8px;transition:bottom .2s}
+.fab{width:44px;height:44px;border-radius:12px;border:0;background:var(--card);box-shadow:var(--shadow);color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.fab svg{width:22px;height:22px}
 
 /* ---- 下：シート ---- */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:58vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
-  border-radius:24px 24px 0 0;box-shadow:0 -2px 24px rgba(16,32,40,.14);padding:0 18px calc(16px + env(safe-area-inset-bottom,0px))}
-@media (min-width:900px){ .sheet{left:16px;bottom:16px;width:400px;max-height:calc(100vh - 32px);border-radius:var(--r);padding-top:16px} .grab{display:none} .top{left:432px} }
-.grab{position:sticky;top:0;display:block;width:calc(100% + 36px);margin:0 -18px;height:26px;border:0;background:var(--card);z-index:1}
-.grab::after{content:"";display:block;width:40px;height:5px;border-radius:3px;background:#cfd6d4;margin:8px auto 0}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:56vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
+  border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(15,23,42,.12);padding:0 18px calc(14px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){ .sheet{left:16px;bottom:16px;width:380px;max-height:calc(100vh - 32px);border-radius:18px;padding-top:16px} .grab{display:none} .top{left:404px} }
+.grab{position:sticky;top:0;display:block;width:calc(100% + 36px);margin:0 -18px;height:22px;border:0;background:var(--card);z-index:1}
+.grab::after{content:"";display:block;width:36px;height:4px;border-radius:2px;background:#d6dbe4;margin:8px auto 0}
 .sheet.min #result,.sheet.min .more,.sheet.min .foot{display:none}
-.head{display:flex;align-items:center;gap:8px;margin:0 0 8px}
-.head h2{font-size:20px;line-height:1.35;margin:0;flex:1;min-width:0}
-.trial{flex:none;font-size:12px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:999px;padding:3px 10px}
-.lead{margin:0 0 10px;font-size:14px;color:var(--muted)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}
-.stat{background:var(--soft);border-radius:14px;padding:10px 8px 8px;text-align:center}
-.stat b{display:block;font-size:20px;line-height:1.2;font-variant-numeric:tabular-nums}
-.stat b small{font-size:12px;margin-left:1px}
-.stat span{display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--muted);white-space:nowrap}
-.stat i{width:8px;height:8px;border-radius:50%;display:inline-block}
-.hint{display:flex;align-items:center;gap:10px;margin:0;padding:12px 14px;border-radius:14px;background:var(--brand-soft);color:#0a4f5a;font-size:14px}
-.hint svg{width:20px;height:20px;flex:none}
+.head{display:flex;align-items:center;gap:8px;margin:2px 0 2px}
+.head h2{font-size:18px;line-height:1.35;font-weight:700;margin:0;flex:1;min-width:0;letter-spacing:0}
+.trial{flex:none;font-size:11px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:6px;padding:2px 7px;letter-spacing:.04em}
+.lead{margin:0 0 12px;font-size:13px;color:var(--muted)}
+/* 概要：割合の帯 */
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--soft);margin:0 0 10px}
+.bar i{display:block;height:100%}
+.bar i+i{margin-left:2px}
+.keys{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 14px;padding:0;list-style:none;font-size:12px;color:var(--muted)}
+.keys li{display:flex;align-items:center;gap:6px}
+.keys i{width:8px;height:8px;border-radius:50%}
+.keys b{color:var(--ink);font-size:13px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 4px}
+.tile{display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--soft);padding:10px 12px;font-size:12px;color:var(--muted)}
+.tile b{display:block;font-size:17px;color:var(--ink);line-height:1.2}
+.tile .ti{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;background:#fff}
+.tile .ti svg{width:18px;height:18px}
 
 /* 判定結果 */
-.vcard{display:flex;align-items:center;gap:14px;border-radius:16px;padding:14px 16px;color:#fff;margin:0 0 12px}
-.vcard .mk{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;flex:none}
-.vcard b{display:block;font-size:20px;line-height:1.3}
-.vcard span{display:block;font-size:14px;line-height:1.5;opacity:.95}
-.s5{background:#11603f}.s4{background:#1f8a5b}.s3{background:#a65f00}.s2{background:#c62828}.s1{background:#56656b}
-.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
-.metrics div{background:var(--soft);border-radius:14px;padding:10px 12px}
-.metrics b{display:block;font-size:22px;line-height:1.2;font-variant-numeric:tabular-nums}
-.metrics b small{font-size:13px;margin-left:2px;font-weight:400}
-.metrics span{font-size:12px;color:var(--muted)}
-.facts{list-style:none;margin:0 0 12px;padding:0;border:1px solid var(--line);border-radius:14px}
-.facts li{display:flex;gap:12px;padding:10px 14px;font-size:14px;align-items:flex-start}
-.facts li+li{border-top:1px solid var(--line)}
-.facts svg{width:20px;height:20px;flex:none;color:var(--brand);margin-top:1px}
+.verdict{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:28px;border-radius:14px;padding:0 12px 0 10px;font-size:13px;font-weight:700;color:#fff}
+.pill .mk{font-size:14px}
+.s5{background:#15803d}.s4{background:var(--ok)}.s3{background:#d97706}.s2{background:var(--bad)}.s1{background:#64748b}
+.vdesc{margin:0 0 12px;font-size:13px;color:var(--muted)}
+.kpi{display:flex;align-items:baseline;gap:14px;margin:0 0 6px}
+.kpi .big{font-size:34px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.kpi .big small{font-size:15px;font-weight:600;margin-left:2px;letter-spacing:0}
+.kpi .sub{font-size:14px;color:var(--ink2);font-weight:600}
+.cov{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:12px;color:var(--muted)}
+.cov .bar{flex:1;height:6px;margin:0}
+.facts{list-style:none;margin:0 0 14px;padding:0}
+.facts li{display:flex;gap:12px;padding:9px 0;font-size:14px;align-items:center}
+.facts li+li{box-shadow:inset 0 1px 0 var(--line)}
+.facts .fi{width:32px;height:32px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
+.facts svg{width:17px;height:17px}
 .facts small{display:block;color:var(--muted);font-size:12px}
-.sec{font-size:13px;font-weight:700;color:var(--muted);margin:4px 0 6px}
-.issues{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
-.issues button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:8px 12px;font-size:14px}
-.issues .tag{flex:none;font-size:12px;font-weight:700;color:#fff;border-radius:6px;padding:2px 8px}
-.tag.bad{background:var(--bad)}.tag.warn{background:var(--warn)}.tag.unk{background:var(--unk)}
+.sec{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px;letter-spacing:.04em}
+.issues{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.issues button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:46px;border:0;border-radius:12px;background:var(--soft);padding:8px 12px;font-size:13px}
+.issues .tag{flex:none;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px}
+.tag.bad{background:var(--bad)}.tag.warn{background:#d97706}.tag.unk{background:var(--unk)}
+.issues small{display:block;font-size:11px;color:var(--muted)}
 .issues .arr{margin-left:auto;width:16px;height:16px;color:var(--muted);flex:none}
-details.steps{margin:0 0 10px;font-size:14px;border:1px solid var(--line);border-radius:12px;padding:0 14px}
-details.steps summary{min-height:48px;display:flex;align-items:center;cursor:pointer;color:var(--brand);font-weight:700;list-style:none}
+details.steps{margin:0 0 10px;font-size:13px;border-radius:12px;background:var(--soft);padding:0 14px}
+details.steps summary{min-height:46px;display:flex;align-items:center;cursor:pointer;color:var(--ink2);font-weight:700;list-style:none}
 details.steps summary::-webkit-details-marker{display:none}
-details.steps summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
-details.steps[open] summary::after{transform:rotate(-135deg);margin-top:4px}
-details.steps ol{margin:0 0 12px;padding-left:22px}
-.note{font-size:12px;color:var(--muted);margin:0 0 8px}
+details.steps summary::after,.more summary::after,details.adv summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px;opacity:.6}
+details.steps[open] summary::after,.more[open] summary::after,details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+details.steps ol{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
+.note{font-size:11px;color:var(--muted);margin:0 0 6px;line-height:1.6}
 
 /* 凡例・出典・リンク */
-.more{margin-top:12px;border-top:1px solid var(--line)}
-.more summary{min-height:48px;display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:700;color:var(--muted);list-style:none}
+.more{margin-top:10px;box-shadow:inset 0 1px 0 var(--line)}
+.more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);list-style:none}
 .more summary::-webkit-details-marker{display:none}
-.more summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
-.more[open] summary::after{transform:rotate(-135deg);margin-top:4px}
-.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 10px;padding:0;list-style:none;font-size:13px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 10px;padding:0;list-style:none;font-size:12px;color:var(--ink2)}
 .legend li{display:flex;align-items:center;gap:8px}
-.legend i{display:inline-block;width:24px;height:5px;border-radius:3px;flex:none}
+.legend i{display:inline-block;width:22px;height:4px;border-radius:2px;flex:none}
 .legend i.dash{background:repeating-linear-gradient(90deg,var(--unk) 0 5px,transparent 5px 9px)!important}
-.legend b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
-.src{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.legend b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:9px;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.src{margin:0 0 8px;font-size:11px;color:var(--muted)}
 .src a{color:var(--muted)}
-.foot{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;padding-top:4px;font-size:13px}
+.foot{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin:0;font-size:12px}
 .foot a,.foot .linkbtn{color:var(--muted);background:none;border:0;padding:0;text-decoration:none;min-height:36px;display:inline-flex;align-items:center}
 .foot .linkbtn{color:var(--brand);font-weight:700;gap:6px}
-.foot .linkbtn svg{width:16px;height:16px}
+.foot .linkbtn svg{width:15px;height:15px}
 
 /* 地図のポップアップ */
-.maplibregl-popup-content{font:14px/1.6 "BIZ UDPGothic","Hiragino Sans",sans-serif;color:var(--ink);padding:14px 16px;border-radius:16px;box-shadow:var(--shadow)}
-.maplibregl-popup-close-button{width:36px;height:36px;font-size:22px;color:var(--muted);border-radius:0 16px 0 12px}
-.pop h3{font-size:15px;margin:0 30px 8px 0;display:flex;align-items:center;gap:8px}
-.pop h3 i{width:10px;height:10px;border-radius:50%;flex:none}
+.maplibregl-popup-content{font:13px/1.6 var(--font);color:var(--ink);padding:14px 16px;border-radius:14px;box-shadow:var(--shadow)}
+.maplibregl-popup-close-button{width:34px;height:34px;font-size:20px;color:var(--muted);border-radius:0 14px 0 10px}
+.pop h3{font-size:14px;margin:0 28px 8px 0;display:flex;align-items:center;gap:8px}
+.pop h3 i{width:9px;height:9px;border-radius:50%;flex:none}
 .pop dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
 .pop dt{color:var(--muted)}
 .pop dd{margin:0}
-.pop .bad{color:var(--bad);font-weight:700}
-.pop .warn{color:#8a5300;font-weight:700}
-.pop small{display:block;margin-top:8px;color:var(--muted);font-size:12px}
+.pop .bad{color:#dc2626;font-weight:700}
+.pop .warn{color:#b45309;font-weight:700}
+.pop small{display:block;margin-top:8px;color:var(--muted);font-size:11px}
 .pop small a{color:var(--muted)}
-.pop .rep{display:block;width:100%;margin-top:10px;min-height:42px;border:0;border-radius:12px;background:var(--soft);font-size:13px;font-weight:700;color:var(--brand)}
+.pop .rep{display:block;width:100%;margin-top:10px;min-height:40px;border:0;border-radius:10px;background:var(--brand-soft);font-size:13px;font-weight:700;color:var(--brand)}
 
 /* ---- ダイアログ ---- */
-.panel{position:fixed;inset:0;z-index:30;background:rgba(14,26,32,.45);display:flex;align-items:flex-end;justify-content:center}
-.panel-card{background:var(--card);width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))}
-@media (min-width:600px){ .panel{align-items:center} .panel-card{border-radius:24px} }
-.panel-card h2{font-size:20px;margin:0 0 4px}
-.panel-card p{font-size:14px;color:var(--muted);margin:4px 0 14px}
+.panel{position:fixed;inset:0;z-index:30;background:rgba(11,18,32,.4);display:flex;align-items:flex-end;justify-content:center}
+.panel-card{background:var(--card);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+@media (min-width:600px){ .panel{align-items:center} .panel-card{border-radius:22px} }
+.panel-card h2{font-size:20px;margin:0 0 4px;letter-spacing:0}
+.panel-card p{font-size:13px;color:var(--muted);margin:4px 0 16px}
 .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px;padding:0;border:0}
-.presets label{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:64px;border:2px solid var(--line);border-radius:14px;padding:8px 12px;font-size:15px;font-weight:700;line-height:1.35;cursor:pointer}
-.presets label small{font-size:12px;font-weight:400;color:var(--muted);margin-top:2px}
+.presets label{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:62px;border-radius:14px;background:var(--soft);padding:10px 12px;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:inset 0 0 0 1.5px transparent}
+.presets label small{font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}
 .presets input{position:absolute;opacity:0;pointer-events:none}
-.presets label:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
-.presets label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
-details.adv{margin:0 0 14px;border:1px solid var(--line);border-radius:14px;padding:0 14px}
-details.adv summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:700;font-size:15px;list-style:none}
+.presets label:has(input:checked){background:var(--brand-soft);box-shadow:inset 0 0 0 1.5px var(--brand);color:var(--brand)}
+.presets label:has(input:focus-visible),.kinds label:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
+details.adv{margin:0 0 16px;border-radius:14px;background:var(--soft);padding:0 14px}
+details.adv summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:700;font-size:14px;list-style:none}
 details.adv summary::-webkit-details-marker{display:none}
-details.adv summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px}
-details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 .fields{display:grid;gap:12px;margin:0 0 14px}
-.fields label{display:grid;gap:4px;font-size:14px;font-weight:700}
-.fields select{min-height:48px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--soft);font-weight:400}
-.fields .chk{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:400}
-.fields .chk input{width:22px;height:22px;accent-color:var(--brand)}
-.fields textarea{min-height:96px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft);resize:vertical;font-weight:400}
+.fields label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--ink2)}
+.fields select{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;font-weight:500;color:var(--ink)}
+.fields .chk{display:flex;align-items:center;gap:10px;min-height:40px;font-weight:500}
+.fields .chk input{width:20px;height:20px;accent-color:var(--brand)}
+.fields textarea{min-height:96px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft);resize:vertical;font-weight:400;color:var(--ink)}
 .kinds{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;padding:0;border:0}
-.kinds label{display:flex;align-items:center;min-height:44px;border:2px solid var(--line);border-radius:999px;padding:4px 14px;font-size:14px;cursor:pointer}
+.kinds label{display:flex;align-items:center;height:38px;border-radius:19px;background:var(--soft);padding:0 14px;font-size:13px;font-weight:600;cursor:pointer}
 .kinds input{position:absolute;opacity:0;pointer-events:none}
-.kinds label:has(input:checked){border-color:var(--brand);background:var(--brand-soft);font-weight:700}
-.kinds label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:2px}
+.kinds label:has(input:checked){background:var(--ink);color:#fff}
 .row{display:flex;gap:8px}
-.btn{flex:1;min-height:52px;border:0;border-radius:14px;padding:0 16px;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:16px}
+.btn{flex:1;min-height:50px;border:0;border-radius:14px;padding:0 16px;background:var(--ink);color:#fff;font-weight:700;font-size:15px}
 .btn.ghost{flex:0 0 auto;background:var(--soft);color:var(--ink)}
 
-.me{width:20px;height:20px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 8px rgba(26,115,232,.18),0 1px 4px rgba(0,0,0,.3)}
-.pin{width:36px;height:46px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.me{width:18px;height:18px;border-radius:50%;background:var(--brand);border:3px solid #fff;box-shadow:0 0 0 8px rgba(59,91,253,.18),0 1px 4px rgba(0,0,0,.3)}
+.pin{width:34px;height:44px;filter:drop-shadow(0 3px 4px rgba(11,18,32,.3))}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
@@ -202,16 +204,20 @@ details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 
 <section class="top" aria-label="場所を探す">
   <form class="search" id="searchForm" role="search">
-    <img class="logo" src="icons/icon.svg" alt="アクセシビリティ・サポートマップ">
+    <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
     <label for="q" class="sr">行きたい場所</label>
-    <input id="q" type="search" placeholder="どこへ行きますか？" autocomplete="off" enterkeyhint="search">
-    <button class="go" type="submit" aria-label="探す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
+    <input id="q" type="search" placeholder="行き先を検索" autocomplete="off" enterkeyhint="search">
+    <img class="logo" src="icons/icon.svg" alt="アクセシビリティ・サポートマップ">
   </form>
-  <button class="chip" id="profBtn" type="button" aria-haspopup="dialog">
-    <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></span>
-    <span id="profText">移動の条件：未設定</span>
-    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
-  </button>
+  <div class="chips" role="toolbar" aria-label="条件とジャンル">
+    <button class="chip me-chip" id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span id="profText">条件を設定</span></button>
+    <button class="chip" type="button" data-q="トイレ"><span class="e" aria-hidden="true">🚻</span>トイレ</button>
+    <button class="chip" type="button" data-q="カフェ"><span class="e" aria-hidden="true">☕</span>カフェ</button>
+    <button class="chip" type="button" data-q="居酒屋"><span class="e" aria-hidden="true">🍺</span>居酒屋</button>
+    <button class="chip" type="button" data-q="ラーメン"><span class="e" aria-hidden="true">🍜</span>ラーメン</button>
+    <button class="chip" type="button" data-q="コンビニ"><span class="e" aria-hidden="true">🏪</span>コンビニ</button>
+    <button class="chip" type="button" data-q="病院"><span class="e" aria-hidden="true">🏥</span>病院</button>
+  </div>
   <div class="drop"><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
 </section>
 
@@ -224,19 +230,19 @@ details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
 
 <section class="sheet" id="sheet" aria-labelledby="sheetTitle">
   <button class="grab" id="grab" type="button" aria-expanded="true" aria-controls="sheet"><span class="sr">詳しい情報を開く・閉じる</span></button>
-  <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2><span class="trial">試験提供中</span></div>
+  <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2><span class="trial">BETA</span></div>
   <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
   <div id="result" aria-live="polite"></div>
   <details class="more">
     <summary>地図の見かた・出典</summary>
     <ul class="legend" id="legend" aria-label="凡例" hidden>
-      <li><i style="background:#1f8a5b"></i>あなたの条件で通れる</li>
-      <li><i style="background:#e08a00"></i>通れるが注意</li>
-      <li><i style="background:#d32f2f"></i>条件に合わない</li>
+      <li><i style="background:#16a34a"></i>あなたの条件で通れる</li>
+      <li><i style="background:#f59e0b"></i>通れるが注意</li>
+      <li><i style="background:#ef4444"></i>条件に合わない</li>
       <li><i class="dash"></i>未調査</li>
-      <li><b style="background:#0b6b7a">WC</b>トイレ</li>
-      <li><b style="background:#6a3fa0">EV</b>エレベーター</li>
-      <li><b style="background:#37474f">入</b>入口</li>
+      <li><b style="background:#3b5bfd">WC</b>トイレ</li>
+      <li><b style="background:#8b5cf6">EV</b>エレベーター</li>
+      <li><b style="background:#334155">入</b>入口</li>
     </ul>
     <p class="src" id="src"></p>
   </details>
@@ -317,17 +323,17 @@ var map = new maplibregl.Map({
       gsi:{type:"vector",url:"pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles",
         attribution:'<a href="https://github.com/gsi-cyberjapan/optimal_bvmap" target="_blank" rel="noopener">国土地理院ベクトルタイル</a>'}},
     layers:[
-      {id:"bg",type:"background",paint:{"background-color":"#f6f4ef"}},
-      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#bfd9ee"}},
-      {id:"bldg",type:"fill",source:"gsi","source-layer":"BldA",minzoom:14,paint:{"fill-color":"#e4e0d6","fill-outline-color":"#cfc9bb"}},
+      {id:"bg",type:"background",paint:{"background-color":"#f2f4f7"}},
+      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#cfe2f6"}},
+      {id:"bldg",type:"fill",source:"gsi","source-layer":"BldA",minzoom:14,paint:{"fill-color":"#e4e8ee","fill-outline-color":"#d3d9e2"}},
       {id:"road-case",type:"line",source:"gsi","source-layer":"RdCL",minzoom:12,layout:{"line-cap":"round","line-join":"round"},
-        paint:{"line-color":"#cfc8b8","line-width":["interpolate",["linear"],["zoom"],12,1.5,16,8,18,20]}},
+        paint:{"line-color":"#dde2ea","line-width":["interpolate",["linear"],["zoom"],12,1.5,16,8,18,20]}},
       {id:"road",type:"line",source:"gsi","source-layer":"RdCL",layout:{"line-cap":"round","line-join":"round"},
         paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],10,0.6,16,6,18,17]}},
-      {id:"rail",type:"line",source:"gsi","source-layer":"RailCL",paint:{"line-color":"#6e7a80","line-width":["interpolate",["linear"],["zoom"],10,1,16,3]}},
+      {id:"rail",type:"line",source:"gsi","source-layer":"RailCL",paint:{"line-color":"#9aa4b2","line-width":["interpolate",["linear"],["zoom"],10,1,16,3]}},
       {id:"label",type:"symbol",source:"gsi","source-layer":"Anno",
         layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],10,11,17,14]},
-        paint:{"text-color":"#3a4448","text-halo-color":"#ffffff","text-halo-width":2}}
+        paint:{"text-color":"#4b5563","text-halo-color":"#ffffff","text-halo-width":2}}
     ]
   }
 });
@@ -384,7 +390,7 @@ function code(t,v){ return CODE[t][v]?esc(CODE[t][v]):(v===99?"不明":null); }
 function linkHtml(L){
   var e=evalLink(L), lv=linkLevel(L);
   var head={bad:"あなたの条件に合わない区間",warn:"通れるが注意が必要な区間",ok:"あなたの条件で通れる区間",unknown:"一部が未調査の区間"}[lv];
-  var h='<div class="pop"><h3><i style="background:'+({bad:"#d32f2f",warn:"#e08a00",ok:"#1f8a5b",unknown:"#8d999e"}[lv])+'"></i>'+esc(head)+'</h3><dl>';
+  var h='<div class="pop"><h3><i style="background:'+({bad:"#ef4444",warn:"#f59e0b",ok:"#16a34a",unknown:"#94a3b8"}[lv])+'"></i>'+esc(head)+'</h3><dl>';
   h+=row("種類",esc(CODE.rt[L.rt]||CODE.st[L.st]||"通路"));
   if(e.fail.length) h+=row("理由",'<span class="bad">'+esc(e.fail.join("、"))+'</span>');
   if(e.warn.length) h+=row("注意",'<span class="warn">'+esc(e.warn.join("、"))+'</span>');
@@ -414,19 +420,23 @@ function poiHtml(p){
   var id=p.osm, url="https://www.openstreetmap.org/"+({n:"node",w:"way",r:"relation"}[id[0]])+"/"+id.slice(1);
   return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small><button type="button" class="rep" data-rep="osm:'+esc(id)+'" data-ll="'+p.ll[1]+','+p.ll[0]+'" data-name="'+esc(t.name||kind)+'">ここが違う・報告する</button></div>';
 }
-var LEVEL_COLOR=["match",["get","lv"],"bad","#d32f2f","warn","#e08a00","ok","#1f8a5b","#8a9599"];
+var LEVEL_COLOR=["match",["get","lv"],"bad","#ef4444","warn","#f59e0b","ok","#16a34a","#94a3b8"];
 var area=null, pop=null, adj=null, routeTo=null, lastFocus=null;
 function showPop(ll,html){ if(pop) pop.remove(); pop=new maplibregl.Popup({offset:10,maxWidth:"300px"}).setLngLat(ll).setHTML(html).addTo(map); }
 function linkFeatures(){ return area.links.map(function(L,i){ return {type:"Feature",properties:{i:i,lv:linkLevel(L)},geometry:{type:"LineString",coordinates:L.c}}; }); }
 function overview(){
   var n={bad:0,warn:0,ok:0,unknown:0}; area.links.forEach(function(L){ n[linkLevel(L)]++; });
   var wcs=area.pois.filter(function(p){ return p.k==="toilet"; }).length;
-  var all=area.links.length||1; function pc(k){ return Math.round(n[k]/all*100); }
-  function st(v,u,c,t){ return '<div class="stat"><b>'+v+'<small>'+u+'</small></b><span><i style="background:'+c+'"></i>'+t+'</span></div>'; }
+  var all=area.links.length||1, pc=function(k){ return Math.round(n[k]/all*100); };
+  var evs=area.pois.filter(function(p){ return p.k==="elevator"; }).length;
+  function seg(k,c){ return n[k]?'<i style="flex:'+n[k]+';background:'+c+'"></i>':''; }
+  function key(c,t,v){ return '<li><i style="background:'+c+'"></i>'+t+' <b class="num">'+v+'%</b></li>'; }
+  function tile(ic,c,v,t){ return '<div class="tile"><span class="ti" style="color:'+c+'">'+ICON[ic]+'</span><div><b class="num">'+v+'</b>'+t+'</div></div>'; }
   $("sheetTitle").textContent=area.name; dim(false);
-  $("sheetText").innerHTML='<p class="lead">あなたの条件で見た、この地域の歩道</p><div class="stats">'+
-    st(pc("ok")+pc("warn"),"%","#1f8a5b","通れる")+st(pc("bad"),"%","#d32f2f","合わない")+st(pc("unknown"),"%","#8d999e","未調査")+st(wcs,"か所","#0b6b7a","トイレ")+
-    '</div><p class="hint">'+ICON.search+'行きたい場所を探すと、そこまで行けるかを判定します</p>';
+  $("sheetText").innerHTML='<p class="lead">あなたの条件で見た、このエリアの歩道</p>'+
+    '<div class="bar" aria-hidden="true">'+seg("ok","#16a34a")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#cbd5e1")+'</div>'+
+    '<ul class="keys">'+key("#16a34a","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#cbd5e1","未調査",pc("unknown"))+'</ul>'+
+    '<div class="tiles">'+tile("wc","#3b5bfd",wcs,"トイレ")+tile("ev","#8b5cf6",evs,"エレベーター")+'</div>';
   $("result").innerHTML="";
 }
 function loadArea(){
@@ -438,7 +448,7 @@ function loadArea(){
     map.addSource("route",{type:"geojson",data:EMPTY});
     map.addSource("pois",{type:"geojson",data:{type:"FeatureCollection",features:pf},attribution:"施設 &copy; OpenStreetMap contributors"});
     map.addLayer({id:"links-unknown",type:"line",source:"links",filter:["==",["get","lv"],"unknown"],layout:{"line-cap":"butt"},
-      paint:{"line-color":"#8d999e","line-opacity":0.75,"line-width":["interpolate",["linear"],["zoom"],14,1,18,3.5],"line-dasharray":[2,2]}});
+      paint:{"line-color":"#94a3b8","line-opacity":0.75,"line-width":["interpolate",["linear"],["zoom"],14,1,18,3.5],"line-dasharray":[2,2]}});
     map.addLayer({id:"links",type:"line",source:"links",filter:["!=",["get","lv"],"unknown"],layout:{"line-cap":"round","line-join":"round"},
       paint:{"line-color":LEVEL_COLOR,"line-opacity":["match",["get","lv"],"ok",0.6,0.95],
         "line-width":["interpolate",["linear"],["zoom"],14,["match",["get","lv"],"ok",1.5,2.5],18,["match",["get","lv"],"ok",5,8]]}});
@@ -450,10 +460,10 @@ function loadArea(){
     map.addLayer({id:"route",type:"line",source:"route",filter:["!=",["get","lv"],"unknown"],layout:{"line-cap":"round","line-join":"round"},
       paint:{"line-color":LEVEL_COLOR,"line-width":["interpolate",["linear"],["zoom"],14,5,18,13]}});
     map.addLayer({id:"route-unknown",type:"line",source:"route",filter:["==",["get","lv"],"unknown"],
-      paint:{"line-color":"#8d999e","line-width":["interpolate",["linear"],["zoom"],14,5,18,13],"line-dasharray":[1,0.8]}});
+      paint:{"line-color":"#94a3b8","line-width":["interpolate",["linear"],["zoom"],14,5,18,13],"line-dasharray":[1,0.8]}});
     map.addLayer({id:"pois",type:"circle",source:"pois",filter:["!=",["get","k"],"place"],
       paint:{"circle-radius":["interpolate",["linear"],["zoom"],14,5,18,12],
-        "circle-color":["match",["get","k"],"toilet","#0b6b7a","elevator","#6a3fa0","#37474f"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
+        "circle-color":["match",["get","k"],"toilet","#3b5bfd","elevator","#8b5cf6","#334155"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
     map.addLayer({id:"pois-label",type:"symbol",source:"pois",minzoom:16,filter:["!=",["get","k"],"place"],
       layout:{"text-field":["match",["get","k"],"toilet","WC","elevator","EV","入"],"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],16,9,18,11],"text-allow-overlap":true},
       paint:{"text-color":"#ffffff"}});
@@ -508,16 +518,17 @@ function dijkstra(from,to,allowFail){
 }
 var STATUS={5:["◎","確認済み","必要な情報がそろっていて、直近の調査で条件に合っています"],4:["○","条件内","調査済みの情報では、あなたの条件で通れます"],
   3:["△","要確認","未調査の区間があります。現地や施設への確認をおすすめします"],2:["×","条件不一致","あなたの条件に合わない箇所を避けられませんでした"],1:["？","判定不能","判断に必要な情報が足りません"]};
-function vcard(n,text){ var t=STATUS[n]; return '<div class="vcard s'+n+'"><span class="mk" aria-hidden="true">'+t[0]+'</span><div><b>'+t[1]+'</b><span>'+esc(text||t[2])+'</span></div></div>'; }
+function vcard(n,text){ var t=STATUS[n]; return '<div class="verdict"><span class="pill s'+n+'"><span class="mk" aria-hidden="true">'+t[0]+'</span>'+t[1]+'</span></div><p class="vdesc">'+esc(text||t[2])+'</p>'; }
 var ICON={
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   start:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8"/></svg>',
   dest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
   wc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="4.5" r="1.8"/><circle cx="17" cy="4.5" r="1.8"/><path d="M7 8v13M4.5 8h5v6h-5zM17 8l-3 8h6zM16 16v5M18 16v5"/></svg>',
+  ev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M12 3v18M8 9.5l-1.5 2h3zM16 11.5l-1.5-2h3z" fill="currentColor"/></svg>',
   cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
   arr:'<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
-function fact(ic,main,sub){ return '<li>'+ICON[ic]+'<div>'+main+(sub?'<small>'+sub+'</small>':'')+'</div></li>'; }
+function fact(ic,main,sub){ return '<li><span class="fi">'+ICON[ic]+'</span><div>'+main+(sub?'<small>'+sub+'</small>':'')+'</div></li>'; }
 function destInfo(ll){
   var place=null, pd=1e9, wc=null, wd=1e9;
   area.pois.forEach(function(p){ var d=km(ll,[p.ll[1],p.ll[0]])*1000;
@@ -550,7 +561,9 @@ function judge(c){
   var b=new maplibregl.LngLatBounds(); feats.forEach(function(f){ f.geometry.coordinates.forEach(function(x){ b.extend(x); }); }); b.extend([c.ll[1],c.ll[0]]);
   var mins=Math.max(1,Math.round(len/1000/P().kmh*60));
   var lenTxt=fmtLen(len), lenNum=lenTxt.replace(/[a-z]+$/,""), lenUnit=lenTxt.slice(lenNum.length);
-  $("sheetText").innerHTML=vcard(status)+'<div class="metrics"><div><b>'+lenNum+'<small>'+lenUnit+'</small></b><span>距離</span></div><div><b>'+mins+'<small>分</small></b><span>目安の時間</span></div><div><b>'+Math.round((1-unkRatio)*100)+'<small>%</small></b><span>調査済み</span></div></div>';
+  var cov=Math.round((1-unkRatio)*100);
+  $("sheetText").innerHTML=vcard(status)+'<div class="kpi"><span class="big num">'+mins+'<small>分</small></span><span class="sub num">'+lenNum+lenUnit+'</span></div>'+
+    '<div class="cov"><span>調査済み</span><div class="bar"><i style="flex:'+cov+';background:#16a34a"></i><i style="flex:'+(100-cov)+';background:#cbd5e1"></i></div><b class="num">'+cov+'%</b></div>';
   var h='<ul class="facts">';
   h+=fact("start","出発："+esc(oName));
   h+=fact("dest","目的地の車椅子対応："+(d.place?esc(WC[d.place.t.wheelchair]||d.place.t.wheelchair):"未確認"),d.place?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
@@ -560,7 +573,7 @@ function judge(c){
   var unkN=path.filter(function(i){ return evalLink(area.links[i]).unk.length; }).length;
   if(issues.length||unkN){
     h+='<p class="sec">気をつける箇所</p><ul class="issues" aria-label="気をつける箇所">';
-    issues.slice(0,8).forEach(function(x,k){ h+='<li><button type="button" data-k="'+k+'"><span class="tag '+x[0]+'">'+x[1]+'</span><span>'+esc(x[2])+'（'+esc(CODE.rt[x[3].rt]||CODE.st[x[3].st]||"通路")+'）</span>'+ICON.arr+'</button></li>'; });
+    issues.slice(0,8).forEach(function(x,k){ h+='<li><button type="button" data-k="'+k+'"><span class="tag '+x[0]+'">'+x[1]+'</span><span>'+esc(x[2].replace(/（終点側が.+?）/g,""))+'<small>'+esc(CODE.rt[x[3].rt]||CODE.st[x[3].st]||"通路")+'</small></span>'+ICON.arr+'</button></li>'; });
     if(unkN) h+='<li><button type="button" data-unk="1"><span class="tag unk">未調査</span><span>'+unkN+'区間・'+fmtLen(unkLen)+'（地図の灰色の破線）</span>'+ICON.arr+'</button></li>';
     h+='</ul>';
   }
@@ -604,7 +617,7 @@ $("repForm").onsubmit=function(e){
 
 // ---- 条件の設定画面 ----
 function profSub(p){ return STEP_TXT[p.step]+"・"+SLOPE_TXT[p.slope]+(p.stairs?"・階段可":""); }
-function showProf(){ var p=P(); $("profText").innerHTML='<b>'+esc(prof?p.label:"条件を設定")+'</b><small>'+esc(prof?profSub(p):"手動車いすで判定中")+'</small>'; }
+function showProf(){ var p=P(); $("profText").textContent=prof?p.label.replace(/（調整済み）$/,"＊"):"条件を設定"; $("profBtn").setAttribute("aria-label","移動の条件："+(prof?p.label+"、"+profSub(p):"未設定")+"。変更する"); }
 function fillForm(p){ $("pStep").value=p.step; $("pSlope").value=p.slope; $("pWidth").value=p.width; $("pStairs").checked=p.stairs; $("pEsc").checked=p.esc; }
 function openProf(){
   lastFocus=document.activeElement;
@@ -688,8 +701,12 @@ function local(q){
   if(!words.length) return [];
   var tests=words.map(function(w){ var g=GENRES.filter(function(x){ return x[0].test(w); }); var nw=norm(w);
     return function(pl){ return norm(pl[0]).indexOf(nw)>=0 || g.some(function(x){ return x[1].test(pl[1]); }); }; });
-  return area.places.filter(function(pl){ return tests.every(function(t){ return t(pl); }); }).map(function(pl){
+  var out=area.places.filter(function(pl){ return tests.every(function(t){ return t(pl); }); }).map(function(pl){
     return {name:pl[0], addr:genreOf(pl[1])||"赤羽周辺", ll:[pl[3],pl[2]], local:true}; });
+  // 名前のないトイレも候補に入れる（車椅子で使えるかを添える）
+  if(words.length===1&&/トイレ|お手洗い/.test(words[0])) area.pois.forEach(function(p){ if(p.k!=="toilet") return;
+    out.push({name:p.t.name||"トイレ", addr:"トイレ・"+(p.t.wheelchair?(WC[p.t.wheelchair]||p.t.wheelchair):"車椅子対応は未確認"), ll:[p.ll[1],p.ll[0]], local:true}); });
+  return out;
 }
 function near(){ var b=area?area.bbox:[AKABANE[0]-0.01,AKABANE[1]-0.01,AKABANE[0]+0.01,AKABANE[1]+0.01], m=0.02; return [b[0]-m,b[1]-m,b[2]+m,b[3]+m]; }
 function photon(q,bb){
@@ -747,12 +764,13 @@ function search(q){
 function pick(c){
   $("sugg").hidden=true; say(""); $("sheet").classList.remove("min"); $("grab").setAttribute("aria-expanded","true");
   if(!destMarker){ var el=document.createElement("div"); el.className="pin";
-    el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#0b6b7a" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
+    el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#0b1220" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
   destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
   map.flyTo({center:[c.ll[1],c.ll[0]],zoom:17});
   judge(c);
 }
+document.querySelectorAll(".chip[data-q]").forEach(function(b){ b.onclick=function(){ $("q").value=b.dataset.q; search(b.dataset.q); }; });
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
 
 // ---- オフラインでも開けるように（PWA） ----
