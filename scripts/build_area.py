@@ -2,7 +2,7 @@
 """赤羽駅周辺の「通れるか」の材料を集めて data/akabane.json に書き出す。
 
 - 歩道の段差・幅・坂・階段など：国土交通省「歩行空間ネットワークデータ（赤羽駅周辺）」
-  （ほこナビDP、公共データ利用規約 第1.0版）。コードの意味は歩行空間ネットワークデータ整備仕様による
+  （ほこナビDP、公共データ利用規約 第1.0版）。コードの意味は歩行空間ネットワークデータ整備仕様（2024年7月）による
 - トイレ・エレベーター・入口・車椅子対応の施設：OpenStreetMap（ODbL）を Overpass API で取得
 
 使い方: python3 scripts/build_area.py [link.geojson node.geojson overpass.json]

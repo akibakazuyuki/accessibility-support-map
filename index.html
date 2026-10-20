@@ -168,13 +168,13 @@ var map = new maplibregl.Map({
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
 // ---- 赤羽駅周辺の歩行空間データ（国交省）と施設（OpenStreetMap） ----
-// コードの意味は「歩行空間ネットワークデータ整備仕様」による。99 は不明
+// コードの意味は「歩行空間ネットワークデータ整備仕様（2024年7月）」による。99 は不明
 var CODE = {
   st:{1:"歩道（車道と分離）",2:"歩道なしの道",3:"横断歩道",4:"横断部（標示なし）",5:"地下通路",6:"歩道橋",7:"建物内の通路",8:"その他"},
   rt:{2:"動く歩道",3:"踏切",4:"エレベーター",5:"エスカレーター",6:"階段",7:"スロープ"},
   w:{1:"1.0m未満",2:"1.0〜2.0m",3:"2.0〜3.0m",4:"3.0m以上"},
-  sl:{1:"5%以下",2:"5〜8%（上り）",3:"5〜8%（下り）",4:"8〜18%（上り）",5:"8〜18%（下り）",6:"18%超（上り）",7:"18%超（下り）"},
-  lv:{1:"2cm以下",2:"2〜5cm",3:"5〜10cm",4:"10cm超"},
+  sl:{1:"なし（平坦）",2:"5%以下",3:"5〜8%（終点側が高い）",4:"5〜8%（終点側が低い）",5:"8〜18%（終点側が高い）",6:"8〜18%（終点側が低い）",7:"18%超（終点側が高い）",8:"18%超（終点側が低い）"},
+  lv:{1:"なし",2:"2cm以下",3:"2〜5cm",4:"5〜10cm",5:"10cm超"},
   ev:{1:"なし",2:"あり（バリアフリー非対応）",3:"あり（車椅子対応）",4:"あり（視覚障害者対応）",5:"あり（車椅子・視覚障害者対応）"},
   rf:{1:"なし",2:"あり"},
   cd:{1:"車椅子の通行に支障なし",2:"車椅子の通行に支障あり"},
@@ -184,16 +184,16 @@ var CODE = {
 };
 // 一般的な車椅子利用を想定した色分け（本人の条件での判定はプロフィール機能で行う）
 function linkLevel(L){
-  if(L.rt===6||L.rt===3||L.lv===3||L.lv===4||(L.sl>=4&&L.sl<=7)||L.w===1||L.cd===2) return "bad";
-  if(L.rt===5||L.lv===2||L.sl===2||L.sl===3) return "warn";
+  if(L.rt===6||L.rt===3||L.lv===4||L.lv===5||(L.sl>=5&&L.sl<=8)||L.w===1||L.cd===2) return "bad";
+  if(L.rt===5||L.lv===3||L.sl===3||L.sl===4) return "warn";
   if(L.lv===99&&L.sl===99&&L.w===99&&L.rt!==4&&L.rt!==7) return "unknown";
   return "ok";
 }
 function why(L){
   var r=[];
   if(L.rt===6) r.push(["bad","階段"]); if(L.rt===3) r.push(["bad","踏切"]); if(L.rt===5) r.push(["warn","エスカレーター"]);
-  if(L.lv===3||L.lv===4) r.push(["bad","段差 "+CODE.lv[L.lv]]); else if(L.lv===2) r.push(["warn","段差 "+CODE.lv[L.lv]]);
-  if(L.sl>=4&&L.sl<=7) r.push(["bad","坂 "+CODE.sl[L.sl]]); else if(L.sl===2||L.sl===3) r.push(["warn","坂 "+CODE.sl[L.sl]]);
+  if(L.lv===4||L.lv===5) r.push(["bad","段差 "+CODE.lv[L.lv]]); else if(L.lv===3) r.push(["warn","段差 "+CODE.lv[L.lv]]);
+  if(L.sl>=5&&L.sl<=8) r.push(["bad","坂 "+CODE.sl[L.sl]]); else if(L.sl===3||L.sl===4) r.push(["warn","坂 "+CODE.sl[L.sl]]);
   if(L.w===1) r.push(["bad","幅 "+CODE.w[1]]); if(L.cd===2) r.push(["bad","路面に支障あり"]);
   return r;
 }
