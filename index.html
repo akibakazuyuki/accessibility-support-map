@@ -76,6 +76,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sugg span{min-width:0}
 .sugg small{display:block;color:var(--muted);font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lhead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 8px 4px 14px;font-size:13px;font-weight:800;color:#3a4540}
+.ltabs{display:flex;gap:4px;background:#f3f5f4;border-radius:18px;padding:3px}
+.ltabs button{border:0;background:none;border-radius:15px;height:30px;padding:0 14px;font-size:12.5px;font-weight:800;color:#6b7570;display:inline-flex;align-items:center;gap:4px}
+.ltabs button[aria-pressed="true"]{background:#fff;color:#0f8a4a;box-shadow:0 1px 4px rgba(20,40,30,.1)}
+.ltabs b{font-size:11px;color:#ec4f8c}
 .msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted)}
 .msg:empty{display:none}
 
@@ -304,7 +308,7 @@ details.adv summary::-webkit-details-marker{display:none}
     <button class="chip" type="button" data-f="park" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="currentColor" stroke="none"/><path d="M10 17V7.5h3a3 3 0 0 1 0 6h-3" stroke="#fff"/></svg>駐車場</button>
     <button class="chip" type="button" data-f="indoor" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>屋内</button>
   </div>
-  <div class="drop"><div class="lhead" id="listHead" hidden><span id="listTitle">一覧</span><button class="ibtn" id="listClose" type="button" aria-label="一覧を閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
+  <div class="drop"><div class="lhead" id="listHead" hidden><span id="listTitle">一覧</span><div class="ltabs" id="listTabs" role="group" aria-label="一覧の種類" hidden><button type="button" data-tab="near" aria-pressed="true">近く</button><button type="button" data-tab="fav" aria-pressed="false">♥ お気に入り<b id="favCount"></b></button></div><button class="ibtn" id="listClose" type="button" aria-label="一覧を閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
 </section>
 
 <div class="fabs">
@@ -1094,7 +1098,7 @@ function search(q){
 }
 // 一覧・検索結果を閉じる（×・地図をタップ・Esc）
 function closeList(){ $("sugg").hidden=true; $("listHead").hidden=true; $("btnList").setAttribute("aria-expanded","false"); say(""); }
-function showList(out,note,title){
+function showList(out,note,title,tabs){
   var ul=$("sugg"), fk=favs().map(function(f){ return f.k; }); ul.innerHTML="";
   out.forEach(function(c){
     var ct=CATS[c.cat||"dest"], li=document.createElement("li"), b=document.createElement("button"); b.type="button";
@@ -1102,21 +1106,30 @@ function showList(out,note,title){
     b.onclick=function(){ pick(c); };
     li.appendChild(b); ul.appendChild(li);
   });
-  ul.hidden=false; $("listHead").hidden=false; $("listTitle").textContent=title||"検索結果"; say(out.length+note);
+  ul.hidden=false; $("listHead").hidden=false; $("listTitle").hidden=!!tabs; $("listTabs").hidden=!tabs; $("listTitle").textContent=title||"検索結果";
+  document.querySelectorAll("#listTabs [data-tab]").forEach(function(b){ var on=b.dataset.tab===listTab; b.setAttribute("aria-pressed",String(on)); });
+  $("favCount").textContent=favs().length||""; say(out.length?out.length+note:"");
 }
 // 「一覧」：いま地図に出しているピンを近い順に（お気に入りは先頭）
-$("btnList").onclick=function(){
-  if(!$("sugg").hidden){ closeList(); return; }
-  if(!area) return;
+// 「一覧」：「近く」はいま地図に出しているピンを近い順に、「お気に入り」は♡を押した場所
+var listTab="near";
+function openList(tab){
+  if(!area) return; listTab=tab;
   var base=me&&km(me,AKABANE)<3?me:[map.getCenter().lat,map.getCenter().lng], out=[];
-  pinFeats.forEach(function(f){ var pr=f.properties;
+  if(tab==="fav") out=favs().map(function(f){ return {name:f.name,addr:f.addr,ll:f.ll,cat:f.cat,d:km(base,f.ll)}; });
+  else pinFeats.forEach(function(f){ var pr=f.properties;
     var ok=filt==="all"?(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)):(filtMatch(filt,pr)&&(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)));
     if(!ok||pr.k==="entrance") return; var c=pinCand(pr); c.d=km(base,c.ll); out.push(c); });
-  favs().forEach(function(f){ out=out.filter(function(c){ return favKey(c)!==f.k; }); out.unshift({name:f.name,addr:f.addr,ll:f.ll,cat:f.cat,d:km(base,f.ll)}); });
-  var nf=favs().length; out=out.slice(0,nf).concat(out.slice(nf).sort(function(a,b){ return a.d-b.d; })).slice(0,40);
-  if(!out.length){ say("この条件のピンはありません"); return; }
-  showList(out,"件（近い順）","近い順の一覧"); $("btnList").setAttribute("aria-expanded","true");
+  out=out.sort(function(a,b){ return a.d-b.d; }).slice(0,40);
+  showList(out,tab==="fav"||filt==="all"?"件（近い順）":"件（近い順・チップで絞り込み中）",null,true);
+  if(!out.length) say(tab==="fav"?"まだありません。場所を開いて♡を押すと、ここに並びます":"この条件のピンはありません");
+  $("btnList").setAttribute("aria-expanded","true");
+}
+$("btnList").onclick=function(){
+  if(!$("sugg").hidden&&$("btnList").getAttribute("aria-expanded")==="true"){ closeList(); return; }
+  openList(favs().length?"fav":"near");
 };
+document.querySelectorAll("#listTabs [data-tab]").forEach(function(b){ b.onclick=function(){ openList(b.dataset.tab); }; });
 $("listClose").onclick=closeList;
 document.addEventListener("click",function(e){ if(!$("sugg").hidden&&!e.target.closest(".drop")&&!e.target.closest("#btnList")&&!e.target.closest(".chip")&&!e.target.closest("#searchForm")) closeList(); });
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("sugg").hidden) closeList(); });
@@ -1129,7 +1142,7 @@ function pick(c){
   if(pop) pop.remove();
   judge(c);
 }
-document.querySelectorAll(".chip[data-f]").forEach(function(b){ b.onclick=function(){ applyFilter(b.dataset.f); if(!$("sugg").hidden&&$("btnList").getAttribute("aria-expanded")==="true"){ $("sugg").hidden=true; $("btnList").click(); } }; });
+document.querySelectorAll(".chip[data-f]").forEach(function(b){ b.onclick=function(){ applyFilter(b.dataset.f); if(!$("sugg").hidden&&$("btnList").getAttribute("aria-expanded")==="true") openList("near"); }; });
 $("btnLegend").onclick=function(){ setNet(!showNet); say(showNet?"歩道の通りやすさを色で表示しています（緑：通れる・赤：合わない・灰：未調査）":""); };
 setNet(showNet);
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
