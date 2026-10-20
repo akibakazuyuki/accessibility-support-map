@@ -372,9 +372,14 @@ function tuneBase(){
   if(usedGsi) return;
   var JA=["coalesce",["get","name:ja"],["get","name"]];
   map.getStyle().layers.forEach(function(l){
-    if(/^(poi_r20|poi_r7|building-3d|natural_earth)$/.test(l.id)) map.setLayoutProperty(l.id,"visibility","none");
-    else if(l.type==="symbol"&&l.layout&&l.layout["text-field"]&&!/shield/.test(l.id)) map.setLayoutProperty(l.id,"text-field",JA);
+    if(/^(poi_r20|poi_r7|building-3d|natural_earth|road_one_way_arrow.*|.*shield.*|.*rail_hatching)$/.test(l.id)) map.setLayoutProperty(l.id,"visibility","none");
+    else if(l.type==="symbol"&&l.layout&&l.layout["text-field"]) map.setLayoutProperty(l.id,"text-field",JA);
   });
+  // 線路と幹線道路の色を落ち着かせ、公園を少し明るい緑に
+  [["road_major_rail","line-color","#c9ced6"],["road_transit_rail","line-color","#c9ced6"],["bridge_major_rail","line-color","#c9ced6"],
+   ["road_trunk_primary","line-color","#fde9b8"],["road_secondary_tertiary","line-color","#fff6dc"],["bridge_trunk_primary","line-color","#fde9b8"],
+   ["park","fill-color","#d8efd3"],["landcover_grass","fill-color","#dff1d9"],["water","fill-color","#b9dcf5"]].forEach(function(x){
+    if(map.getLayer(x[0])) try{ map.setPaintProperty(x[0],x[1],x[2]); }catch(e){} });
 }
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
