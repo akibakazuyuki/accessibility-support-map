@@ -22,4 +22,7 @@ await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(5000);
 await p.screenshot({ path: "preview/3_card.png" });
 await p.click("#grab"); await p.waitForTimeout(1200);
 await p.screenshot({ path: "preview/5_full.png" });
+await p.click("#grab"); await p.waitForTimeout(800);
+if (await p.$("#btnGo")) { await p.click("#btnGo"); await p.waitForTimeout(4000); }
+await p.screenshot({ path: "preview/7_go.png" });
 await b.close();

@@ -286,6 +286,12 @@ details.adv summary::-webkit-details-marker{display:none}
 
 .me{width:20px;height:20px;border-radius:50%;background:#2f80ed;border:3px solid #fff;box-shadow:0 1px 6px rgba(20,60,120,.35)}
 .pin{width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(20,36,28,.3))}
+.dest{position:relative;width:max-content;display:flex;flex-direction:column;align-items:center;pointer-events:none;z-index:3}
+.dest .lbl{max-width:200px;margin-bottom:4px;padding:6px 12px;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(20,40,30,.2);font-size:13px;font-weight:800;line-height:1.3;color:#1c2420;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dest svg{position:relative;z-index:1;width:46px;height:59px;filter:drop-shadow(0 4px 6px rgba(20,36,28,.35))}
+.dest .halo{position:absolute;left:50%;bottom:-9px;width:44px;height:18px;margin-left:-22px;border-radius:50%;background:rgba(23,160,88,.45);animation:halo 1.6s ease-out infinite}
+@keyframes halo{0%{transform:scale(.4);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){ .dest .halo{animation:none;opacity:.5} }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
@@ -692,7 +698,7 @@ function setNet(on){ showNet=on; ls("net",on?"1":null); ["links","links-unknown"
 map.once("style.load",function(){ loadArea(); });
 // 検索欄と下のパネルに隠れないように経路を地図に収める
 function fitRoute(b){
-  var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+56;  // 目的地のピンの高さぶん余白を足す
+  var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+96;  // 目的地の目印と名前の札の高さぶん余白を足す
   var bottom=wide?40:Math.min($("sheet").offsetHeight+16,window.innerHeight-top-120);
   var pad={top:top,bottom:bottom,left:wide?440:44,right:wide?40:80}, tries=0;
   map.fitBounds(b,{padding:pad,maxZoom:18});
@@ -1135,10 +1141,12 @@ document.addEventListener("click",function(e){ if(!$("sugg").hidden&&!e.target.c
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("sugg").hidden) closeList(); });
 function pick(c){
   closeList(); showLayers(false); $("sheet").hidden=false; $("sheet").scrollTop=0; setSheet("mid");
-  if(!destMarker){ var el=document.createElement("div"); el.className="pin";
-    el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
+  // 選んだ場所：名前の札＋大きな緑の目印＋足もとの波紋。ほかのピンと見分けられるように
+  if(!destMarker){ var el=document.createElement("div"); el.className="dest";
+    el.innerHTML='<span class="lbl"></span><svg viewBox="0 0 36 46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="6" fill="#fff"/></svg><i class="halo" aria-hidden="true"></i>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
-  if(c.pin) destMarker.remove(); else destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
+  destMarker.getElement().querySelector(".lbl").textContent=c.name;
+  destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
   if(pop) pop.remove();
   judge(c);
 }
