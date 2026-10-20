@@ -212,7 +212,8 @@ details.steps ol{margin:0;padding-left:22px}
 "use strict";
 var AKABANE = [35.7780, 139.7208];   // JR赤羽駅
 // 誤り報告の受け取り先（Google フォーム）。フォームの「事前入力したURLを取得」で得た entry 番号を入れる。未設定ならメールで送る
-var REPORT = {form:"", entry:{target:"", kind:"", dur:"", text:"", ll:"", app:""}, mail:""};
+var REPORT = {form:"https://docs.google.com/forms/d/e/1FAIpQLSesOloKZTHVqgc1QlTQVUXLc0tlRr4Z9kVe6rE1gqIOIqWb_g/viewform",
+  entry:{target:"entry.612633900", kind:"entry.1771970137", dur:"entry.1684015251", text:"entry.2030489350", ll:"entry.1440004134", app:"entry.91218291"}, mail:""};
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function km(a,b){ var R=6371,dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;
