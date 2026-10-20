@@ -358,6 +358,8 @@ var ROAD_MAJOR=["motorway","trunk","primary","secondary"], ROAD_MINOR=["tertiary
 function roads(cls){ return ["all",["match",["get","class"],cls,true,false],["!=",["get","brunnel"],"tunnel"]]; }
 var BASE={
   version:8,
+  light:{anchor:"viewport",color:"#ffffff",intensity:0.42,position:[1.4,200,35]},
+  sky:{"sky-color":"#bfe0f5","horizon-color":"#eaf5f0","fog-color":"#edf3e7","sky-horizon-blend":0.7,"horizon-fog-blend":0.6,"fog-ground-blend":0.85,"atmosphere-blend":0},
   glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   sources:{omt:{type:"vector",url:"https://tiles.openfreemap.org/planet",
     attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}},
@@ -368,7 +370,7 @@ var BASE={
     soft("pitch","fill","landuse",{filter:["match",["get","class"],["pitch","stadium","school","cemetery"],true,false],paint:{"fill-color":"#dcedd2"}}),
     soft("water","fill","water",{paint:{"fill-color":"#a8d4f2"}}),
     soft("river","line","waterway",{paint:{"line-color":"#a8d4f2","line-width":["interpolate",["linear"],["zoom"],12,1,18,6]}}),
-    soft("bldg","fill","building",{minzoom:14,paint:{"fill-color":"#e3ebde","fill-outline-color":"#e3ebde","fill-opacity":["interpolate",["linear"],["zoom"],14,0,16,0.7]}}),
+    soft("bldg","fill","building",{minzoom:13,maxzoom:15,paint:{"fill-color":"#e3ebde","fill-outline-color":"#e3ebde","fill-opacity":["interpolate",["linear"],["zoom"],13,0,14.5,0.7]}}),
     soft("rail","line","transportation",{filter:["all",roads(["rail","transit"]),["!",["has","service"]]],paint:{"line-color":"#d3dccf","line-width":["interpolate",["linear"],["zoom"],12,0.8,18,2.5]}}),
     soft("road-minor","line","transportation",{filter:roads(ROAD_MINOR),minzoom:13,layout:{"line-cap":"round","line-join":"round"},
       paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],13,0.6,15,2.5,18,13]}}),
@@ -376,6 +378,12 @@ var BASE={
       paint:{"line-color":"#d9e3d2","line-width":["interpolate",["exponential",1.6],["zoom"],10,1.5,15,9,18,30]}}),
     soft("road-major","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
       paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],10,1,15,7,18,25]}}),
+    // 建物は立体に。低い建物は白っぽく、高い建物ほどやわらかいベージュ
+    soft("bldg-3d","fill-extrusion","building",{minzoom:14.5,paint:{
+      "fill-extrusion-color":["interpolate",["linear"],["coalesce",["get","render_height"],8],5,"#f4f6f1",20,"#f6f0e4",50,"#f3e3d3"],
+      "fill-extrusion-height":["interpolate",["linear"],["zoom"],14.5,0,15.5,["coalesce",["get","render_height"],8]],
+      "fill-extrusion-base":["coalesce",["get","render_min_height"],0],
+      "fill-extrusion-opacity":0.92,"fill-extrusion-vertical-gradient":true}}),
     soft("place","symbol","place",{filter:["match",["get","class"],["suburb","quarter","neighbourhood"],true,false],
       layout:{"text-field":JA,"text-font":["Noto Sans Regular"],"text-size":12,"text-max-width":8},
       paint:{"text-color":"#7d8b81","text-halo-color":"rgba(255,255,255,.9)","text-halo-width":1.5}}),
@@ -408,8 +416,8 @@ var GSI_STYLE={
     ]
 };
 var map = new maplibregl.Map({
-  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:15.6, minZoom:5, maxZoom:18, attributionControl:{compact:true},
-  pitchWithRotate:false, dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
+  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:16.2, pitch:55, bearing:-18, maxPitch:65, minZoom:5, maxZoom:18.5, attributionControl:{compact:true},
+  dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
   style:BASE
 });
 var usedGsi=false;
@@ -814,7 +822,7 @@ function locate(){
   }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
 $("btnLocate").onclick=locate;
-function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.6}); }
+function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:16.2,pitch:55}); }
 
 // ---- 場所の検索 ----
 // 1) 赤羽周辺の施設（OpenStreetMap を事前に取り込んだもの）を名前と種類で探す
