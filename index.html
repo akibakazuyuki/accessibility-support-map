@@ -690,7 +690,19 @@ map.once("style.load",function(){ loadArea(); });
 function fitRoute(b){
   var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+56;  // 目的地のピンの高さぶん余白を足す
   var bottom=wide?40:Math.min($("sheet").offsetHeight+16,window.innerHeight-top-120);
-  map.fitBounds(b,{padding:{top:top,bottom:bottom,left:wide?440:32,right:wide?40:76},maxZoom:18});
+  var pad={top:top,bottom:bottom,left:wide?440:44,right:wide?40:80}, tries=0;
+  map.fitBounds(b,{padding:pad,maxZoom:18});
+  // 地図を傾けていると、奥や端が枠からはみ出すことがある。経路と目的地が全部見えるまで少しずつ引く
+  function check(){
+    var W=window.innerWidth, H=window.innerHeight, out=false;
+    [b.getNorthWest(),b.getNorthEast(),b.getSouthWest(),b.getSouthEast()].forEach(function(ll){ var q=map.project(ll);
+      if(q.x<pad.left-4||q.x>W-pad.right+4||q.y<pad.top-4||q.y>H-pad.bottom+4) out=true; });
+    if(!out||++tries>5) return;
+    var c=map.project(b.getCenter()), mid=[(pad.left+W-pad.right)/2,(pad.top+H-pad.bottom)/2];
+    map.once("moveend",check);
+    map.easeTo({center:map.unproject([map.getCanvas().clientWidth/2+(c.x-mid[0]),map.getCanvas().clientHeight/2+(c.y-mid[1])]),zoom:map.getZoom()-0.4,duration:250});
+  }
+  map.once("moveend",check);
 }
 // 行き先のピンを、上の検索欄と下のカードの間に見えるよう動かす
 function focus(ll){ requestAnimationFrame(function(){
@@ -839,7 +851,7 @@ function judge(c){
   var h=R?vcard(status):vcard(1,why);
   if(!R){ out.innerHTML='<div id="detail">'+h+'</div>'; focus(c.ll); return; }
   $("btnGo").onclick=function(){ map.getSource("route").setData({type:"FeatureCollection",features:feats}); dim(true);
-    setSheet("min"); setTimeout(function(){ fitRoute(b); },50); };
+    setSheet("min"); setTimeout(function(){ fitRoute(b); },320); };
   h+='<ul class="facts">';
   h+=fact("start","出発："+esc(R.oName),fmtLen(len)+"・約"+mins+"分（"+esc(P().label.replace(/（.*$/,""))+"）");
   h+=fact("dest","目的地の車椅子対応："+(t.wheelchair?esc(WC[t.wheelchair]||t.wheelchair):"未確認"),t.wheelchair?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
