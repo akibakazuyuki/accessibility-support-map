@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f4f6f5">
+<meta name="theme-color" content="#ffffff">
 <meta name="description" content="車椅子・ベビーカー・杖などで外出する人のための、段差・幅・坂・エレベーター・トイレがわかる地図（赤羽駅周辺で試験提供）">
 <title>アクセシビリティ・サポートマップ</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -13,121 +13,141 @@
 <meta name="apple-mobile-web-app-title" content="サポートマップ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
 :root{
   color-scheme:light;
-  --bg:#f2f4f7; --card:#ffffff; --soft:#f3f5f9; --line:#e6e9ef;
-  --ink:#0b1220; --ink2:#334155; --muted:#64748b;
-  --brand:#3b5bfd; --brand-soft:#eef1ff; --brand-ink:#ffffff;
-  --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444; --unk:#94a3b8;
-  --focus:#3b5bfd;
-  --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.10);
-  --font:"Inter","Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;
+  --bg:#eef3ef; --card:#ffffff; --soft:#f4f6f5; --line:#e7ebe8;
+  --ink:#1c2420; --ink2:#3a4540; --muted:#6b7570;
+  --brand:#17a058; --brand-dk:#0f8a4a; --brand-soft:#e7f6ed; --brand-ink:#ffffff;
+  --blue:#2f80ed; --blue-soft:#e8f1fd; --pink:#ec4f8c; --pink-soft:#fdebf2; --orange:#f39c12; --orange-soft:#fef4e3;
+  --violet:#7c5cf0; --violet-soft:#f0ecfe; --teal:#13a3a8; --teal-soft:#e4f6f6;
+  --ok:#17a058; --warn:#f59e0b; --bad:#ef4444; --unk:#9aa5a0;
+  --focus:#2f80ed;
+  --shadow:0 2px 6px rgba(20,40,30,.06),0 8px 24px rgba(20,40,30,.10);
+  --font:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI",sans-serif;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);letter-spacing:.01em;overflow:hidden;-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--font);font-weight:500;overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.num{font-family:"Inter",var(--font);font-feature-settings:"tnum";letter-spacing:-.02em}
+.num{font-feature-settings:"tnum"}
 
 #map{position:fixed;inset:0;background:var(--bg)}
 .maplibregl-ctrl-attrib{background:rgba(255,255,255,.75)!important;color:var(--muted)!important;font-size:10px}
 .maplibregl-ctrl-attrib a{color:var(--muted)!important}
 .maplibregl-ctrl-bottom-left{bottom:calc(var(--sheet-h,150px) + 4px)}
 @media (max-width:599px){ .maplibregl-ctrl-scale{display:none} }
-.maplibregl-ctrl-scale{border-color:var(--muted);color:var(--muted);background:rgba(255,255,255,.7)}
 
-/* ---- 上部：検索・ジャンル ---- */
-.top{position:fixed;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));z-index:10;max-width:520px}
-.search{display:flex;align-items:center;gap:10px;height:50px;margin:0 12px;background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:0 6px 0 14px}
-.search .si{width:20px;height:20px;color:var(--muted);flex:none}
-.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:16px;font-weight:500;outline:none}
-.search input::placeholder{color:#8b95a7;font-weight:400}
+/* ---- 上部：ロゴ・検索・チップ ---- */
+.top{position:fixed;left:0;right:0;top:0;z-index:10;max-width:520px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 4px;
+  background:linear-gradient(#fff 0,#fff 62%,rgba(255,255,255,0))}
+.brand{display:flex;align-items:center;justify-content:center;gap:6px;margin:0 0 8px;font-size:19px;font-weight:800;color:var(--brand);letter-spacing:.02em}
+.brand img{width:26px;height:26px;border-radius:8px}
+.brand .beta{font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:6px;padding:1px 6px;letter-spacing:.06em}
+.search{display:flex;align-items:center;gap:8px;height:50px;margin:0 14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:0 6px 0 14px}
+.search .spark{font-size:18px;line-height:1;flex:none}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:15px;font-weight:500;outline:none}
+.search input::placeholder{color:#8a948f}
 .search input::-webkit-search-cancel-button{display:none}
-.search .logo{width:36px;height:36px;border-radius:10px;flex:none}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 12px 4px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent)}
+.go{width:40px;height:40px;border-radius:12px;border:0;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.go svg{width:20px;height:20px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 6px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:36px;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 2px rgba(15,23,42,.08),0 2px 8px rgba(15,23,42,.08);padding:0 14px;font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap}
-.chip .e{font-size:15px;line-height:1}
-.chip.me-chip{background:var(--ink);color:#fff;padding:0 12px 0 10px}
-.chip.me-chip svg{width:16px;height:16px}
-.chip.me-chip small{font-weight:400;opacity:.7;font-size:12px}
-.drop{margin:8px 12px 0;background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+.chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 3px rgba(20,40,30,.12);padding:0 13px 0 10px;font-size:13px;font-weight:700;color:var(--ink2);white-space:nowrap}
+.chip svg{width:17px;height:17px;flex:none}
+#profBtn{background:var(--brand-soft);color:var(--brand-dk);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.chip.on{background:var(--brand);color:#fff}
+.chip.on svg{color:#fff!important}
+.drop{margin:4px 14px 0;background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .drop:not(:has(:not([hidden]))){display:none}
-.sugg{list-style:none;margin:0;padding:4px 0;max-height:52vh;overflow:auto}
-.sugg button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;border:0;background:none;padding:8px 14px;font-weight:600}
+.sugg{list-style:none;margin:0;padding:4px 0;max-height:50vh;overflow:auto}
+.sugg button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;min-height:56px;border:0;background:none;padding:8px 14px;font-weight:700}
 .sugg button:hover{background:var(--soft)}
 .sugg li+li button{box-shadow:inset 0 1px 0 var(--line)}
-.sugg .pinic{width:34px;height:34px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
-.sugg .pinic svg{width:17px;height:17px}
+.sugg .pinic{width:36px;height:36px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
+.sugg .pinic svg{width:18px;height:18px}
 .sugg span{min-width:0}
-.sugg small{display:block;color:var(--muted);font-size:12px;font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sugg small{display:block;color:var(--muted);font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted)}
 .msg:empty{display:none}
 
 /* ---- 右：操作ボタン ---- */
-.fabs{position:fixed;right:12px;bottom:calc(var(--sheet-h,150px) + 12px);z-index:10;display:flex;flex-direction:column;gap:8px;transition:bottom .2s}
-.fab{width:44px;height:44px;border-radius:12px;border:0;background:var(--card);box-shadow:var(--shadow);color:var(--ink2);display:flex;align-items:center;justify-content:center}
-.fab svg{width:22px;height:22px}
+.fabs{position:fixed;right:14px;bottom:calc(var(--sheet-h,150px) + 12px);z-index:10;display:flex;flex-direction:column;gap:10px;transition:bottom .2s}
+.fab{width:54px;height:54px;border-radius:16px;border:0;background:var(--card);box-shadow:var(--shadow);color:var(--ink2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:10px;font-weight:700}
+.fab svg{width:21px;height:21px}
 
 /* ---- 下：シート ---- */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:56vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
-  border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(15,23,42,.12);padding:0 18px calc(14px + env(safe-area-inset-bottom,0px))}
-@media (min-width:900px){ .sheet{left:16px;bottom:16px;width:380px;max-height:calc(100vh - 32px);border-radius:18px;padding-top:16px} .grab{display:none} .top{left:404px} }
-.grab{position:sticky;top:0;display:block;width:calc(100% + 36px);margin:0 -18px;height:22px;border:0;background:var(--card);z-index:1}
-.grab::after{content:"";display:block;width:36px;height:4px;border-radius:2px;background:#d6dbe4;margin:8px auto 0}
-.sheet.min #result,.sheet.min .more,.sheet.min .foot{display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:60vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
+  border-radius:24px 24px 0 0;box-shadow:0 -4px 30px rgba(20,40,30,.14);padding:0 16px calc(14px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){ .sheet{left:16px;bottom:16px;width:380px;max-height:calc(100vh - 32px);border-radius:22px;padding-top:16px} .grab{display:none} .top{left:404px;background:none} }
+.grab{position:sticky;top:0;display:block;width:calc(100% + 32px);margin:0 -16px;height:22px;border:0;background:var(--card);z-index:1}
+.grab::after{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#d5dcd8;margin:8px auto 0}
+.sheet.min #result,.sheet.min .more,.sheet.min .foot,.sheet.min .tiles,.sheet.min .acts{display:none}
 .head{display:flex;align-items:center;gap:8px;margin:2px 0 2px}
-.head h2{font-size:18px;line-height:1.35;font-weight:700;margin:0;flex:1;min-width:0;letter-spacing:0}
-.trial{flex:none;font-size:11px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:6px;padding:2px 7px;letter-spacing:.04em}
-.lead{margin:0 0 12px;font-size:13px;color:var(--muted)}
-/* 概要：割合の帯 */
-.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--soft);margin:0 0 10px}
+.head h2{font-size:19px;line-height:1.35;font-weight:800;margin:0;flex:1;min-width:0}
+.meta{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink2)}
+.lead{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--soft);margin:0 0 8px}
 .bar i{display:block;height:100%}
 .bar i+i{margin-left:2px}
-.keys{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 14px;padding:0;list-style:none;font-size:12px;color:var(--muted)}
+.keys{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 12px;padding:0;list-style:none;font-size:12px;color:var(--muted)}
 .keys li{display:flex;align-items:center;gap:6px}
 .keys i{width:8px;height:8px;border-radius:50%}
 .keys b{color:var(--ink);font-size:13px}
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 4px}
-.tile{display:flex;align-items:center;gap:10px;border-radius:14px;background:var(--soft);padding:10px 12px;font-size:12px;color:var(--muted)}
-.tile b{display:block;font-size:17px;color:var(--ink);line-height:1.2}
-.tile .ti{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;background:#fff}
-.tile .ti svg{width:18px;height:18px}
 
-/* 判定結果 */
-.verdict{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
-.pill{display:inline-flex;align-items:center;gap:6px;height:28px;border-radius:14px;padding:0 12px 0 10px;font-size:13px;font-weight:700;color:#fff}
-.pill .mk{font-size:14px}
-.s5{background:#15803d}.s4{background:var(--ok)}.s3{background:#d97706}.s2{background:var(--bad)}.s1{background:#64748b}
-.vdesc{margin:0 0 12px;font-size:13px;color:var(--muted)}
-.kpi{display:flex;align-items:baseline;gap:14px;margin:0 0 6px}
-.kpi .big{font-size:34px;font-weight:800;line-height:1;letter-spacing:-.03em}
-.kpi .big small{font-size:15px;font-weight:600;margin-left:2px;letter-spacing:0}
-.kpi .sub{font-size:14px;color:var(--ink2);font-weight:600}
-.cov{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:12px;color:var(--muted)}
-.cov .bar{flex:1;height:6px;margin:0}
-.facts{list-style:none;margin:0 0 14px;padding:0}
+/* 設備タイル */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
+.tile{display:flex;align-items:center;gap:7px;border-radius:14px;padding:9px 7px;min-width:0}
+.tile .ti{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;color:#fff}
+.tile .ti svg{width:18px;height:18px}
+.tile div{min-width:0}
+.tile small{display:block;font-size:10.5px;font-weight:700;color:var(--ink2);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile b{display:block;font-size:13px;line-height:1.3;white-space:nowrap}
+.t-blue{background:var(--blue-soft)}.t-blue .ti{background:var(--blue)}
+.t-pink{background:var(--pink-soft)}.t-pink .ti{background:var(--pink)}
+.t-orange{background:var(--orange-soft)}.t-orange .ti{background:var(--orange)}
+.t-green{background:var(--brand-soft)}.t-green .ti{background:var(--brand)}
+.t-violet{background:var(--violet-soft)}.t-violet .ti{background:var(--violet)}
+.t-teal{background:var(--teal-soft)}.t-teal .ti{background:var(--teal)}
+.mk-ok{color:var(--brand)}.mk-mid{color:#d97706}.mk-ng{color:var(--bad)}.mk-unk{color:var(--muted)}
+
+/* 判定 */
+.verdict{display:flex;align-items:center;gap:8px;margin:2px 0 10px;padding:10px 12px;border-radius:14px}
+.verdict .mk{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex:none}
+.verdict b{display:block;font-size:15px;line-height:1.3}
+.verdict span{display:block;font-size:12px;color:var(--ink2);line-height:1.45}
+.v5,.v4{background:var(--brand-soft)}.v5 .mk,.v4 .mk{background:var(--brand)}
+.v3{background:var(--orange-soft)}.v3 .mk{background:#e08a00}
+.v2{background:#fdecec}.v2 .mk{background:var(--bad)}
+.v1{background:var(--soft)}.v1 .mk{background:#7b8580}
+.acts{display:flex;gap:10px;margin:0 0 6px}
+.acts button{flex:1;min-height:50px;border-radius:25px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.acts .ol{border:2px solid var(--brand);background:#fff;color:var(--brand)}
+.acts .fill{border:0;background:var(--brand);color:#fff}
+.acts svg{width:20px;height:20px}
+#detail{padding-top:8px}
+.facts{list-style:none;margin:0 0 12px;padding:0}
 .facts li{display:flex;gap:12px;padding:9px 0;font-size:14px;align-items:center}
 .facts li+li{box-shadow:inset 0 1px 0 var(--line)}
 .facts .fi{width:32px;height:32px;border-radius:10px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
 .facts svg{width:17px;height:17px}
 .facts small{display:block;color:var(--muted);font-size:12px}
-.sec{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px;letter-spacing:.04em}
-.issues{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px}
+.sec{font-size:12px;font-weight:800;color:var(--muted);margin:0 0 6px}
+.issues{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
 .issues button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;min-height:46px;border:0;border-radius:12px;background:var(--soft);padding:8px 12px;font-size:13px}
-.issues .tag{flex:none;font-size:11px;font-weight:700;color:#fff;border-radius:6px;padding:2px 7px}
-.tag.bad{background:var(--bad)}.tag.warn{background:#d97706}.tag.unk{background:var(--unk)}
 .issues small{display:block;font-size:11px;color:var(--muted)}
+.issues .tag{flex:none;font-size:11px;font-weight:800;color:#fff;border-radius:6px;padding:2px 7px}
+.tag.bad{background:var(--bad)}.tag.warn{background:#d97706}.tag.unk{background:var(--unk)}
 .issues .arr{margin-left:auto;width:16px;height:16px;color:var(--muted);flex:none}
 details.steps{margin:0 0 10px;font-size:13px;border-radius:12px;background:var(--soft);padding:0 14px}
-details.steps summary{min-height:46px;display:flex;align-items:center;cursor:pointer;color:var(--ink2);font-weight:700;list-style:none}
+details.steps summary{min-height:46px;display:flex;align-items:center;cursor:pointer;color:var(--ink2);font-weight:800;list-style:none}
 details.steps summary::-webkit-details-marker{display:none}
 details.steps summary::after,.more summary::after,details.adv summary::after{content:"";margin-left:auto;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-4px;opacity:.6}
 details.steps[open] summary::after,.more[open] summary::after,details.adv[open] summary::after{transform:rotate(-135deg);margin-top:4px}
@@ -135,66 +155,67 @@ details.steps ol{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
 .note{font-size:11px;color:var(--muted);margin:0 0 6px;line-height:1.6}
 
 /* 凡例・出典・リンク */
-.more{margin-top:10px;box-shadow:inset 0 1px 0 var(--line)}
-.more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);list-style:none}
+.more{margin-top:8px;box-shadow:inset 0 1px 0 var(--line)}
+.more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style:none}
 .more summary::-webkit-details-marker{display:none}
 .legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;margin:0 0 10px;padding:0;list-style:none;font-size:12px;color:var(--ink2)}
 .legend li{display:flex;align-items:center;gap:8px}
 .legend i{display:inline-block;width:22px;height:4px;border-radius:2px;flex:none}
 .legend i.dash{background:repeating-linear-gradient(90deg,var(--unk) 0 5px,transparent 5px 9px)!important}
-.legend b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:9px;flex:none;border:2px solid #fff;box-shadow:0 0 0 1px var(--line)}
+.legend b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;color:#fff;font-size:9px;flex:none}
 .src{margin:0 0 8px;font-size:11px;color:var(--muted)}
 .src a{color:var(--muted)}
 .foot{display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin:0;font-size:12px}
 .foot a,.foot .linkbtn{color:var(--muted);background:none;border:0;padding:0;text-decoration:none;min-height:36px;display:inline-flex;align-items:center}
-.foot .linkbtn{color:var(--brand);font-weight:700;gap:6px}
+.foot .linkbtn{color:var(--brand);font-weight:800;gap:6px}
 .foot .linkbtn svg{width:15px;height:15px}
 
 /* 地図のポップアップ */
-.maplibregl-popup-content{font:13px/1.6 var(--font);color:var(--ink);padding:14px 16px;border-radius:14px;box-shadow:var(--shadow)}
-.maplibregl-popup-close-button{width:34px;height:34px;font-size:20px;color:var(--muted);border-radius:0 14px 0 10px}
-.pop h3{font-size:14px;margin:0 28px 8px 0;display:flex;align-items:center;gap:8px}
+.maplibregl-popup-content{font:13px/1.6 var(--font);font-weight:500;color:var(--ink);padding:14px 16px;border-radius:16px;box-shadow:var(--shadow)}
+.maplibregl-popup-close-button{width:34px;height:34px;font-size:20px;color:var(--muted);border-radius:0 16px 0 10px}
+.pop h3{font-size:14px;font-weight:800;margin:0 28px 8px 0;display:flex;align-items:center;gap:8px}
 .pop h3 i{width:9px;height:9px;border-radius:50%;flex:none}
 .pop dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
 .pop dt{color:var(--muted)}
 .pop dd{margin:0}
-.pop .bad{color:#dc2626;font-weight:700}
-.pop .warn{color:#b45309;font-weight:700}
+.pop .bad{color:#dc2626;font-weight:800}
+.pop .warn{color:#b45309;font-weight:800}
 .pop small{display:block;margin-top:8px;color:var(--muted);font-size:11px}
 .pop small a{color:var(--muted)}
-.pop .rep{display:block;width:100%;margin-top:10px;min-height:40px;border:0;border-radius:10px;background:var(--brand-soft);font-size:13px;font-weight:700;color:var(--brand)}
+.pop .rep{display:block;width:100%;margin-top:10px;min-height:40px;border:0;border-radius:20px;background:var(--brand-soft);font-size:13px;font-weight:800;color:var(--brand)}
+.pop .goto{display:block;width:100%;margin-top:8px;min-height:40px;border:0;border-radius:20px;background:var(--brand);font-size:13px;font-weight:800;color:#fff}
 
 /* ---- ダイアログ ---- */
-.panel{position:fixed;inset:0;z-index:30;background:rgba(11,18,32,.4);display:flex;align-items:flex-end;justify-content:center}
-.panel-card{background:var(--card);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))}
-@media (min-width:600px){ .panel{align-items:center} .panel-card{border-radius:22px} }
-.panel-card h2{font-size:20px;margin:0 0 4px;letter-spacing:0}
+.panel{position:fixed;inset:0;z-index:30;background:rgba(20,36,28,.4);display:flex;align-items:flex-end;justify-content:center}
+.panel-card{background:var(--card);width:100%;max-width:480px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom,0px))}
+@media (min-width:600px){ .panel{align-items:center} .panel-card{border-radius:24px} }
+.panel-card h2{font-size:20px;font-weight:800;margin:0 0 4px}
 .panel-card p{font-size:13px;color:var(--muted);margin:4px 0 16px}
 .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px;padding:0;border:0}
-.presets label{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:62px;border-radius:14px;background:var(--soft);padding:10px 12px;font-size:14px;font-weight:700;line-height:1.35;cursor:pointer;box-shadow:inset 0 0 0 1.5px transparent}
-.presets label small{font-size:11px;font-weight:400;color:var(--muted);margin-top:3px}
+.presets label{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:62px;border-radius:16px;background:var(--soft);padding:10px 12px;font-size:14px;font-weight:800;line-height:1.35;cursor:pointer;box-shadow:inset 0 0 0 2px transparent}
+.presets label small{font-size:11px;font-weight:500;color:var(--muted);margin-top:3px}
 .presets input{position:absolute;opacity:0;pointer-events:none}
-.presets label:has(input:checked){background:var(--brand-soft);box-shadow:inset 0 0 0 1.5px var(--brand);color:var(--brand)}
+.presets label:has(input:checked){background:var(--brand-soft);box-shadow:inset 0 0 0 2px var(--brand);color:var(--brand-dk)}
 .presets label:has(input:focus-visible),.kinds label:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
-details.adv{margin:0 0 16px;border-radius:14px;background:var(--soft);padding:0 14px}
-details.adv summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:700;font-size:14px;list-style:none}
+details.adv{margin:0 0 16px;border-radius:16px;background:var(--soft);padding:0 14px}
+details.adv summary{min-height:46px;display:flex;align-items:center;cursor:pointer;font-weight:800;font-size:14px;list-style:none}
 details.adv summary::-webkit-details-marker{display:none}
 .fields{display:grid;gap:12px;margin:0 0 14px}
-.fields label{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--ink2)}
-.fields select{min-height:44px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:#fff;font-weight:500;color:var(--ink)}
+.fields label{display:grid;gap:4px;font-size:13px;font-weight:700;color:var(--ink2)}
+.fields select{min-height:44px;border:1px solid var(--line);border-radius:12px;padding:0 10px;background:#fff;font-weight:500;color:var(--ink)}
 .fields .chk{display:flex;align-items:center;gap:10px;min-height:40px;font-weight:500}
 .fields .chk input{width:20px;height:20px;accent-color:var(--brand)}
-.fields textarea{min-height:96px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft);resize:vertical;font-weight:400;color:var(--ink)}
+.fields textarea{min-height:96px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--soft);resize:vertical;font-weight:500;color:var(--ink)}
 .kinds{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;padding:0;border:0}
-.kinds label{display:flex;align-items:center;height:38px;border-radius:19px;background:var(--soft);padding:0 14px;font-size:13px;font-weight:600;cursor:pointer}
+.kinds label{display:flex;align-items:center;height:38px;border-radius:19px;background:var(--soft);padding:0 14px;font-size:13px;font-weight:700;cursor:pointer}
 .kinds input{position:absolute;opacity:0;pointer-events:none}
-.kinds label:has(input:checked){background:var(--ink);color:#fff}
+.kinds label:has(input:checked){background:var(--brand);color:#fff}
 .row{display:flex;gap:8px}
-.btn{flex:1;min-height:50px;border:0;border-radius:14px;padding:0 16px;background:var(--ink);color:#fff;font-weight:700;font-size:15px}
+.btn{flex:1;min-height:50px;border:0;border-radius:25px;padding:0 16px;background:var(--brand);color:#fff;font-weight:800;font-size:15px}
 .btn.ghost{flex:0 0 auto;background:var(--soft);color:var(--ink)}
 
-.me{width:18px;height:18px;border-radius:50%;background:var(--brand);border:3px solid #fff;box-shadow:0 0 0 8px rgba(59,91,253,.18),0 1px 4px rgba(0,0,0,.3)}
-.pin{width:34px;height:44px;filter:drop-shadow(0 3px 4px rgba(11,18,32,.3))}
+.me{width:18px;height:18px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 10px rgba(47,128,237,.18),0 1px 4px rgba(0,0,0,.3)}
+.pin{width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(20,36,28,.3))}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
@@ -203,36 +224,39 @@ details.adv summary::-webkit-details-marker{display:none}
 <div id="map" role="region" aria-label="地図"></div>
 
 <section class="top" aria-label="場所を探す">
+  <p class="brand"><img src="icons/icon.svg" alt=""><span>サポートマップ</span><span class="beta">BETA</span></p>
   <form class="search" id="searchForm" role="search">
-    <svg class="si" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    <span class="spark" aria-hidden="true">✨</span>
     <label for="q" class="sr">行きたい場所</label>
-    <input id="q" type="search" placeholder="行き先を検索" autocomplete="off" enterkeyhint="search">
-    <img class="logo" src="icons/icon.svg" alt="アクセシビリティ・サポートマップ">
+    <input id="q" type="search" placeholder="段差の少ないお店・トイレを探す" autocomplete="off" enterkeyhint="search">
+    <button class="go" type="submit" aria-label="探す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
   </form>
   <div class="chips" role="toolbar" aria-label="条件とジャンル">
-    <button class="chip me-chip" id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span id="profText">条件を設定</span></button>
-    <button class="chip" type="button" data-q="トイレ"><span class="e" aria-hidden="true">🚻</span>トイレ</button>
-    <button class="chip" type="button" data-q="カフェ"><span class="e" aria-hidden="true">☕</span>カフェ</button>
-    <button class="chip" type="button" data-q="居酒屋"><span class="e" aria-hidden="true">🍺</span>居酒屋</button>
-    <button class="chip" type="button" data-q="ラーメン"><span class="e" aria-hidden="true">🍜</span>ラーメン</button>
-    <button class="chip" type="button" data-q="コンビニ"><span class="e" aria-hidden="true">🏪</span>コンビニ</button>
-    <button class="chip" type="button" data-q="病院"><span class="e" aria-hidden="true">🏥</span>病院</button>
+    <button class="chip" id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg><span id="profText">条件を設定</span></button>
+    <button class="chip" type="button" data-q="車椅子OK"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#2f80ed" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg>車椅子OK</button>
+    <button class="chip" type="button" data-q="トイレ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#ec4f8c" aria-hidden="true"><circle cx="7" cy="4.5" r="1.8"/><circle cx="17" cy="4.5" r="1.8"/><path d="M7 8v13M4.5 8h5v6h-5zM17 8l-3 8h6zM16 16v5M18 16v5"/></svg>トイレ</button>
+    <button class="chip" type="button" data-q="エレベーター"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#7c5cf0" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M12 3v18"/><path d="M8 9.5l-1.5 2h3zM16 11.5l-1.5-2h3z" fill="currentColor"/></svg>エレベーター</button>
+    <button class="chip" type="button" data-q="カフェ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f39c12" aria-hidden="true"><path d="M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3.5v2.5M11.5 3.5v2.5"/></svg>カフェ</button>
+    <button class="chip" type="button" data-q="飲食店"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f39c12" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 3c-2 1.5-3 4-3 7h3v11"/></svg>飲食店</button>
+    <button class="chip" type="button" data-q="居酒屋"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f39c12" aria-hidden="true"><path d="M6 7h9v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M15 10h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2"/><path d="M6 7a2.5 2.5 0 0 1 3-2.5A3 3 0 0 1 14 5a2 2 0 0 1 1 2"/></svg>居酒屋</button>
+    <button class="chip" type="button" data-q="コンビニ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#17a058" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9z"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-5h4v5"/></svg>コンビニ</button>
+    <button class="chip" type="button" data-q="病院"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#13a3a8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>病院</button>
   </div>
   <div class="drop"><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
 </section>
 
 <div class="fabs">
-  <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示" title="現在地">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg></button>
-  <button class="fab" id="btnHome" type="button" aria-label="赤羽駅周辺を表示" title="赤羽駅">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4M5 11h14"/><circle cx="9" cy="14" r=".8" fill="currentColor"/><circle cx="15" cy="14" r=".8" fill="currentColor"/></svg></button>
+  <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>現在地</button>
+  <button class="fab" id="btnHome" type="button" aria-label="赤羽駅周辺を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4M5 11h14"/></svg>赤羽駅</button>
+  <button class="fab" id="btnLegend" type="button" aria-label="地図の見かたを表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>凡例</button>
 </div>
 
 <section class="sheet" id="sheet" aria-labelledby="sheetTitle">
   <button class="grab" id="grab" type="button" aria-expanded="true" aria-controls="sheet"><span class="sr">詳しい情報を開く・閉じる</span></button>
-  <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2><span class="trial">BETA</span></div>
+  <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2></div>
+  <p class="meta" id="sheetMeta"></p>
   <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
-  <div id="result" aria-live="polite"></div>
+  <div id="result" aria-live="polite" hidden></div>
   <details class="more">
     <summary>地図の見かた・出典</summary>
     <ul class="legend" id="legend" aria-label="凡例" hidden>
@@ -240,9 +264,9 @@ details.adv summary::-webkit-details-marker{display:none}
       <li><i style="background:#f59e0b"></i>通れるが注意</li>
       <li><i style="background:#ef4444"></i>条件に合わない</li>
       <li><i class="dash"></i>未調査</li>
-      <li><b style="background:#3b5bfd">WC</b>トイレ</li>
-      <li><b style="background:#8b5cf6">EV</b>エレベーター</li>
-      <li><b style="background:#334155">入</b>入口</li>
+      <li><b style="background:#ec4f8c">WC</b>トイレ</li>
+      <li><b style="background:#7c5cf0">EV</b>エレベーター</li><li><b style="background:#2f80ed">♿</b>車椅子OKのお店</li>
+      <li><b style="background:#64748b">入</b>入口</li>
     </ul>
     <p class="src" id="src"></p>
   </details>
@@ -323,11 +347,11 @@ var map = new maplibregl.Map({
       gsi:{type:"vector",url:"pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles",
         attribution:'<a href="https://github.com/gsi-cyberjapan/optimal_bvmap" target="_blank" rel="noopener">国土地理院ベクトルタイル</a>'}},
     layers:[
-      {id:"bg",type:"background",paint:{"background-color":"#f2f4f7"}},
-      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#cfe2f6"}},
-      {id:"bldg",type:"fill",source:"gsi","source-layer":"BldA",minzoom:14,paint:{"fill-color":"#e4e8ee","fill-outline-color":"#d3d9e2"}},
+      {id:"bg",type:"background",paint:{"background-color":"#eef3ee"}},
+      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#bfdcf2"}},
+      {id:"bldg",type:"fill",source:"gsi","source-layer":"BldA",minzoom:14,paint:{"fill-color":"#e3e8e2","fill-outline-color":"#d2d9d1"}},
       {id:"road-case",type:"line",source:"gsi","source-layer":"RdCL",minzoom:12,layout:{"line-cap":"round","line-join":"round"},
-        paint:{"line-color":"#dde2ea","line-width":["interpolate",["linear"],["zoom"],12,1.5,16,8,18,20]}},
+        paint:{"line-color":"#d9e0d8","line-width":["interpolate",["linear"],["zoom"],12,1.5,16,8,18,20]}},
       {id:"road",type:"line",source:"gsi","source-layer":"RdCL",layout:{"line-cap":"round","line-join":"round"},
         paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],10,0.6,16,6,18,17]}},
       {id:"rail",type:"line",source:"gsi","source-layer":"RailCL",paint:{"line-color":"#9aa4b2","line-width":["interpolate",["linear"],["zoom"],10,1,16,3]}},
@@ -390,7 +414,7 @@ function code(t,v){ return CODE[t][v]?esc(CODE[t][v]):(v===99?"不明":null); }
 function linkHtml(L){
   var e=evalLink(L), lv=linkLevel(L);
   var head={bad:"あなたの条件に合わない区間",warn:"通れるが注意が必要な区間",ok:"あなたの条件で通れる区間",unknown:"一部が未調査の区間"}[lv];
-  var h='<div class="pop"><h3><i style="background:'+({bad:"#ef4444",warn:"#f59e0b",ok:"#16a34a",unknown:"#94a3b8"}[lv])+'"></i>'+esc(head)+'</h3><dl>';
+  var h='<div class="pop"><h3><i style="background:'+({bad:"#ef4444",warn:"#f59e0b",ok:"#17a058",unknown:"#9aa5a0"}[lv])+'"></i>'+esc(head)+'</h3><dl>';
   h+=row("種類",esc(CODE.rt[L.rt]||CODE.st[L.st]||"通路"));
   if(e.fail.length) h+=row("理由",'<span class="bad">'+esc(e.fail.join("、"))+'</span>');
   if(e.warn.length) h+=row("注意",'<span class="warn">'+esc(e.warn.join("、"))+'</span>');
@@ -418,32 +442,49 @@ function poiHtml(p){
   if(t.opening_hours) h+=row("利用時間",esc(t.opening_hours));
   if(t["wheelchair:description"]) h+=row("メモ",esc(t["wheelchair:description"]));
   var id=p.osm, url="https://www.openstreetmap.org/"+({n:"node",w:"way",r:"relation"}[id[0]])+"/"+id.slice(1);
-  return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small><button type="button" class="rep" data-rep="osm:'+esc(id)+'" data-ll="'+p.ll[1]+','+p.ll[0]+'" data-name="'+esc(t.name||kind)+'">ここが違う・報告する</button></div>';
+  return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small><button type="button" class="goto" data-goto="'+p.ll[1]+','+p.ll[0]+'" data-name="'+esc(t.name||kind)+'" data-genre="'+esc(kind)+'">ここへ行く</button><button type="button" class="rep" data-rep="osm:'+esc(id)+'" data-ll="'+p.ll[1]+','+p.ll[0]+'" data-name="'+esc(t.name||kind)+'">ここが違う・報告する</button></div>';
 }
-var LEVEL_COLOR=["match",["get","lv"],"bad","#ef4444","warn","#f59e0b","ok","#16a34a","#94a3b8"];
+var LEVEL_COLOR=["match",["get","lv"],"bad","#ef4444","warn","#f59e0b","ok","#17a058","#9aa5a0"];
 var area=null, pop=null, adj=null, routeTo=null, lastFocus=null;
 function showPop(ll,html){ if(pop) pop.remove(); pop=new maplibregl.Popup({offset:10,maxWidth:"300px"}).setLngLat(ll).setHTML(html).addTo(map); }
 function linkFeatures(){ return area.links.map(function(L,i){ return {type:"Feature",properties:{i:i,lv:linkLevel(L)},geometry:{type:"LineString",coordinates:L.c}}; }); }
+function tile(color,ic,label,val){ return '<div class="tile t-'+color+'"><span class="ti">'+svg(ic)+'</span><div><small>'+label+'</small><b>'+val+'</b></div></div>'; }
 function overview(){
   var n={bad:0,warn:0,ok:0,unknown:0}; area.links.forEach(function(L){ n[linkLevel(L)]++; });
-  var wcs=area.pois.filter(function(p){ return p.k==="toilet"; }).length;
   var all=area.links.length||1, pc=function(k){ return Math.round(n[k]/all*100); };
-  var evs=area.pois.filter(function(p){ return p.k==="elevator"; }).length;
+  var wcs=area.pois.filter(function(p){ return p.k==="toilet"; }).length, evs=area.pois.filter(function(p){ return p.k==="elevator"; }).length;
+  var oks=(area.places||[]).filter(function(x){ return x[4]==="yes"||x[4]==="designated"; }).length;
   function seg(k,c){ return n[k]?'<i style="flex:'+n[k]+';background:'+c+'"></i>':''; }
   function key(c,t,v){ return '<li><i style="background:'+c+'"></i>'+t+' <b class="num">'+v+'%</b></li>'; }
-  function tile(ic,c,v,t){ return '<div class="tile"><span class="ti" style="color:'+c+'">'+ICON[ic]+'</span><div><b class="num">'+v+'</b>'+t+'</div></div>'; }
-  $("sheetTitle").textContent=area.name; dim(false);
-  $("sheetText").innerHTML='<p class="lead">あなたの条件で見た、このエリアの歩道</p>'+
-    '<div class="bar" aria-hidden="true">'+seg("ok","#16a34a")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#cbd5e1")+'</div>'+
-    '<ul class="keys">'+key("#16a34a","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#cbd5e1","未調査",pc("unknown"))+'</ul>'+
-    '<div class="tiles">'+tile("wc","#3b5bfd",wcs,"トイレ")+tile("ev","#8b5cf6",evs,"エレベーター")+'</div>';
-  $("result").innerHTML="";
+  $("sheetTitle").textContent=area.name; $("sheetMeta").textContent="あなたの条件で見た、このエリアの歩道"; dim(false);
+  $("sheetText").innerHTML='<div class="bar" aria-hidden="true">'+seg("ok","#17a058")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#d5dcd8")+'</div>'+
+    '<ul class="keys">'+key("#17a058","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#d5dcd8","未調査",pc("unknown"))+'</ul>'+
+    '<div class="tiles">'+tile("pink","wc","トイレ",wcs+"か所")+tile("violet","ev","エレベーター",evs+"か所")+tile("blue","wheel","車椅子OK",oks+"店")+'</div>';
+  $("result").innerHTML=""; $("result").hidden=true;
+}
+// 色付きのしずく形ピンを描いて地図に登録する
+function addPins(){
+  [["pin-wc","#ec4f8c","wc"],["pin-ev","#7c5cf0","ev"],["pin-in","#64748b","step"],["pin-wheel","#2f80ed","wheel"]].forEach(function(x){
+    var r=2, w=34*r, h=44*r, c=document.createElement("canvas"); c.width=w; c.height=h; var g=c.getContext("2d");
+    g.shadowColor="rgba(0,0,0,.25)"; g.shadowBlur=4*r; g.shadowOffsetY=1*r;
+    g.beginPath(); g.moveTo(17*r,42*r); g.bezierCurveTo(17*r,42*r,3*r,28*r,3*r,17*r); g.arc(17*r,17*r,14*r,Math.PI,0); g.bezierCurveTo(31*r,28*r,17*r,42*r,17*r,42*r); g.closePath();
+    g.fillStyle=x[1]; g.fill(); g.shadowColor="transparent"; g.lineWidth=2.5*r; g.strokeStyle="#fff"; g.stroke();
+    g.save(); g.translate(7*r,7*r); g.scale(20*r/24,20*r/24); g.strokeStyle="#fff"; g.fillStyle="#fff"; g.lineWidth=2.2; g.lineCap="round"; g.lineJoin="round";
+    var d=document.createElement("div"); d.innerHTML=SV+IP[x[2]]+"</svg>";
+    d.firstChild.querySelectorAll("path,circle,rect").forEach(function(el){
+      var p; if(el.tagName==="path") p=new Path2D(el.getAttribute("d"));
+      else if(el.tagName==="circle"){ p=new Path2D(); p.arc(+el.getAttribute("cx"),+el.getAttribute("cy"),+el.getAttribute("r"),0,Math.PI*2); }
+      else { p=new Path2D(); var x0=+el.getAttribute("x"),y0=+el.getAttribute("y"),ww=+el.getAttribute("width"),hh=+el.getAttribute("height"),rr=+el.getAttribute("rx")||0; p.roundRect?p.roundRect(x0,y0,ww,hh,rr):p.rect(x0,y0,ww,hh); }
+      if(el.getAttribute("fill")==="currentColor") g.fill(p); else g.stroke(p); });
+    g.restore();
+    if(!map.hasImage(x[0])) map.addImage(x[0],g.getImageData(0,0,w,h),{pixelRatio:r});
+  });
 }
 function loadArea(){
   fetch("data/akabane.json").then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(A){
     area=A;
     adj={}; A.links.forEach(function(L,i){ (adj[L.a]=adj[L.a]||[]).push([i,L.b]); (adj[L.b]=adj[L.b]||[]).push([i,L.a]); });
-    var pf=A.pois.map(function(p,i){ return {type:"Feature",properties:{i:i,k:p.k},geometry:{type:"Point",coordinates:p.ll}}; });
+    var pf=A.pois.map(function(p,i){ return {type:"Feature",properties:{i:i,k:p.k,wc:p.t.wheelchair||""},geometry:{type:"Point",coordinates:p.ll}}; });
     map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:linkFeatures()},attribution:"歩行空間データ：国土交通省"});
     map.addSource("route",{type:"geojson",data:EMPTY});
     map.addSource("pois",{type:"geojson",data:{type:"FeatureCollection",features:pf},attribution:"施設 &copy; OpenStreetMap contributors"});
@@ -461,17 +502,18 @@ function loadArea(){
       paint:{"line-color":LEVEL_COLOR,"line-width":["interpolate",["linear"],["zoom"],14,5,18,13]}});
     map.addLayer({id:"route-unknown",type:"line",source:"route",filter:["==",["get","lv"],"unknown"],
       paint:{"line-color":"#94a3b8","line-width":["interpolate",["linear"],["zoom"],14,5,18,13],"line-dasharray":[1,0.8]}});
-    map.addLayer({id:"pois",type:"circle",source:"pois",filter:["!=",["get","k"],"place"],
-      paint:{"circle-radius":["interpolate",["linear"],["zoom"],14,5,18,12],
-        "circle-color":["match",["get","k"],"toilet","#3b5bfd","elevator","#8b5cf6","#334155"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
-    map.addLayer({id:"pois-label",type:"symbol",source:"pois",minzoom:16,filter:["!=",["get","k"],"place"],
-      layout:{"text-field":["match",["get","k"],"toilet","WC","elevator","EV","入"],"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],16,9,18,11],"text-allow-overlap":true},
-      paint:{"text-color":"#ffffff"}});
+    addPins();
+    // 車椅子OKのお店は重なったら間引き、トイレ・エレベーター・入口は必ず出す
+    map.addLayer({id:"pois-shop",type:"symbol",source:"pois",minzoom:15,filter:["all",["==",["get","k"],"place"],["in",["get","wc"],["literal",["yes","designated","limited"]]]],
+      layout:{"icon-image":"pin-wheel","icon-anchor":"bottom","icon-size":["interpolate",["linear"],["zoom"],15,0.6,18,0.95],"icon-padding":4}});
+    map.addLayer({id:"pois",type:"symbol",source:"pois",minzoom:14.5,filter:["!=",["get","k"],"place"],
+      layout:{"icon-image":["match",["get","k"],"toilet","pin-wc","elevator","pin-ev","pin-in"],"icon-anchor":"bottom",
+        "icon-size":["interpolate",["linear"],["zoom"],15,0.7,18,1],"icon-allow-overlap":true}});
     ["links","links-unknown","route","route-unknown"].forEach(function(id){
       map.on("click",id,function(e){ showPop(e.lngLat,linkHtml(A.links[e.features[0].properties.i])); });
       map.on("mouseenter",id,function(){ map.getCanvas().style.cursor="pointer"; }); map.on("mouseleave",id,function(){ map.getCanvas().style.cursor=""; });
     });
-    map.on("click","pois",function(e){ var p=A.pois[e.features[0].properties.i]; showPop(p.ll,poiHtml(p)); });
+    ["pois","pois-shop"].forEach(function(id){ map.on("click",id,function(e){ var p=A.pois[e.features[0].properties.i]; showPop(p.ll,poiHtml(p)); }); });
     $("legend").hidden=false;
     var s=A.sources[0];
     $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+'・施設は OpenStreetMap';
@@ -518,7 +560,9 @@ function dijkstra(from,to,allowFail){
 }
 var STATUS={5:["◎","確認済み","必要な情報がそろっていて、直近の調査で条件に合っています"],4:["○","条件内","調査済みの情報では、あなたの条件で通れます"],
   3:["△","要確認","未調査の区間があります。現地や施設への確認をおすすめします"],2:["×","条件不一致","あなたの条件に合わない箇所を避けられませんでした"],1:["？","判定不能","判断に必要な情報が足りません"]};
-function vcard(n,text){ var t=STATUS[n]; return '<div class="verdict"><span class="pill s'+n+'"><span class="mk" aria-hidden="true">'+t[0]+'</span>'+t[1]+'</span></div><p class="vdesc">'+esc(text||t[2])+'</p>'; }
+function vcard(n,text){ var t=STATUS[n]; return '<div class="verdict v'+n+'"><span class="mk" aria-hidden="true">'+t[0]+'</span><div><b>'+t[1]+'</b><span>'+esc(text||t[2])+'</span></div></div>'; }
+var SV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">', IP={"wheel": "<circle cx=\"11\" cy=\"4\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M11 7.5v6h5.5l2.5 5.5\"/><path d=\"M11 10.5h4.5\"/><path d=\"M8 11a5.5 5.5 0 1 0 7.8 6.8\"/>", "wc": "<circle cx=\"7\" cy=\"4.5\" r=\"1.8\"/><circle cx=\"17\" cy=\"4.5\" r=\"1.8\"/><path d=\"M7 8v13M4.5 8h5v6h-5zM17 8l-3 8h6zM16 16v5M18 16v5\"/>", "ev": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3\"/><path d=\"M12 3v18\"/><path d=\"M8 9.5l-1.5 2h3zM16 11.5l-1.5-2h3z\" fill=\"currentColor\"/>", "cafe": "<path d=\"M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z\"/><path d=\"M16 10h1.5a2.5 2.5 0 0 1 0 5H16\"/><path d=\"M8 3.5v2.5M11.5 3.5v2.5\"/>", "food": "<path d=\"M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10\"/><path d=\"M17 3c-2 1.5-3 4-3 7h3v11\"/>", "beer": "<path d=\"M6 7h9v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z\"/><path d=\"M15 10h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2\"/><path d=\"M6 7a2.5 2.5 0 0 1 3-2.5A3 3 0 0 1 14 5a2 2 0 0 1 1 2\"/>", "store": "<path d=\"M4 9l1.5-5h13L20 9z\"/><path d=\"M5.5 9v11h13V9\"/><path d=\"M10 20v-5h4v5\"/>", "hosp": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4\"/><path d=\"M12 8v8M8 12h8\"/>", "step": "<path d=\"M3 19h5v-5h5V9h5V4h3\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4.5l3 2\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M8.5 12.2l2.4 2.4 4.6-4.8\"/>", "nav": "<path d=\"M4 11l16-7-7 16-2-7z\"/>", "layers": "<path d=\"M12 3l9 5-9 5-9-5z\"/><path d=\"M3 13l9 5 9-5\"/>", "loc": "<circle cx=\"12\" cy=\"12\" r=\"3.5\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/><path d=\"M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3\"/>", "train": "<rect x=\"5\" y=\"3\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M8 21l2-4M16 21l-2-4M5 11h14\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>", "info": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 11v5M12 8h.01\"/>"};
+function svg(n){ return SV+IP[n]+"</svg>"; }
 var ICON={
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
   start:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8"/></svg>',
@@ -539,8 +583,9 @@ function destInfo(ll){
 function judge(c){
   routeTo=c; if(!area) return;
   var inArea=c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
-  var out=$("result"); $("sheetTitle").textContent=c.name;
-  if(!inArea){ map.getSource("route").setData(EMPTY);
+  var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML="";
+  var dist=km(me||AKABANE,c.ll); $("sheetMeta").innerHTML=(c.addr?esc(c.addr)+"・":"")+(dist<1?Math.round(dist*1000)+"m":dist.toFixed(1)+"km");
+  if(!inArea){ map.getSource("route").setData(EMPTY); $("sheetMeta").textContent=c.addr||"";
     $("sheetText").innerHTML=vcard(1,"段差・道幅・坂の情報は、いまは赤羽駅周辺だけです"); out.innerHTML=""; dim(false); return; }
   var useMe=me&&me[0]>=area.bbox[0]&&me[0]<=area.bbox[2]&&me[1]>=area.bbox[1]&&me[1]<=area.bbox[3];
   var o=useMe?me:AKABANE, oName=useMe?"現在地":"赤羽駅（現在地が範囲外のため）";
@@ -561,9 +606,21 @@ function judge(c){
   var b=new maplibregl.LngLatBounds(); feats.forEach(function(f){ f.geometry.coordinates.forEach(function(x){ b.extend(x); }); }); b.extend([c.ll[1],c.ll[0]]);
   var mins=Math.max(1,Math.round(len/1000/P().kmh*60));
   var lenTxt=fmtLen(len), lenNum=lenTxt.replace(/[a-z]+$/,""), lenUnit=lenTxt.slice(lenNum.length);
-  var cov=Math.round((1-unkRatio)*100);
-  $("sheetText").innerHTML=vcard(status)+'<div class="kpi"><span class="big num">'+mins+'<small>分</small></span><span class="sub num">'+lenNum+lenUnit+'</span></div>'+
-    '<div class="cov"><span>調査済み</span><div class="bar"><i style="flex:'+cov+';background:#16a34a"></i><i style="flex:'+(100-cov)+';background:#cbd5e1"></i></div><b class="num">'+cov+'%</b></div>';
+  var cov=Math.round((1-unkRatio)*100), nBad=issues.filter(function(x){ return x[0]==="bad"; }).length, nWarn=issues.length-nBad;
+  var ev=null, evd=1e9; area.pois.forEach(function(p){ if(p.k!=="elevator") return; var e=km(c.ll,[p.ll[1],p.ll[0]])*1000; if(e<evd){ evd=e; ev=p; } });
+  var dw=d.place&&d.place.t.wheelchair;
+  function mk(cls,sym,t){ return '<span class="mk-'+cls+'">'+sym+'</span> '+t; }
+  var tiles=tile("blue","wheel","車椅子",dw==="yes"||dw==="designated"?mk("ok","◎","入れる"):dw==="limited"?mk("mid","△","一部"):dw==="no"?mk("ng","×","難しい"):mk("unk","？","未確認"))+
+    tile("pink","wc","トイレ",d.wc&&d.wcm<500?mk("ok","◎",fmtLen(d.wcm)):d.wc?mk("mid","△",fmtLen(d.wcm)):mk("unk","？","不明"))+
+    tile("orange","step","段差・坂",nBad?mk("ng","×",nBad+"か所"):nWarn?mk("mid","△","注意"+nWarn):mk("ok","◎","問題なし"))+
+    tile("violet","ev","エレベーター",ev&&evd<300?mk("ok","◎",fmtLen(evd)):mk("unk","－","なし"))+
+    tile("green","check","調査済み",(cov===100?mk("ok","◎",""):cov>=50?mk("mid","△",""):mk("ng","×",""))+cov+"%")+
+    tile("teal","clock","所要時間","約"+mins+"分");
+  $("sheetMeta").innerHTML=(c.addr?esc(c.addr)+"・":"")+lenNum+lenUnit+"・約"+mins+"分（"+esc(oName.replace(/（.*/,""))+"から）";
+  $("sheetText").innerHTML=vcard(status)+'<div class="tiles">'+tiles+'</div>'+
+    '<div class="acts"><button type="button" class="ol" id="btnMore">詳しく見る</button><button type="button" class="fill" id="btnGo">'+svg("nav")+'ここへ行く</button></div>';
+  $("btnMore").onclick=function(){ var o=$("result"); o.hidden=!o.hidden; this.textContent=o.hidden?"詳しく見る":"閉じる"; if(!o.hidden) o.scrollIntoView({block:"nearest",behavior:"smooth"}); };
+  $("btnGo").onclick=function(){ $("sheet").classList.add("min"); $("grab").setAttribute("aria-expanded","false"); setTimeout(function(){ fitRoute(b); },50); };
   var h='<ul class="facts">';
   h+=fact("start","出発："+esc(oName));
   h+=fact("dest","目的地の車椅子対応："+(d.place?esc(WC[d.place.t.wheelchair]||d.place.t.wheelchair):"未確認"),d.place?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
@@ -585,7 +642,7 @@ function judge(c){
     if(run&&run.name===name&&run.note===note) run.d+=L.d; else { flush(); run={name:name,d:L.d,note:note}; } });
   flush(); h+='</ol></details>';
   h+='<p class="note">判定は国と OpenStreetMap の調査時点の情報によるもので、工事や故障などで現地と違う場合があります。最終的な判断はご自身で行ってください。</p>';
-  out.innerHTML=h;
+  out.innerHTML='<div id="detail">'+h+'</div>';
   fitRoute(b);
   out.querySelectorAll("[data-k]").forEach(function(btn){ btn.onclick=function(){ var L=issues[+btn.dataset.k][3], m=L.c[Math.floor(L.c.length/2)]; map.flyTo({center:m,zoom:18}); showPop(m,linkHtml(L)); }; });
   var ub=out.querySelector("[data-unk]"); if(ub) ub.onclick=function(){ var i=path.filter(function(i){ return evalLink(area.links[i]).unk.length; })[0], L=area.links[i]; map.flyTo({center:L.c[0],zoom:18}); showPop(L.c[0],linkHtml(L)); };
@@ -599,6 +656,8 @@ function openRep(t){
   $("repForm").reset(); $("repPanel").hidden=false; $("repForm").querySelector("input").focus();
 }
 function closeRep(){ $("repPanel").hidden=true; if(lastFocus) lastFocus.focus(); }
+document.addEventListener("click",function(e){ var g=e.target.closest&&e.target.closest("[data-goto]");
+  if(g){ var gl=g.dataset.goto.split(",").map(Number); if(pop) pop.remove(); pick({name:g.dataset.name,addr:g.dataset.genre,ll:gl}); } });
 document.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-rep]"); if(!b) return;
   var ll=b.dataset.ll.split(",").map(Number); openRep({id:b.dataset.rep,name:b.dataset.name,ll:ll}); });
 $("repGeneral").onclick=function(){ var c=map.getCenter(); openRep({id:"",name:"",ll:[+c.lat.toFixed(6),+c.lng.toFixed(6)]}); };
@@ -704,6 +763,10 @@ function local(q){
   var out=area.places.filter(function(pl){ return tests.every(function(t){ return t(pl); }); }).map(function(pl){
     return {name:pl[0], addr:genreOf(pl[1])||"赤羽周辺", ll:[pl[3],pl[2]], local:true}; });
   // 名前のないトイレも候補に入れる（車椅子で使えるかを添える）
+  if(words.length===1&&/車椅子|車いす|バリアフリー/.test(words[0])) return area.places.filter(function(pl){ return pl[4]==="yes"||pl[4]==="designated"||pl[4]==="limited"; }).map(function(pl){
+    return {name:pl[0], addr:(genreOf(pl[1])||"施設")+"・"+(pl[4]==="limited"?"車椅子一部OK":"車椅子OK"), ll:[pl[3],pl[2]], local:true}; });
+  if(words.length===1&&/エレベーター|EV/i.test(words[0])) return area.pois.filter(function(p){ return p.k==="elevator"; }).map(function(p){
+    return {name:p.t.name||"エレベーター", addr:"エレベーター"+(p.t.level?"・"+p.t.level+"階":""), ll:[p.ll[1],p.ll[0]], local:true}; });
   if(words.length===1&&/トイレ|お手洗い/.test(words[0])) area.pois.forEach(function(p){ if(p.k!=="toilet") return;
     out.push({name:p.t.name||"トイレ", addr:"トイレ・"+(p.t.wheelchair?(WC[p.t.wheelchair]||p.t.wheelchair):"車椅子対応は未確認"), ll:[p.ll[1],p.ll[0]], local:true}); });
   return out;
@@ -764,13 +827,15 @@ function search(q){
 function pick(c){
   $("sugg").hidden=true; say(""); $("sheet").classList.remove("min"); $("grab").setAttribute("aria-expanded","true");
   if(!destMarker){ var el=document.createElement("div"); el.className="pin";
-    el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#0b1220" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
+    el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
   destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
   map.flyTo({center:[c.ll[1],c.ll[0]],zoom:17});
   judge(c);
 }
-document.querySelectorAll(".chip[data-q]").forEach(function(b){ b.onclick=function(){ $("q").value=b.dataset.q; search(b.dataset.q); }; });
+document.querySelectorAll(".chip[data-q]").forEach(function(b){ b.onclick=function(){
+  document.querySelectorAll(".chip[data-q]").forEach(function(x){ x.classList.toggle("on",x===b); }); $("q").value=b.dataset.q; search(b.dataset.q); }; });
+$("btnLegend").onclick=function(){ var s=$("sheet"); s.classList.remove("min"); $("grab").setAttribute("aria-expanded","true"); var m=s.querySelector(".more"); m.open=true; m.scrollIntoView({block:"nearest",behavior:"smooth"}); };
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
 
 // ---- オフラインでも開けるように（PWA） ----
