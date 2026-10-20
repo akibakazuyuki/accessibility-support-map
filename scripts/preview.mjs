@@ -19,4 +19,6 @@ await p.keyboard.press("Escape"); await p.waitForTimeout(400);
 await p.click("#btnList"); await p.waitForTimeout(800);
 await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(5000);
 await p.screenshot({ path: "preview/3_card.png" });
+await p.click("#grab"); await p.waitForTimeout(1200);
+await p.screenshot({ path: "preview/5_full.png" });
 await b.close();

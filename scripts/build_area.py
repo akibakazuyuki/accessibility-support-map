@@ -118,7 +118,10 @@ out center tags;"""
 
 TAG_KEYS = ["name", "wheelchair", "toilets:wheelchair", "wheelchair:description", "door", "automatic_door",
             "width", "step_count", "ramp", "level", "opening_hours", "changing_table", "access", "fee",
-            "entrance", "amenity", "shop", "tourism", "healthcare", "operator", "description"]
+            "entrance", "amenity", "shop", "tourism", "healthcare", "operator", "description",
+            # 場所のシート用：障害者用駐車場・エレベーター・屋内・ベビーカー・住所
+            "capacity:disabled", "elevator", "indoor", "location", "stroller", "cuisine",
+            "addr:full", "addr:province", "addr:city", "addr:quarter", "addr:neighbourhood", "addr:block_number", "addr:housenumber"]
 
 
 def build_pois(osm):
