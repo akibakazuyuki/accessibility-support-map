@@ -1,4 +1,4 @@
-// スマホ幅（390×844）で、はじめの画面・飲食で絞り込み・お店カードを撮る
+// スマホ幅（390×844）で、はじめの画面・車いすで絞り込み・レイヤー・お店カードを撮る
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 mkdirSync("preview", { recursive: true });
@@ -10,8 +10,11 @@ p.on("pageerror", e => console.log("pageerror", String(e)));
 await p.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" });
 await p.waitForTimeout(6000);
 await p.screenshot({ path: "preview/1_start.png" });
-await p.click('.chip[data-f="food"]'); await p.waitForTimeout(2500);
+await p.click('.chip[data-f="wheel"]'); await p.waitForTimeout(2500);
 await p.screenshot({ path: "preview/2_food.png" });
+await p.click("#btnLayers"); await p.waitForTimeout(800);
+await p.screenshot({ path: "preview/4_layers.png" });
+await p.keyboard.press("Escape"); await p.waitForTimeout(400);
 await p.click("#btnList"); await p.waitForTimeout(800);
 await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(5000);
 await p.screenshot({ path: "preview/3_card.png" });
