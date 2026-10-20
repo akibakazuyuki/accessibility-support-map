@@ -99,6 +99,11 @@ def overpass(bbox):
   nwr["highway"="elevator"]({b});
   node["entrance"]({b});
   nwr["wheelchair"]({b});
+  nwr["name"]["amenity"]({b});
+  nwr["name"]["shop"]({b});
+  nwr["name"]["tourism"]({b});
+  nwr["name"]["leisure"]({b});
+  nwr["name"]["healthcare"]({b});
 );
 out center tags;"""
     data = urllib.parse.urlencode({"data": q}).encode()
@@ -132,11 +137,36 @@ def build_pois(osm):
             kind = "entrance"
         else:
             kind = "place"
-            if not t.get("name"):
+            if not t.get("name") or "wheelchair" not in t:
                 continue
         out.append({"k": kind, "osm": e["type"][0] + str(e["id"]), "ll": [r6(lon), r6(lat)],
                     "t": {k: t[k] for k in TAG_KEYS if k in t}})
     out.sort(key=lambda p: p["osm"])
+    return out
+
+
+CAT_KEYS = ["amenity", "shop", "tourism", "leisure", "healthcare", "cuisine"]
+
+
+def build_places(osm):
+    """検索用：名前のある施設を [名前, 種類, 経度, 緯度, 車椅子] で並べる"""
+    out, seen = [], set()
+    for e in osm.get("elements", []):
+        t = e.get("tags") or {}
+        name = t.get("name")
+        lat = e.get("lat", (e.get("center") or {}).get("lat"))
+        lon = e.get("lon", (e.get("center") or {}).get("lon"))
+        if not name or lat is None or lon is None:
+            continue
+        cat = "|".join(k + "=" + t[k] for k in CAT_KEYS if k in t)
+        if not cat:
+            continue
+        key = (name, round(lat, 4), round(lon, 4))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append([name, cat, r6(lon), r6(lat), t.get("wheelchair", "")])
+    out.sort(key=lambda p: (p[0], p[2]))
     return out
 
 
@@ -154,6 +184,7 @@ def main():
     if osm is None:
         osm = overpass(bbox)
     pois = build_pois(osm)
+    places = build_places(osm)
     out = {
         "area": AREA, "name": "赤羽駅周辺", "bbox": bbox,
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -163,11 +194,11 @@ def main():
             {"id": "osm", "name": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright",
              "license": "ODbL 1.0（© OpenStreetMap contributors）"},
         ],
-        "nodes": nodes, "links": links, "pois": pois,
+        "nodes": nodes, "links": links, "pois": pois, "places": places,
     }
     with open(f"data/{AREA}.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"links={len(links)} nodes={len(nodes)} pois={len(pois)} surveyed={dates[:1]}..{dates[-1:]}")
+    print(f"links={len(links)} nodes={len(nodes)} pois={len(pois)} places={len(places)} surveyed={dates[:1]}..{dates[-1:]}")
 
 
 if __name__ == "__main__":
