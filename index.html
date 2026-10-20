@@ -264,6 +264,8 @@ function evalLink(L){
   return r;
 }
 function linkLevel(L){ var e=evalLink(L); return e.fail.length?"bad":e.unk.length?"unknown":e.warn.length?"warn":"ok"; }
+function row(k,v){ return v==null?"":"<dt>"+esc(k)+"</dt><dd>"+v+"</dd>"; }
+function code(t,v){ return CODE[t][v]?esc(CODE[t][v]):(v===99?"不明":null); }
 function linkHtml(L){
   var e=evalLink(L), lv=linkLevel(L);
   var head={bad:"あなたの条件に合わない区間",warn:"通れるが注意が必要な区間",ok:"あなたの条件で通れる区間",unknown:"一部が未調査の区間"}[lv];
