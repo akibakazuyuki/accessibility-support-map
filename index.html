@@ -45,15 +45,15 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 @media (max-width:599px){ .maplibregl-ctrl-scale{display:none} }
 
 /* ---- 上部：ロゴ・検索・チップ ---- */
-.top{position:fixed;left:0;right:0;top:0;z-index:10;max-width:520px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 4px;
-  background:linear-gradient(#fff 0,#fff 62%,rgba(255,255,255,0))}
-.brand{position:relative;display:flex;align-items:center;justify-content:flex-start;gap:7px;height:36px;margin:0 0 8px;padding:0 16px;font-size:19px;font-weight:800;color:var(--brand);letter-spacing:.02em}
-.brand img{width:26px;height:26px;border-radius:8px}
-.brand .beta{font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:6px;padding:1px 6px;letter-spacing:.06em}
-.search{display:flex;align-items:center;gap:8px;height:50px;margin:0 14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:0 6px 0 14px}
-.search .spark{font-size:18px;line-height:1;flex:none}
-.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:15px;font-weight:500;outline:none}
-.search input::placeholder{color:#8a948f}
+/* 白い帯は作らず、地図の上にうっすら白をかけてロゴと検索バーを浮かせる */
+.top{position:fixed;left:0;right:0;top:0;z-index:10;max-width:520px;padding:calc(10px + env(safe-area-inset-top,0px)) 0 4px;
+  background:linear-gradient(rgba(255,255,255,.88) 0,rgba(255,255,255,.6) 55%,rgba(255,255,255,0) 100%)}
+.brand{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;margin:0 0 10px;font-size:22px;font-weight:800;color:var(--brand);letter-spacing:.02em;line-height:1}
+.brand svg{width:28px;height:28px;flex:none}
+.search{display:flex;align-items:center;gap:10px;height:48px;margin:0 16px;background:rgba(255,255,255,.96);border-radius:24px;box-shadow:0 2px 12px rgba(20,40,30,.08);padding:0 6px 0 16px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.search .spark{font-size:17px;line-height:1;flex:none}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:14px;font-weight:500;outline:none}
+.search input::placeholder{color:#6b7570}
 .search input::-webkit-search-cancel-button{display:none}
 .go{width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
 .go svg{width:21px;height:21px}
@@ -63,7 +63,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 3px rgba(20,40,30,.12);padding:0 13px 0 10px;font-size:13px;font-weight:700;color:var(--ink2);white-space:nowrap}
 .chip svg{width:17px;height:17px;flex:none}
-#profBtn{position:absolute;right:14px;top:2px;display:flex;align-items:center;gap:4px;height:32px;border:0;border-radius:16px;background:var(--brand-soft);color:var(--brand-dk);padding:0 10px 0 8px;font-size:12px;font-weight:800;letter-spacing:0}
+#profBtn{display:inline-flex;margin:0 0 12px;align-items:center;gap:4px;height:32px;border:0;border-radius:16px;background:var(--brand-soft);color:var(--brand-dk);padding:0 10px 0 8px;font-size:12px;font-weight:800;letter-spacing:0}
 #profBtn svg{width:16px;height:16px}
 .chip.on{background:var(--brand);color:#fff;box-shadow:0 2px 6px rgba(23,160,88,.35)}
 .chip.on svg{color:#fff!important}
@@ -235,12 +235,11 @@ details.adv summary::-webkit-details-marker{display:none}
 <div id="map" role="region" aria-label="地図"></div>
 
 <section class="top" aria-label="場所を探す">
-  <div class="brand"><img src="icons/icon.svg" alt=""><span>サポートマップ</span>
-    <button id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg><span id="profText">条件</span></button></div>
+  <h2 class="brand"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="9" cy="9.5" r="2.4" fill="currentColor"/><circle cx="19" cy="9.5" r="2.4" fill="currentColor"/><path d="M5.5 15.5a8.5 8.5 0 0 0 17 0" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>サポートマップ</h2>
   <form class="search" id="searchForm" role="search">
     <span class="spark" aria-hidden="true">✨</span>
     <label for="q" class="sr">行きたい場所</label>
-    <input id="q" type="search" placeholder="車椅子で入れるお店・トイレを探す" autocomplete="off" enterkeyhint="search">
+    <input id="q" type="search" placeholder="車椅子で入りやすくて、駐車場がある場所" autocomplete="off" enterkeyhint="search">
     <button class="go" id="goBtn" type="submit" aria-label="探す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
   </form>
   <div class="chips" role="toolbar" aria-label="地図に出すもの">
@@ -266,6 +265,7 @@ details.adv summary::-webkit-details-marker{display:none}
   <button class="grab" id="grab" type="button" aria-expanded="false" aria-controls="sheet"><span class="sr">詳しい情報を開く・閉じる</span></button>
   <div class="head"><span class="cat" id="sheetCat" hidden></span><h2 id="sheetTitle">赤羽駅周辺</h2><button class="ibtn" id="fav" type="button" aria-label="お気に入り" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg></button><button class="ibtn" id="closeCard" type="button" aria-label="閉じる" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <p class="meta" id="sheetMeta"></p>
+<button id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg><span id="profText">条件</span></button>
   <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
   <div id="result" aria-live="polite" hidden></div>
   <details class="more">
@@ -509,7 +509,7 @@ function overview(){
   var oks=(area.places||[]).filter(function(x){ return x[4]==="yes"||x[4]==="designated"; }).length;
   function seg(k,c){ return n[k]?'<i style="flex:'+n[k]+';background:'+c+'"></i>':''; }
   function key(c,t,v){ return '<li><i style="background:'+c+'"></i>'+t+' <b class="num">'+v+'%</b></li>'; }
-  $("sheetTitle").textContent=area.name; $("sheetCat").hidden=$("fav").hidden=$("closeCard").hidden=true; dim(false);
+  $("sheetTitle").textContent=area.name; $("sheetCat").hidden=$("fav").hidden=$("closeCard").hidden=true; $("profBtn").hidden=false; dim(false);
   $("sheetMeta").innerHTML="あなたの条件で通れる歩道 <b class=\"num\">"+(pc("ok")+pc("warn"))+"%</b>・未調査 "+pc("unknown")+"%";
   var pks=(area.places||[]).filter(function(x){ return /amenity=parking/.test(x[1]); }).length;
   $("sheetText").innerHTML='<div class="bar" aria-hidden="true">'+seg("ok","#17a058")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#d5dcd8")+'</div>'+
@@ -669,7 +669,7 @@ function judge(c){
   routeTo=c; if(!area) return;
   var inArea=c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
-  var ct=CATS[c.cat||"dest"]; $("sheetCat").style.background=ct[0]; $("sheetCat").innerHTML=svg(ct[1]); $("sheetCat").hidden=$("closeCard").hidden=$("fav").hidden=false; showFav(c);
+  var ct=CATS[c.cat||"dest"]; $("sheetCat").style.background=ct[0]; $("sheetCat").innerHTML=svg(ct[1]); $("sheetCat").hidden=$("closeCard").hidden=$("fav").hidden=false; $("profBtn").hidden=true; showFav(c);
   var dist=km(me||AKABANE,c.ll); $("sheetMeta").innerHTML=(c.addr?esc(c.addr)+"・":"")+(dist<1?Math.round(dist*1000)+"m":dist.toFixed(1)+"km");
   if(!inArea){ $("sheetMeta").textContent=c.addr||"";
     $("sheetText").innerHTML=vcard(1,"段差・道幅・坂の情報は、いまは赤羽駅周辺だけです"); out.innerHTML=""; dim(false); focus(c.ll); return; }
@@ -765,7 +765,7 @@ $("repForm").onsubmit=function(e){
 
 // ---- 条件の設定画面 ----
 function profSub(p){ return STEP_TXT[p.step]+"・"+SLOPE_TXT[p.slope]+(p.stairs?"・階段可":""); }
-function showProf(){ var p=P(); $("profText").textContent=prof?p.label.replace(/（.*$/,""):"条件"; $("profBtn").setAttribute("aria-label","移動の条件："+(prof?p.label+"、"+profSub(p):"未設定")+"。変更する"); }
+function showProf(){ var p=P(); $("profText").textContent=prof?"あなたの条件："+p.label:"あなたの条件を設定"; $("profBtn").setAttribute("aria-label","移動の条件："+(prof?p.label+"、"+profSub(p):"未設定")+"。変更する"); }
 function fillForm(p){ $("pStep").value=p.step; $("pSlope").value=p.slope; $("pWidth").value=p.width; $("pStairs").checked=p.stairs; $("pEsc").checked=p.esc; }
 function openProf(){
   lastFocus=document.activeElement;
