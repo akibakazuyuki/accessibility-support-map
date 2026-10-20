@@ -943,7 +943,12 @@ go.addEventListener("click",function(){ if(go.type!=="button") return;
   try{ r.start(); }catch(e){ go.classList.remove("rec"); } });
 
 // ---- オフラインでも開けるように（PWA） ----
-if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+// 新しい版が届いたら一度だけ読み直して、すぐ最新の画面にする
+if("serviceWorker" in navigator){
+  var hadSw=!!navigator.serviceWorker.controller, reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){ if(hadSw&&!reloaded){ reloaded=true; location.reload(); } });
+  window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(r){ r.update(); }).catch(function(){}); });
+}
 })();
 </script>
 </body>
