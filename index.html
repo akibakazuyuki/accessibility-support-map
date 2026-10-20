@@ -2,1646 +2,216 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<title>ハイウェイ・レーダー</title>
+<meta name="description" content="車椅子・ベビーカー・杖などで外出する人のための、段差・幅・坂・エレベーター・トイレがわかる地図（赤羽駅周辺で試験提供）">
+<title>アクセシビリティ・サポートマップ</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="サポートマップ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Barlow+Semi+Condensed:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
 :root{
   color-scheme:light;
-  --asphalt:#f5f1e8; --deck:#ffffff; --deck2:#f0f2ef; --line:#dde2de;
-  --ink:#1c252b; --muted:#5f6d68;
-  --sign:#0b7a4b; --sign-ink:#ffffff;        /* 高速道路の案内標識の緑 */
-  --accident:#ff4d4f; --jam:#ff9f1a; --slow:#ffd23f; --closed:#b36bff; --works:#4db8ff; --ok:#3ddc84;
+  --paper:#f6f4ef; --card:#ffffff; --card2:#f0f1ee; --line:#d9ddd8;
+  --ink:#1b2226; --muted:#56635e;
+  --brand:#0a6a8c; --brand-ink:#ffffff;      /* 案内サインの青 */
+  --focus:#f2b705;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--asphalt);color:var(--ink);font:15px/1.5 "BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;overflow:hidden}
-.num,.plate b,.e-no{font-family:"Barlow Semi Condensed","Arial Narrow",sans-serif;font-variant-numeric:tabular-nums}
-button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-button:focus-visible,input:focus-visible{outline:2px solid var(--slow);outline-offset:2px}
+body{background:var(--paper);color:var(--ink);font:16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-#map{position:fixed;inset:0;background:var(--asphalt)}
-html.gmap #map{position:fixed!important;inset:0;width:100%;height:100%}
-.maplibregl-ctrl-attrib{background:rgba(255,255,255,.8)!important;color:var(--muted)!important;font-size:10px}
+#map{position:fixed;inset:0;background:var(--paper)}
+.maplibregl-ctrl-attrib{background:rgba(255,255,255,.85)!important;color:var(--muted)!important;font-size:11px}
 .maplibregl-ctrl-attrib a{color:var(--muted)!important}
 
-
-/* ---- 上部：レーダー計器 ---- */
-.gauge{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:1000;
-  display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(30,40,40,.15);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid var(--line);border-radius:18px;padding:10px 12px;max-width:520px}
-.radar{flex:0 0 96px;height:96px}
-.radar text{font:700 9px "Barlow Semi Condensed",sans-serif;fill:var(--muted)}
-.sweep{transform-origin:50px 50px;animation:spin 4s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.gauge-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.where{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.verdict{font-size:18px;font-weight:700;line-height:1.3}
-.counts{display:flex;gap:6px;flex-wrap:wrap}
-.count{display:flex;align-items:baseline;gap:4px;border-radius:8px;padding:2px 8px;background:var(--deck2);font-size:12px}
-.count b{font-size:18px;line-height:1}
-.count.acc b{color:var(--accident)} .count.jam b{color:var(--jam)} .count.cls b{color:var(--closed)}
+/* ---- 上部：検索 ---- */
+.top{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:10;max-width:520px;
+  background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 18px rgba(20,30,30,.14);padding:10px 12px}
+.brand{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:0 0 6px}
+.brand img{width:22px;height:22px}
+.brand b{color:var(--ink)}
+.trial{margin-left:auto;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;min-height:48px;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--card2)}
+.btn{min-height:48px;border:0;border-radius:12px;padding:0 16px;background:var(--brand);color:var(--brand-ink);font-weight:700}
+.btn.ghost{background:var(--card2);color:var(--ink);border:1px solid var(--line)}
+.sugg{list-style:none;margin:8px 0 0;padding:0;max-height:45vh;overflow:auto}
+.sugg button{display:block;width:100%;text-align:left;min-height:48px;border:0;border-top:1px solid var(--line);background:none;padding:8px 4px}
+.sugg small{display:block;color:var(--muted);font-size:13px}
+.msg{margin:8px 0 0;font-size:14px;color:var(--muted)}
 
 /* ---- 右：操作ボタン ---- */
-.fabs{position:fixed;right:12px;z-index:1000;display:flex;flex-direction:column;gap:10px;
-  bottom:calc(var(--sheet-h,168px) + 14px + env(safe-area-inset-bottom,0px));transition:bottom .25s}
-.fab{width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--deck);box-shadow:0 2px 8px rgba(30,40,40,.15);display:grid;place-items:center;font-size:11px;font-weight:700;line-height:1.1;text-align:center}
+.fabs{position:fixed;right:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:10;display:flex;flex-direction:column;gap:10px}
+.fab{width:56px;height:56px;border-radius:16px;border:1px solid var(--line);background:var(--card);box-shadow:0 3px 12px rgba(20,30,30,.16);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:1.2;gap:2px}
 .fab svg{width:22px;height:22px}
-.fab.on{background:var(--sign);border-color:var(--sign);color:#fff}
-.count.orb b{color:#ff6fd8}
-.orbis{width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid #ff2d55;display:grid;place-items:center;font:700 11px "BIZ UDPGothic",sans-serif;color:#ff2d55;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:pointer}
-.alert{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:1500;max-width:520px;
-  background:#ff2d55;color:#fff;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 6px 20px rgba(0,0,0,.5);border:0;text-align:left;width:auto}
-.alert b{font-size:28px;line-height:1}
-.alert span{font-size:14px;font-weight:700}
-/* ---- ルート ---- */
-.ends{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--deck);padding:4px 56px 4px 12px}
-.endrow{display:flex;gap:10px;align-items:baseline;padding:6px 0;font-size:15px;font-weight:700;min-width:0}
-.endrow+.endrow{border-top:1px solid var(--line)}
-.endrow small{color:var(--muted);font-weight:700;font-size:12px;min-width:28px}
-.endrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#btnSwap{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:20px;font-weight:700;color:var(--sign)}
-.seg2{display:flex;background:var(--deck2);border-radius:12px;padding:3px;gap:3px}
-.seg2 button{flex:1;border:0;background:none;padding:9px 6px;border-radius:9px;font-size:14px;color:var(--muted);font-weight:700}
-.seg2 button[aria-pressed="true"]{background:var(--sign);color:#fff}
-.sugg{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.sugg button{border:0;border-bottom:1px solid var(--line);background:var(--deck);text-align:left;padding:10px 12px;font-size:14px}
-.sugg button small{display:block;color:var(--muted);font-size:12px}
-.sugg button:last-child{border-bottom:0}
-.sugg button.hint{color:var(--sign);font-weight:700;background:var(--deck2)}
-.arrbox{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--deck2)}
-.arrrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.arrrow label{font-size:13px;font-weight:700}
-.arrrow input{font:inherit;font-size:17px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:#fff}
-#arrOut{margin:8px 0 0;font-size:14px;line-height:1.6}
-#arrOut b{font-size:20px}
-.rcards{display:flex;flex-direction:column;gap:8px}
-.rcard{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;text-align:left;border:2px solid var(--line);background:var(--deck);border-radius:14px;padding:12px}
-.rcard[aria-pressed="true"]{border-color:var(--sign);background:#eef7f2}
-.rcard .kind{grid-row:span 2;font-weight:700;font-size:13px;background:var(--deck2);border-radius:8px;padding:6px 8px;text-align:center;min-width:64px}
-.rcard[aria-pressed="true"] .kind{background:var(--sign);color:#fff}
-.rcard .big{font-size:22px;font-weight:700;line-height:1.1}
-.rcard .sub{font-size:12px;color:var(--muted)}
-.rcard .warn{grid-row:span 2;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:12px;font-weight:700}
-.rsteps{margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--deck)}
-.rsteps summary{padding:10px 12px;font-weight:700;font-size:14px;cursor:pointer}
-.rsteps ol{list-style:none;margin:0;padding:0 12px 8px;max-height:40vh;overflow:auto}
-.rsteps li{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.4}
-.rsteps li b{min-width:58px;color:var(--muted);font-weight:700;font-size:12px;padding-top:2px}
-.rsteps li small{display:block;color:var(--muted);font-size:12px}
-.chip{border-radius:6px;padding:1px 7px;color:#fff;white-space:nowrap}
-html.gmap #map{touch-action:none}
-html.lowz .orbis{display:none}
-.osmc{position:fixed;left:6px;z-index:999;bottom:calc(var(--sheet-h,168px) + 2px);font-size:9px;color:#6b665c;background:rgba(255,255,255,.6);padding:0 4px;border-radius:4px;pointer-events:none;transition:bottom .25s}
-.gnote{position:fixed;left:12px;right:12px;bottom:calc(var(--sheet-h,168px) + 12px);z-index:1100;background:#fff;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.5;box-shadow:0 4px 16px rgba(0,0,0,.25)}
-.gnote button{display:block;margin-top:8px;border:0;background:var(--deck2);border-radius:8px;padding:6px 12px;font-weight:700}
-.backpill{position:fixed;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));z-index:1000;border:0;border-radius:22px;padding:11px 18px;
-  background:var(--sign);color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
-.navbar{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:1000;max-width:520px;background:var(--sign);color:#fff;
-  border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 4px 18px rgba(0,0,0,.25)}
-.navbar .eta b{font-size:30px;line-height:1}
-.navbar .eta small{display:block;font-size:12px;opacity:.85}
-.navbar .nstat{flex:1;min-width:0;font-size:14px;font-weight:700;line-height:1.35}
-.navbar .nstat small{display:block;font-weight:400;opacity:.9;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.navbar button{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px}
-.recenter{position:fixed;left:50%;transform:translateX(-50%);z-index:1000;top:calc(132px + env(safe-area-inset-top,0px));
-  background:var(--slow);color:#1a1a1a;border:0;border-radius:999px;padding:8px 16px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.4)}
 
-/* ---- 下：シート（道路ごとの一覧） ---- */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:1001;background:var(--deck);box-shadow:0 -4px 18px rgba(30,40,40,.12);border-top:1px solid var(--line);
-  border-radius:20px 20px 0 0;display:flex;flex-direction:column;height:var(--sheet-h,168px);transition:height .25s;
-  padding-bottom:env(safe-area-inset-bottom,0px);max-width:560px;margin:0 auto}
-.handle{border:0;background:none;padding:10px 16px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-.handle i{width:44px;height:5px;border-radius:3px;background:var(--line)}
-.sheet-head{display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px}
-.sheet-head h2{margin:0;font-size:15px}
-.legend{display:flex;align-items:center;gap:4px 6px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-html.gmap.ttraf #lgCong{background:#f2dc1a!important}
-.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-left:4px}
-.seg button{border:0;background:none;padding:4px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
-.seg button[aria-pressed="true"]{background:var(--sign);color:var(--sign-ink);font-weight:700}
-.list{flex:1;overflow-y:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;overscroll-behavior:contain}
-.item{display:grid;grid-template-columns:6px 1fr auto;gap:10px;align-items:stretch;background:var(--deck2);border:0;border-radius:12px;padding:10px 12px 10px 0;text-align:left;width:100%}
-.stripe{border-radius:0 4px 4px 0}
-.item .main{min-width:0;display:flex;flex-direction:column;gap:3px}
-.road{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.e-no{background:var(--sign);color:var(--sign-ink);border:1.5px solid #fff;border-radius:5px;padding:0 5px;font-size:13px;font-weight:700;line-height:1.35}
-.rname{font-weight:700;font-size:14px}
-.tag{font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;color:#111}
-.sect{font-size:13px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.desc{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.side{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:2px;font-size:12px;color:var(--muted);white-space:nowrap}
-.side b{font-size:20px;color:var(--ink);line-height:1}
-.empty{color:var(--muted);font-size:14px;padding:16px 4px;text-align:center}
-.demo-flag{background:var(--slow);color:#1a1a1a;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;margin-left:6px}
+/* ---- 下：シート ---- */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;background:var(--card);border-top:1px solid var(--line);
+  border-radius:18px 18px 0 0;box-shadow:0 -4px 18px rgba(20,30,30,.12);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font-size:17px;margin:0 0 4px}
+.sheet p{margin:0;font-size:14px;color:var(--muted)}
+@media (min-width:900px){ .sheet{left:12px;bottom:12px;border-radius:18px;border:1px solid var(--line)} .fabs{bottom:24px} }
 
-/* ---- 設定・場所パネル ---- */
-.panel{position:fixed;inset:0;z-index:2000;background:rgba(20,30,30,.35);display:flex;align-items:flex-end;justify-content:center}
-.panel-card{background:var(--deck);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;max-height:90%;overflow-y:auto}
-.panel-card h3{margin:0;font-size:18px}
-.panel-card p{margin:0;color:var(--muted);font-size:13px}
-.steps{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px;font-size:14px}
-.steps a{color:var(--slow)}
-.field{display:flex;gap:8px}
-.field input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--asphalt);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:700;background:var(--sign);color:var(--sign-ink)}
-.btn.ghost{background:var(--deck2);color:var(--ink)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.regions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.regions button{border:1px solid var(--line);background:var(--deck2);border-radius:10px;padding:10px 4px;font-size:14px}
-.regions small{display:block;color:var(--muted);font-size:11px}
-
-.me{width:18px;height:18px;border-radius:50%;background:#4db8ff;border:3px solid #fff;box-shadow:0 0 0 0 rgba(77,184,255,.7);animation:ping 2s infinite}
-@keyframes ping{70%{box-shadow:0 0 0 16px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
-.pin{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 12px "BIZ UDPGothic",sans-serif;color:#111;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer}
-.pinwrap{display:flex;align-items:center;gap:4px;cursor:pointer}
-.pinlbl{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.95);box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:6px;padding:2px 6px 2px 3px;font-size:12px;font-weight:700;white-space:nowrap}
-.pinlbl .e-no{font-size:12px}
-.maplibregl-popup-content{background:var(--deck);color:var(--ink);font-size:13px;border-radius:10px;padding:10px 12px}
-.maplibregl-popup-tip{border-top-color:var(--deck)!important;border-bottom-color:var(--deck)!important}
-.maplibregl-popup-close-button{color:var(--muted);font-size:18px}
-
-@media (min-width:900px){
-  .sheet{left:12px;right:auto;top:calc(128px + env(safe-area-inset-top,0px));bottom:12px;width:400px;height:auto!important;border-radius:18px;border:1px solid var(--line);margin:0}
-  .handle{cursor:default}.handle i{display:none}
-  .fabs{bottom:24px!important}
-}
-@media (prefers-reduced-motion:reduce){.sweep,.me{animation:none}.sheet,.fabs{transition:none}}
+.me{width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.2)}
+.pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
 </head>
 <body>
-<div id="map" aria-label="地図"></div>
+<h1 class="sr">アクセシビリティ・サポートマップ</h1>
+<div id="map" role="region" aria-label="地図"></div>
 
-<section class="gauge" aria-live="polite">
-  <svg class="radar" viewBox="0 0 100 100" aria-hidden="true">
-    <defs><radialGradient id="rg" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0b7a4b" stop-opacity=".35"/><stop offset="1" stop-color="#0b7a4b" stop-opacity="0"/></radialGradient>
-      <linearGradient id="sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3ddc84" stop-opacity="0"/><stop offset="1" stop-color="#3ddc84" stop-opacity=".45"/></linearGradient></defs>
-    <circle cx="50" cy="50" r="46" fill="url(#rg)" stroke="#cfd6d2"/>
-    <circle cx="50" cy="50" r="30.7" fill="none" stroke="#cfd6d2" stroke-dasharray="2 3"/>
-    <circle cx="50" cy="50" r="15.3" fill="none" stroke="#cfd6d2" stroke-dasharray="2 3"/>
-    <path class="sweep" d="M50 50 L96 50 A46 46 0 0 0 82.5 17.5 Z" fill="url(#sw)"/>
-    <text x="50" y="9" text-anchor="middle">N</text>
-    <text x="52" y="33" id="rLabel">30</text>
-    <g id="blips"></g>
-    <circle cx="50" cy="50" r="3.5" fill="#4db8ff" stroke="#fff" stroke-width="1.2"/>
-  </svg>
-  <div class="gauge-body">
-    <div class="where" id="where">現在地を探しています…</div>
-    <div class="verdict" id="verdict">周辺の高速道路を確認中</div>
-    <div class="counts">
-      <span class="count acc"><b class="num" id="cAcc">–</b>事故</span>
-      <span class="count jam"><b class="num" id="cJam">–</b>渋滞</span>
-      <span class="count cls"><b class="num" id="cCls">–</b>通行止・規制</span>
-      <span class="count orb"><b class="num" id="cOrb">–</b>オービス</span>
-    </div>
-  </div>
+<section class="top" aria-label="場所を探す">
+  <p class="brand"><img src="icons/icon.svg" alt=""><b>アクセシビリティ・サポートマップ</b><span class="trial">赤羽で試験提供</span></p>
+  <form class="search" id="searchForm" role="search">
+    <label for="q" class="sr">行きたい場所</label>
+    <input id="q" type="search" placeholder="行きたい場所（施設名・住所）" autocomplete="off" enterkeyhint="search">
+    <button class="btn" type="submit">探す</button>
+  </form>
+  <ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul>
+  <p class="msg" id="msg" role="status" aria-live="polite"></p>
 </section>
-
-<button class="recenter" id="searchHere" type="button" hidden>この付近を調べる</button>
-
-<button class="alert" id="orbAlert" type="button" hidden aria-live="assertive"><b class="num" id="orbDist"></b><span id="orbText"></span></button>
 
 <div class="fabs">
-  <button class="fab" id="btnLocate" type="button" aria-label="現在地に戻る">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
-  <button class="fab" id="btnPlace" type="button">地方</button>
-  <button class="fab" id="btnRoute" type="button" style="background:var(--sign);color:#fff;border-color:var(--sign)">ルート</button>
-  <button class="fab on" id="btnOrb" type="button" aria-pressed="true" style="font-size:10px">オー<br>ビス</button>
-  <button class="fab" id="btnKey" type="button">設定</button>
+  <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>現在地</button>
+  <button class="fab" id="btnHome" type="button" aria-label="赤羽駅周辺を表示">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4M5 11h14"/></svg>赤羽駅</button>
 </div>
 
-<section class="sheet" id="sheet">
-  <button class="handle" id="handle" type="button" aria-expanded="false" aria-controls="list">
-    <i></i>
-    <span class="sheet-head"><h2 id="listTitle">高速道路の事故・渋滞（近い順）</h2><span class="num" id="updated" style="color:var(--muted);font-size:12px"></span></span>
-  </button>
-  <div style="padding:0 12px 8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
-    <div class="legend" aria-label="凡例"><i id="lgCong" style="background:#f39a1e"></i>混雑<i style="background:#e8302a"></i>渋滞<i style="background:var(--closed)"></i>通行止</div>
-    <span style="display:flex;gap:6px"><button class="btn ghost" id="btnGmaps" type="button" style="padding:6px 10px;font-size:13px" aria-label="この場所をGoogleマップで開く（通行止めの確認）">Gマップ</button>
-    <button class="btn ghost" id="btnRefresh" type="button" style="padding:6px 12px;font-size:13px">更新</button></span>
-  </div>
-  <div class="list" id="list"></div>
+<section class="sheet" aria-labelledby="sheetTitle">
+  <h2 id="sheetTitle">赤羽駅周辺</h2>
+  <p id="sheetText">段差・道幅・坂・エレベーター・トイレの情報を準備しています。あなたの移動条件で「行けるか」を判定する機能は順次追加します。</p>
 </section>
-
-<div class="panel" id="keyPanel" hidden>
-  <div class="panel-card" role="dialog" aria-labelledby="keyTitle">
-    <h3 id="keyTitle">渋滞データの接続</h3>
-    <p>事故と渋滞の情報は TomTom から取得します。無料キーを一度入れるだけで、以後はこのスマホで自動的に使われます。</p>
-    <ol class="steps">
-      <li><a href="https://my.tomtom.com/" target="_blank" rel="noopener">my.tomtom.com</a> で無料登録・ログインする</li>
-      <li>ログインしたまま <a href="https://my.tomtom.com/" target="_blank" rel="noopener">キーの一覧ページ</a> を開き、表示される英数字のキーをコピーする</li>
-      <li>下の欄に貼り付けて「接続」を押す</li>
-    </ol>
-    <form class="field" id="keyForm">
-      <input id="keyInput" type="text" placeholder="APIキーを貼り付け" autocomplete="off" spellcheck="false" aria-label="TomTom APIキー">
-      <button class="btn" type="submit">接続</button>
-    </form>
-    <button class="btn ghost" id="btnPaste" type="button">コピーしたキーを貼り付ける</button>
-    <p>キーはこのブラウザの中にだけ保存され、外部には公開されません。</p>
-    <h3 style="margin-top:14px" id="gTitle">地図・ルート・施設検索（Google）</h3>
-    <p>日本の道路で正確なルートと到着時間を出すために Google のキーを使います。個人で使う分は毎月の無料枠に収まります（登録にクレジットカードが必要です）。</p>
-    <ol class="steps">
-      <li><a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud</a> に Google アカウントでログインし、プロジェクトを作る（名前は「渋滞マップ」など）</li>
-      <li>案内に従って「お支払い（請求先アカウント）」を登録する</li>
-      <li>次の3つのページを開き、それぞれ「有効にする」を押す：<a href="https://console.cloud.google.com/apis/library/routes.googleapis.com" target="_blank" rel="noopener">Routes API</a>（ルート）・<a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank" rel="noopener">Maps JavaScript API</a>（地図）・<a href="https://console.cloud.google.com/apis/library/places.googleapis.com" target="_blank" rel="noopener">Places API (New)</a>（施設検索）</li>
-      <li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">認証情報のページ</a>で「認証情報を作成」→「APIキー」を押し、表示されたキー（AIza で始まる）をコピー</li>
-      <li>安全のため、そのキーの編集画面で「ウェブサイト」に <b>https://akibakazuyuki.github.io/*</b> を追加し、「APIの制限」で上の3つだけを選んで保存</li>
-      <li>コピーしたキーを下に貼り付けて「保存」</li>
-    </ol>
-    <form class="field" id="gForm">
-      <input id="gInput" type="text" placeholder="AIza で始まるキー" autocomplete="off" spellcheck="false" aria-label="Google APIキー">
-      <button class="btn" type="submit">保存</button>
-    </form>
-    <h3 style="margin-top:14px">施設の検索（任意・無料）</h3>
-    <p>ゴルフ場やお店など、目的地の施設を探しやすくなります。Yahoo! JAPAN の「Client ID」を使います。</p>
-    <ol class="steps">
-      <li>Yahoo! JAPAN ID でログインして <a href="https://e.developer.yahoo.co.jp/register" target="_blank" rel="noopener">アプリケーションの登録</a> を開く</li>
-      <li>「クライアントサイド（Yahoo! ID連携 v2）」を選び、アプリ名に「渋滞マップ」、サイトURLに <b>https://akibakazuyuki.github.io/</b> を入れて登録する</li>
-      <li>表示された「Client ID」をコピーして、下に貼り付ける</li>
-    </ol>
-    <form class="field" id="yjForm">
-      <input id="yjInput" type="text" placeholder="Client IDを貼り付け" autocomplete="off" spellcheck="false" aria-label="Yahoo! Client ID">
-      <button class="btn" type="submit">保存</button>
-    </form>
-    <div class="row"><button class="btn ghost" id="btnDemo" type="button">サンプルで試す</button><button class="btn ghost" id="closeKey" type="button">閉じる</button></div>
-  </div>
-</div>
-
-<button type="button" class="backpill" id="backRoute" hidden>‹ ルート検索に戻る</button>
-<div class="navbar" id="navBar" hidden>
-  <div class="eta"><small>到着予定</small><b class="num" id="navEta">--:--</b></div>
-  <div class="nstat" id="navStat">ルートを確認中<small id="navNext"></small><small id="navSub"></small></div>
-  <button type="button" id="navEnd">終了</button>
-</div>
-
-<div class="panel" id="routePanel" hidden>
-  <div class="panel-card" role="dialog" aria-labelledby="routeTitle">
-    <h3 id="routeTitle">ルート検索</h3>
-    <div class="ends">
-      <div class="endrow"><small>出発</small><span id="endA">現在地</span></div>
-      <div class="endrow"><small>到着</small><span id="endB">下の欄で目的地を探す</span></div>
-      <button type="button" id="btnSwap" aria-label="出発地と目的地を入れ替える">⇅</button>
-    </div>
-    <form class="field" id="routeForm">
-      <input id="destInput" type="search" placeholder="施設名・住所・電話番号" aria-label="目的地" autocomplete="off">
-      <button class="btn" type="submit">検索</button>
-    </form>
-    <div class="sugg" id="destSugg" hidden></div>
-    <div class="seg2" role="group" aria-label="使う道路">
-      <button type="button" id="rHwy" aria-pressed="true">高速道路を使う</button>
-      <button type="button" id="rGen" aria-pressed="false">一般道のみ</button>
-    </div>
-    <div class="rcards" id="rCards"></div>
-    <details class="rsteps" id="rSteps" hidden><summary id="rStepsSum">道順</summary><ol id="rStepsList"></ol></details>
-    <p id="routeNote"></p>
-    <div class="arrbox" id="arrBox" hidden>
-      <div class="arrrow"><label for="arrTime">着きたい時刻</label><input id="arrTime" type="time" step="300"><button class="btn" id="btnArr" type="button">出発時刻を出す</button></div>
-      <p id="arrOut" aria-live="polite"></p>
-    </div>
-    <div class="row"><button class="btn" id="btnGo" type="button" hidden>このルートで出発</button><button class="btn ghost" id="btnViewMap" type="button" hidden>地図で確認</button><button class="btn ghost" id="closeRoute" type="button">閉じる</button></div>
-  </div>
-</div>
-
-<div class="panel" id="placePanel" hidden>
-  <div class="panel-card" role="dialog" aria-labelledby="placeTitle">
-    <h3 id="placeTitle">見たい場所</h3>
-    <form class="field" id="placeForm">
-      <input id="placeInput" type="search" placeholder="地名・IC名（例：海老名、御殿場）" aria-label="地名で探す">
-      <button class="btn" type="submit">探す</button>
-    </form>
-    <div class="regions" id="regions"></div>
-    <div class="row"><button class="btn ghost" id="closePlace" type="button">閉じる</button></div>
-  </div>
-</div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js"></script>
 <script>
 (function(){
 "use strict";
-var RADIUS_KM = 45, REFRESH_MS = 120000;
-var CAT = {
-  1:{k:"acc",t:"事故",h:"#ff4d4f"}, 14:{k:"acc",t:"故障車",h:"#ff4d4f"},
-  6:{k:"jam",t:"渋滞",h:"#ff9f1a"},
-  8:{k:"cls",t:"通行止",h:"#b36bff"}, 7:{k:"cls",t:"車線規制",h:"#b36bff"}, 9:{k:"cls",t:"工事",h:"#4db8ff"}
-};
-function cat(ic){ return CAT[ic] || {k:"etc",t:"注意",h:"#ffd23f"}; }
-var ROADS = {E1:"東名・名神",E1A:"新東名・新名神",E2:"山陽道",E2A:"中国道",E3:"九州道",E4:"東北道",E5:"道央道",E6:"常磐道",
-  E8:"北陸道",E9:"山陰道",E17:"関越道",E18:"上信越道",E20:"中央道",E41:"東海北陸道",E50:"北関東道",E51:"東関東道",C1:"首都高 都心環状線",C2:"首都高 中央環状線",C3:"外環道",C4:"圏央道",E14:"京葉道路"};
-var REGIONS = [
-  ["北海道","札幌",43.06,141.35],["東北","仙台",38.27,140.87],["関東","東京",35.68,139.77],
-  ["中部","名古屋",35.17,136.90],["北陸","金沢",36.58,136.65],["近畿","大阪",34.70,135.50],
-  ["中国","広島",34.40,132.46],["四国","高松",34.34,134.04],["九州","福岡",33.59,130.40],
-  ["南九州","鹿児島",31.56,130.56],["沖縄","那覇",26.21,127.68],["甲信","長野",36.65,138.18]
-];
-
+var AKABANE = [35.7780, 139.7208];   // JR赤羽駅
 function $(id){ return document.getElementById(id); }
-// 新しい版が公開されていたら自動で読み込み直す（スマホに古いページが残るのを防ぐ）
-var APP_VER="20260927-21";
-(function(){ try{ fetch(location.pathname+"?check="+Date.now(),{cache:"no-store"}).then(function(r){ return r.text(); }).then(function(t){
-  var m=t.match(/APP_VER="([^"]+)"/); if(m && m[1]!==APP_VER && location.search.indexOf("v="+m[1])<0) location.replace(location.pathname+"?v="+m[1]+location.hash); }).catch(function(){}); }catch(e){} })();
-function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v);}catch(e){ return null; } }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function km(a,b){ var R=6371,dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;
+  var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.sqrt(s)); }
+function say(t){ $("msg").textContent=t||""; }
 
-var key = ls("tt_key") || "", demo = false, yjId = ls("yj_id") || "", gKey = ls("g_key") || "";
-// セットアップ用リンク（#k=キー）で開いた場合はキーを保存し、アドレス欄から消す
-(function(){ var m=location.hash.match(/[#&]k=([A-Za-z0-9]{20,64})/), y=location.hash.match(/[#&]y=([A-Za-z0-9._-]{20,120})/), g=location.hash.match(/[#&]g=(AIza[A-Za-z0-9_-]{30,45})/);
-  if(g){ gKey=g[1]; ls("g_key",gKey); }
-  if(m){ key=m[1]; ls("tt_key",key); } if(y){ yjId=y[1]; ls("yj_id",yjId); }
-  if(m||y||g){ try{ history.replaceState(null,"",location.pathname); }catch(e){} } })();
-var focus = null, me = null, incidents = [], seq = 0, ready = false;
-
-// ---- 地図（国土地理院ベクトルタイル：海岸線・県境・高速道路・路線名だけを描く） ----
-var MOTORWAY = ["any",["==",["to-string",["get","vt_motorway"]],"1"],["==",["get","vt_rdctg"],"高速自動車国道等"]];
-var ANNO_CODE = ["to-number",["get","vt_code"],0];
-var ANNO_TEXT = ["to-string",["coalesce",["get","vt_text"],["get","knj"],""]];
-var HWY_NAME = ["any"].concat(["高速","自動車道","首都高","有料","道路","バイパス","環状"].map(function(w){ return ["in",w,ANNO_TEXT]; }));
-// ---- Google マップ（キーがあれば地図を Google に。事故・ルート等の重ね表示は同じコードのまま動くよう MapLibre と同じ呼び方を用意） ----
-var GSTYLE=[
-  {featureType:"poi",stylers:[{visibility:"off"}]},
-  {featureType:"transit",stylers:[{visibility:"off"}]},
-  {featureType:"landscape",elementType:"geometry",stylers:[{color:"#f5f1e8"}]},
-  {featureType:"water",elementType:"geometry",stylers:[{color:"#bcd8ef"}]},
-  {featureType:"road.local",elementType:"geometry",stylers:[{color:"#ffffff"}]},
-  {featureType:"road.local",elementType:"labels",stylers:[{visibility:"simplified"}]},
-  {featureType:"road.arterial",elementType:"geometry.fill",stylers:[{color:"#ffffff"}]},
-  {featureType:"road.arterial",elementType:"geometry.stroke",stylers:[{color:"#d9d2c2"}]},
-  {featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#ffffff"}]},
-
-  {featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#7d7466"},{weight:1.2}]},
-  {featureType:"road.highway.controlled_access",elementType:"geometry.fill",stylers:[{color:"#ffffff"}]},
-  {featureType:"road.highway.controlled_access",elementType:"geometry.stroke",stylers:[{color:"#27323a"},{weight:1.8}]},
-  {featureType:"road.highway",elementType:"labels.text.fill",stylers:[{color:"#0b5a36"}]},
-  {featureType:"road.highway",elementType:"labels.text.stroke",stylers:[{color:"#ffffff"},{weight:4}]},
-  {featureType:"administrative.province",elementType:"geometry.stroke",stylers:[{color:"#a99f8a"},{weight:1}]}
-];
-function gmapAllowed(){ if(!gKey) return false; if((+ls("g_map_fail")||0)>Date.now()-10*6e4) return false; var c=gCnt(); return (c.m2||0)<9000; }
-// ---- 高速道路・自動車専用道路の線と道路名、IC・JCT・SA・PA（OpenStreetMapから作った data/expressways.json） ----
-// Googleの地図は有料の自動車専用道路（富津館山道路など）を普通の国道として描くので、自前で重ねる
-var XW=null, xwWait=[];
-function loadXW(cb){
-  if(XW){ cb(XW); return; } xwWait.push(cb); if(xwWait.length>1) return;
-  fetch("data/expressways.json").then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(j){
-    // 全角英数を半角に、複数名は先頭だけ、上り・下りの区別は外す
-    var nm=function(x){ return String(x||"").split(";")[0].replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(ch){ return String.fromCharCode(ch.charCodeAt(0)-0xFEE0); }).replace(/[（(](上り|下り|上|下|内回り|外回り)[）)]/g,"").trim(); };
-    var pts=[], byName={}, grid={}, gk=function(x,y){ return Math.floor(x*200)+"_"+Math.floor(y*200); };
-    (j.lines||[]).forEach(function(l){ for(var i=0;i<l.c.length;i+=2){ grid[gk(l.c[i],l.c[i+1])]=1;
-      if(i>=2){ var d=Math.max(Math.abs(l.c[i]-l.c[i-2]),Math.abs(l.c[i+1]-l.c[i-1])), k=Math.ceil(d*400); for(var s2=1;s2<k;s2++){ grid[gk(l.c[i-2]+(l.c[i]-l.c[i-2])*s2/k,l.c[i-1]+(l.c[i+1]-l.c[i-1])*s2/k)]=1; } } } });
-    var onXW=function(x,y){ for(var a=-1;a<=1;a++) for(var b=-1;b<=1;b++){ if(grid[(Math.floor(x*200)+a)+"_"+(Math.floor(y*200)+b)]) return true; } return false; };
-    (j.pts||[]).forEach(function(p){ var n=nm(p[2]); if(!n || /道の駅|駐車場|パーキング第|コインパーキング/.test(n) || !onXW(p[0],p[1])) return;
-      var t=/JCT|ジャンクション/.test(n)?"j":/SA|サービスエリア/.test(n)?"s":/PA|パーキング|オアシス/.test(n)?"p":p[3];
-      var near=(byName[n]||[]).some(function(q){ return Math.abs(q[0]-p[0])<0.03&&Math.abs(q[1]-p[1])<0.03; });
-      if(near) return; var q=[p[0],p[1],n,t]; (byName[n]=byName[n]||[]).push(q); pts.push(q); });
-    XW={lines:(j.lines||[]).map(function(l){ var c=l.c, b=[180,90,-180,-90];
-        for(var i=0;i<c.length;i+=2){ if(c[i]<b[0]) b[0]=c[i]; if(c[i]>b[2]) b[2]=c[i]; if(c[i+1]<b[1]) b[1]=c[i+1]; if(c[i+1]>b[3]) b[3]=c[i+1]; }
-        return {n:nm(l.n)||nm(l.r),c:c,b:b}; }), pts:pts, lab:{}};
-    xwWait.forEach(function(f){ f(XW); }); xwWait=[];
-  }).catch(function(){ xwWait=[]; });
-}
-function wx(lon,z){ return (lon+180)/360*256*Math.pow(2,z); }
-function wy(lat,z){ var s=Math.sin(lat*Math.PI/180); return (0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*256*Math.pow(2,z); }
-function xwWidth(z){ return z<=6?1.2:z<=8?2:z<=10?3:z<=12?4.5:z<=14?6.5:8.5; }
-// ズームごとに、道路名とIC名を重ならない位置に決める（上下線で同じ名前が並ぶので、近くの同名は1つにする）
-function xwLabels(z){
-  if(XW.lab[z]) return XW.lab[z];
-  var out=[], boxes=[], cell={};
-  function hit(b){ var k0=Math.floor(b[0]/256), k1=Math.floor(b[2]/256), j0=Math.floor(b[1]/256), j1=Math.floor(b[3]/256);
-    for(var i=k0;i<=k1;i++) for(var j=j0;j<=j1;j++){ var L=cell[i+"_"+j]; if(L) for(var q=0;q<L.length;q++){ var o=L[q]; if(b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]) return true; } }
-    return false; }
-  function add(b){ var k0=Math.floor(b[0]/256), k1=Math.floor(b[2]/256), j0=Math.floor(b[1]/256), j1=Math.floor(b[3]/256);
-    for(var i=k0;i<=k1;i++) for(var j=j0;j<=j1;j++){ (cell[i+"_"+j]=cell[i+"_"+j]||[]).push(b); } }
-  var fs=z>=12?13:12;
-  if(z>=8){ var step=z>=12?380:z>=10?300:240, same={};
-    XW.lines.forEach(function(l){ if(!l.n) return; var c=l.c, acc=step*0.5;
-      for(var i=2;i<c.length;i+=2){ var x0=wx(c[i-2],z), y0=wy(c[i-1],z), x1=wx(c[i],z), y1=wy(c[i+1],z), d=Math.hypot(x1-x0,y1-y0);
-        while(acc<=d && d>0){ var t=acc/d, x=x0+(x1-x0)*t, y=y0+(y1-y0)*t, a=Math.atan2(y1-y0,x1-x0); if(a>Math.PI/2) a-=Math.PI; if(a<-Math.PI/2) a+=Math.PI;
-          var w=l.n.length*fs+10, r=Math.max(Math.abs(Math.cos(a))*w,Math.abs(Math.sin(a))*w)/2+fs/2;
-          var b=[x-r,y-r*0.6,x+r,y+r*0.6], sk=l.n, near=false;
-          (same[sk]||[]).forEach(function(q){ if(Math.hypot(q[0]-x,q[1]-y)<step*0.7) near=true; });
-          if(!near && !hit(b)){ add(b); (same[sk]=same[sk]||[]).push([x,y]); out.push({k:"r",x:x,y:y,a:a,s:l.n,b:b}); }
-          acc+=step; }
-        acc-=d; } }); }
-  if(z>=10) XW.pts.forEach(function(p){ var x=wx(p[0],z), y=wy(p[1],z), t=p[3];
-    var name=(t==="i"&&!/IC|インター|出入口|ランプ/.test(p[2])?p[2]+"IC":t==="s"&&!/SA|サービス/.test(p[2])?p[2]+"SA":t==="p"&&!/PA|パーキング|オアシス/.test(p[2])?p[2]+"PA":p[2]);
-    var show=z>=11 || t!=="i"; var w=name.length*(fs-1)+8;
-    var b=[x+6,y-fs/2-3,x+10+w,y+fs/2+3];
-    if(show && !hit(b)){ add(b); out.push({k:"p",x:x,y:y,t:t,s:name,b:b}); } else out.push({k:"d",x:x,y:y,t:t}); });
-  XW.lab[z]=out; return out;
-}
-function drawXWTile(ctx,tx,ty,z,sc){
-  var ox=tx*256, oy=ty*256, m=40, n=Math.pow(2,z);
-  var lon0=(ox-m)/(256*n)*360-180, lon1=(ox+256+m)/(256*n)*360-180;
-  var lat=function(py){ var k=Math.PI-2*Math.PI*py/(256*n); return 180/Math.PI*Math.atan(0.5*(Math.exp(k)-Math.exp(-k))); };
-  var lat1=lat(oy-m), lat0=lat(oy+256+m);
-  ctx.setTransform(sc,0,0,sc,-ox*sc,-oy*sc); ctx.lineCap="round"; ctx.lineJoin="round";
-  var vis=XW.lines.filter(function(l){ return !(l.b[2]<lon0||l.b[0]>lon1||l.b[3]<lat0||l.b[1]>lat1); }), w=xwWidth(z);
-  function path(l){ var c=l.c; ctx.beginPath(); ctx.moveTo(wx(c[0],z),wy(c[1],z)); for(var i=2;i<c.length;i+=2) ctx.lineTo(wx(c[i],z),wy(c[i+1],z)); ctx.stroke(); }
-  // 14以上はGoogleの道路の形の方が正確なので、線は描かず名前だけ出す
-  // Googleの交通情報を使うときは、渋滞の色を隠さないよう線は描かず名前とICだけにする
-  if(z<=13 && document.documentElement.classList.contains("ttraf")){ ctx.strokeStyle="#27323a"; ctx.lineWidth=w+(z>=10?2.4:1.6); vis.forEach(path);
-    ctx.strokeStyle="#ffffff"; ctx.lineWidth=w; vis.forEach(path); }
-  if(z<8) return;
-  var fs=z>=12?13:12; ctx.textAlign="center"; ctx.textBaseline="middle";
-  xwLabels(z).forEach(function(L){
-    if(L.x<ox-300||L.x>ox+556||L.y<oy-300||L.y>oy+556) return;
-    if(L.k!=="r"){ var col=L.t==="j"?"#fff":L.t==="i"?"#27323a":"#2f86ff", r=z>=12?4.5:3.5;
-      ctx.beginPath(); ctx.arc(L.x,L.y,r,0,7); ctx.fillStyle=col; ctx.fill(); ctx.lineWidth=1.5; ctx.strokeStyle=L.t==="j"?"#27323a":"#fff"; ctx.stroke(); }
-    if(L.k==="p"){ ctx.save(); ctx.textAlign="left"; ctx.font="700 "+(fs-1)+"px 'BIZ UDPGothic',sans-serif"; ctx.lineWidth=3.5; ctx.strokeStyle="#fff";
-      ctx.strokeText(L.s,L.x+9,L.y); ctx.fillStyle=L.t==="s"||L.t==="p"?"#1c6fd8":"#27323a"; ctx.fillText(L.s,L.x+9,L.y); ctx.restore(); }
-    if(L.k==="r"){ ctx.save(); ctx.translate(L.x,L.y); ctx.rotate(L.a); ctx.font="700 "+fs+"px 'BIZ UDPGothic',sans-serif";
-      var dy=-(xwWidth(z)/2+fs*0.75); /* 渋滞の色を隠さないよう線の横に置く */
-      ctx.lineWidth=4; ctx.strokeStyle="#fff"; ctx.strokeText(L.s,0,dy); ctx.fillStyle="#0b5a8c"; ctx.fillText(L.s,0,dy); ctx.restore(); }
-  });
-}
-function xwMapType(){
-  function T(){ this.tileSize=new google.maps.Size(256,256); this.maxZoom=19; this.name="xw"; }
-  T.prototype.getTile=function(c,z,doc){ var cv=doc.createElement("canvas"), sc=Math.min(2,window.devicePixelRatio||1);
-    cv.width=cv.height=256*sc; cv.style.width=cv.style.height="256px";
-    var n=1<<z; if(XW && z>=5 && c.y>=0 && c.y<n){ try{ drawXWTile(cv.getContext("2d"),((c.x%n)+n)%n,c.y,z,sc); }catch(e){} }
-    return cv; };
-  return new T();
-}
-function GM(){
-  var gmap=null, q=[], onLoad=[], onMove=[], layers=[], sources={}, mk=[];
-  function whenReady(f){ if(gmap) f(); else q.push(f); }
-  function ev(x,f,z){
-    if(!Array.isArray(x)) return x;
-    if(x[0]==="get") return (f.properties||{})[x[1]];
-    if(x[0]==="geometry-type") return f.geometry&&f.geometry.type;
-    if(x[0]==="interpolate"){ var st=x.slice(3); if(z<=st[0]) return st[1]; for(var i=2;i<st.length;i+=2){ if(z<=st[i]){ var t=(z-st[i-2])/(st[i]-st[i-2]); return st[i-1]+(st[i+1]-st[i-1])*t; } } return st[st.length-1]; }
-    return x;
-  }
-  function pass(flt,f){ if(!flt) return true; if(flt[0]==="==") return ev(flt[1],f)===ev(flt[2],f); return true; }
-  function feats(d){ if(!d) return []; if(d.type==="FeatureCollection") return d.features||[]; if(d.type==="Feature") return [d]; return []; }
-  function paths(g){ if(!g) return [];
-    var ll=function(c){ return {lat:c[1],lng:c[0]}; };
-    if(g.type==="LineString") return [g.coordinates.map(ll)];
-    if(g.type==="MultiLineString"||g.type==="Polygon") return g.coordinates.map(function(r){ return r.map(ll); });
-    return []; }
-  function draw(L,idx){
-    (L.polys||[]).forEach(function(p){ p.setMap(null); }); L.polys=[];
-    if(!gmap||L.hidden) return; var src=sources[L.source]; if(!src) return;
-    var z=gmap.getZoom(), pt=L.spec.paint||{};
-    feats(src.data).forEach(function(f){ if(!pass(L.spec.filter,f)) return;
-      var col=ev(pt["line-color"],f,z)||"#000", w=ev(pt["line-width"],f,z)||2, op=pt["line-opacity"]!=null?ev(pt["line-opacity"],f,z):1;
-      paths(f.geometry).forEach(function(path){
-        var o={path:path,map:gmap,clickable:false,zIndex:100+idx,strokeColor:col,strokeWeight:w,strokeOpacity:op};
-        if(pt["line-dasharray"]){ o.strokeOpacity=0; o.icons=[{icon:{path:"M 0,-1 0,1",strokeOpacity:op,strokeColor:col,scale:Math.max(1,w)},offset:"0",repeat:(pt["line-dasharray"][0]+pt["line-dasharray"][1])*3+"px"}]; }
-        var p=new google.maps.Polyline(o); p._f=f; L.polys.push(p); }); });
-  }
-  function redraw(id){ layers.forEach(function(L,i){ if(!id||L.source===id) draw(L,i); }); }
-  function gFail(msg){ if(gmap&&gmap._ok) return; ls("g_map_fail",String(Date.now())); ls("g_map_err",String(msg||"").slice(0,200)); location.reload(); }
-  var gTimer=setTimeout(function(){ gFail("timeout"); },15000);
-  window.gmInit=async function(){ try{
-    if(!google.maps.Map && google.maps.importLibrary){ await google.maps.importLibrary("core"); await google.maps.importLibrary("maps"); }
-    gmap=new google.maps.Map(document.getElementById("map"),{center:{lat:36.2,lng:138.3},zoom:5,minZoom:4,maxZoom:19,disableDefaultUI:true,
-      gestureHandling:"greedy",clickableIcons:false,keyboardShortcuts:false,styles:GSTYLE,backgroundColor:"#bcd8ef"});
-    // 混雑・渋滞の区間だけ色を付ける（TomTomの遅延表示。順調な区間は色を付けない）
-    // 地図の渋滞表示：既定はGoogleの交通情報（抜けが少ない）。"tt"にするとTomTomの渋滞区間だけの表示
-    if(key && ls("trafSrc")==="tt"){ document.documentElement.classList.add("ttraf"); var addDelay=function(){ var t=Date.now(); var mt=new google.maps.ImageMapType({tileSize:new google.maps.Size(256,256),maxZoom:19,
-        getTileUrl:function(c,z){ var n=1<<z; if(c.y<0||c.y>=n) return null; var x=((c.x%n)+n)%n;
-          return "https://api.tomtom.com/traffic/map/4/tile/flow/relative-delay/"+z+"/"+x+"/"+c.y+".png?key="+encodeURIComponent(key)+"&t="+t; }});
-        var ov=gmap.overlayMapTypes, idx=-1; for(var i=0;i<ov.getLength();i++){ if(ov.getAt(i)&&ov.getAt(i).name==="delay") idx=i; }
-        mt.name="delay"; if(idx>=0) ov.setAt(idx,mt); else ov.push(mt); };
-      addDelay(); setInterval(addDelay,5*6e4); }
-    else { var tl=new google.maps.TrafficLayer(); tl.setMap(gmap); setInterval(function(){ tl.setMap(null); tl.setMap(gmap); },5*6e4); }
-    // 自前の高速道路の線は渋滞の色より下に置く
-    loadXW(function(){ gmap.overlayMapTypes.insertAt(0,xwMapType()); var a=document.createElement("div"); a.className="osmc"; a.textContent="高速道路 © OpenStreetMap"; document.body.appendChild(a); });
-    gmap.addListener("idle",function(){ onMove.forEach(function(f){ f(); }); });
-    // 13以下は自前の高速道路の線を上に描くので、Googleの高速道路は薄くして二重に見えないようにする
-    var PALE=[{featureType:"road.highway.controlled_access",elementType:"geometry.stroke",stylers:[{color:"#e4ddcd"},{weight:0.6}]}];
-    if(!(key && ls("trafSrc")==="tt")) PALE=[];
-    var GMID=GSTYLE.concat(PALE), GLOW=GMID.concat([{featureType:"road.arterial",stylers:[{visibility:"off"}]},{featureType:"road.local",stylers:[{visibility:"off"}]}]), lowSt=null;
-    var roadDetail=function(){ var z=gmap.getZoom(), lv=z<12?0:z<14?1:2; if(lv!==lowSt){ lowSt=lv; gmap.setOptions({styles:[GLOW,GMID,GSTYLE][lv]}); } };
-    roadDetail(); gmap.addListener("zoom_changed",roadDetail);
-    var lastZ=gmap.getZoom(); gmap.addListener("zoom_changed",function(){ var z=Math.round(gmap.getZoom()); if(z!==lastZ){ lastZ=z; redraw(); } });
-    var c=gCnt(); c.m2=(c.m2||0)+1; ls("g_cnt",JSON.stringify(c));
-    gmap._ok=true; clearTimeout(gTimer);
-    q.forEach(function(f){ try{ f(); }catch(e){ console.error(e); } }); q=[]; onLoad.forEach(function(f){ try{ f(); }catch(e){ console.error(e); } }); onLoad=[];
-  }catch(e){ gmap=null; gFail(e&&e.message||e); } };
-  window.gm_authFailure=function(){ gmap=null; gFail("auth"); };
-  var s=document.createElement("script");
-  s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(gKey)+"&language=ja&region=JP&v=weekly&callback=gmInit";
-  s.async=true; s.onerror=function(){ gFail("script"); };
-  document.head.appendChild(s);
-
-  var facade={
-    once:function(e,f){ if(e==="style.load"){ if(gmap) f(); else onLoad.push(f); } },
-    on:function(e,f){ if(e==="moveend") onMove.push(f); },
-    addImage:function(){}, setFilter:function(){},
-    addSource:function(id,spec){ if(spec.type!=="geojson") return; sources[id]={data:spec.data,setData:function(d){ this.data=d; redraw(id); }}; },
-    getSource:function(id){ return sources[id]; },
-    removeSource:function(id){ delete sources[id]; },
-    addLayer:function(spec,before){ if(!sources[spec.source]) return; var L={id:spec.id,source:spec.source,spec:spec,hidden:(spec.layout||{}).visibility==="none",polys:[]};
-      var bi=-1; layers.forEach(function(x,i){ if(x.id===before) bi=i; }); if(bi<0) layers.push(L); else layers.splice(bi,0,L); redraw(); },
-    getLayer:function(id){ return layers.filter(function(x){ return x.id===id; })[0]; },
-    removeLayer:function(id){ layers=layers.filter(function(L){ if(L.id===id){ (L.polys||[]).forEach(function(p){ p.setMap(null); }); return false; } return true; }); },
-    setLayoutProperty:function(id,k,v){ var L=facade.getLayer(id); if(L&&k==="visibility"){ L.hidden=(v==="none"); redraw(L.source); } },
-    fitBounds:function(b,opt){ whenReady(function(){ var bb=new google.maps.LatLngBounds(); b.pts.forEach(function(p){ bb.extend({lat:p[1],lng:p[0]}); });
-      if(b.pts.length<1) return; gmap.fitBounds(bb,(opt&&opt.padding)||0);
-      if(opt&&opt.maxZoom) google.maps.event.addListenerOnce(gmap,"idle",function(){ if(gmap.getZoom()>opt.maxZoom) gmap.setZoom(opt.maxZoom); }); }); },
-    easeTo:function(o){ whenReady(function(){ if(o.center) gmap.panTo({lat:o.center[1],lng:o.center[0]}); if(o.zoom) gmap.setZoom(o.zoom); }); },
-    getZoom:function(){ return gmap?gmap.getZoom():5; },
-    getCenter:function(){ var c=gmap&&gmap.getCenter(); return c?{lat:c.lat(),lng:c.lng()}:{lat:36.2,lng:138.3}; }
-  };
-  function Marker(o){ this.el=o.element; this.anchor=o.anchor||"center"; this.off=o.offset||[0,0]; this.ll=null; this.ov=null; }
-  Marker.prototype.setLngLat=function(a){ this.ll={lat:a[1],lng:a[0]}; if(this.ov) this.ov.draw(); return this; };
-  Marker.prototype.addTo=function(){ var me=this; whenReady(function(){
-      var ov=new google.maps.OverlayView();
-      ov.onAdd=function(){ me.el.style.position="absolute"; this.getPanes().overlayMouseTarget.appendChild(me.el); };
-      ov.draw=function(){ var pr=this.getProjection(); if(!pr||!me.ll) return; var p=pr.fromLatLngToDivPixel(new google.maps.LatLng(me.ll.lat,me.ll.lng));
-        var w=me.el.offsetWidth, h=me.el.offsetHeight;
-        me.el.style.left=(p.x-(me.anchor==="left"?0:w/2)+me.off[0])+"px"; me.el.style.top=(p.y-h/2+me.off[1])+"px"; };
-      ov.onRemove=function(){ if(me.el.parentNode) me.el.parentNode.removeChild(me.el); };
-      if(me.removed) return; me.ov=ov; ov.setMap(gmap); }); return this; };
-  Marker.prototype.remove=function(){ this.removed=true; if(this.ov) this.ov.setMap(null); this.ov=null; return this; };
-  function Popup(o){ this.o=o||{}; }
-  Popup.prototype.setLngLat=function(a){ this.ll={lat:a[1],lng:a[0]}; return this; };
-  Popup.prototype.setHTML=function(h){ this.h=h; return this; };
-  Popup.prototype.addTo=function(){ var me=this; whenReady(function(){ if(me.removed) return; var d=document.createElement("div"); d.innerHTML=me.h;
-      me.iw=new google.maps.InfoWindow({content:d,position:me.ll,maxWidth:parseInt(me.o.maxWidth,10)||260}); me.iw.open({map:gmap}); }); return this; };
-  Popup.prototype.remove=function(){ this.removed=true; if(this.iw) this.iw.close(); return this; };
-  function Bounds(){ this.pts=[]; }
-  Bounds.prototype.extend=function(p){ this.pts.push(p); return this; };
-  return {map:facade,Marker:Marker,Popup:Popup,LngLatBounds:Bounds};
-}
-var USE_G = gmapAllowed(), ML, map;
-if(gKey && !USE_G && (+ls("g_map_fail")||0)>Date.now()-10*6e4) setTimeout(function(){ var n=document.createElement("div"); n.className="gnote";
-  n.innerHTML='Googleの地図を読み込めませんでした（'+String(ls("g_map_err")||"不明").replace(/[<>&]/g,"")+'）。Google Cloud で <a href="https://console.cloud.google.com/apis/library/maps-backend.googleapis.com" target="_blank" rel="noopener">Maps JavaScript API</a> を有効にしてから、10分後に開き直してください。<button type="button">閉じる</button>';
-  n.querySelector("button").onclick=function(){ n.remove(); ls("g_map_fail",null); }; document.body.appendChild(n); },500);
-if(USE_G){ var G=GM(); ML=G; map=G.map; document.documentElement.classList.add("gmap"); }
-else { ML=maplibregl;
-// 国土地理院の公式デモと同じPMTiles版を使う
+// ---- 地図（国土地理院ベクトルタイル。歩く人向けに道・建物・鉄道・地名を描く） ----
 var pmProtocol = new pmtiles.Protocol();
 maplibregl.addProtocol("pmtiles", pmProtocol.tile);
-map = new maplibregl.Map({
-  container:"map", center:[138.3,36.2], zoom:5, minZoom:4, maxZoom:17, attributionControl:{compact:true},
+var ANNO_TEXT = ["to-string",["coalesce",["get","vt_text"],["get","knj"],""]];
+var map = new maplibregl.Map({
+  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:16, minZoom:5, maxZoom:18, attributionControl:{compact:true},
   pitchWithRotate:false, dragRotate:false, localIdeographFontFamily:'"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif',
   style:{
     version:8,
     glyphs:"https://gsi-cyberjapan.github.io/optimal_bvmap/glyphs/{fontstack}/{range}.pbf",
     sources:{
-      blank:{type:"raster",tiles:["https://cyberjapandata.gsi.go.jp/xyz/blank/{z}/{x}/{y}.png"],tileSize:256,minzoom:5,maxzoom:14},
       gsi:{type:"vector",url:"pmtiles://https://cyberjapandata.gsi.go.jp/xyz/optimal_bvmap-v1/optimal_bvmap-v1.pmtiles",
-      attribution:'<a href="https://github.com/gsi-cyberjapan/optimal_bvmap" target="_blank" rel="noopener">国土地理院ベクトルタイル</a>'}},
+        attribution:'<a href="https://github.com/gsi-cyberjapan/optimal_bvmap" target="_blank" rel="noopener">国土地理院ベクトルタイル</a>'}},
     layers:[
-      {id:"sea",type:"background",paint:{"background-color":["step",["zoom"],"#bcd8ef",8,"#f5f1e8"]}},
-      {id:"land",type:"fill",source:"gsi","source-layer":"AdmArea",paint:{"fill-color":"#f5f1e8"}},
-      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#bcd8ef"}},
-      {id:"coast",type:"line",source:"gsi","source-layer":"Cstline",paint:{"line-color":"#8fb6d8","line-width":1}},
-      {id:"pref",type:"line",source:"gsi","source-layer":"AdmBdry",maxzoom:11,paint:{"line-color":"#c9c2b3","line-width":1,"line-dasharray":[4,2]}},
-      {id:"road",type:"line",source:"gsi","source-layer":"RdCL",minzoom:9,filter:["all",["!",MOTORWAY],["in",["get","vt_rdctg"],["literal",["国道","主要道路"]]]],
-        layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#e2dccd","line-width":["interpolate",["linear"],["zoom"],9,1,14,4]}},
-      {id:"hwy-case",type:"line",source:"gsi","source-layer":"RdCL",filter:MOTORWAY,layout:{"line-cap":"round","line-join":"round"},
-        paint:{"line-color":"#27323a","line-width":["interpolate",["linear"],["zoom"],5,3,9,6,12,10,15,16]}},
-      {id:"hwy",type:"line",source:"gsi","source-layer":"RdCL",filter:MOTORWAY,layout:{"line-cap":"round","line-join":"round"},
-        paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],5,1.4,9,3.6,12,6.5,15,11]}}
+      {id:"bg",type:"background",paint:{"background-color":"#f6f4ef"}},
+      {id:"water",type:"fill",source:"gsi","source-layer":"WA",paint:{"fill-color":"#bfd9ee"}},
+      {id:"bldg",type:"fill",source:"gsi","source-layer":"BldA",minzoom:14,paint:{"fill-color":"#e4e0d6","fill-outline-color":"#cfc9bb"}},
+      {id:"road-case",type:"line",source:"gsi","source-layer":"RdCL",minzoom:12,layout:{"line-cap":"round","line-join":"round"},
+        paint:{"line-color":"#cfc8b8","line-width":["interpolate",["linear"],["zoom"],12,1.5,16,8,18,20]}},
+      {id:"road",type:"line",source:"gsi","source-layer":"RdCL",layout:{"line-cap":"round","line-join":"round"},
+        paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],10,0.6,16,6,18,17]}},
+      {id:"rail",type:"line",source:"gsi","source-layer":"RailCL",paint:{"line-color":"#6e7a80","line-width":["interpolate",["linear"],["zoom"],10,1,16,3]}},
+      {id:"label",type:"symbol",source:"gsi","source-layer":"Anno",
+        layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],10,11,17,14]},
+        paint:{"text-color":"#3a4448","text-halo-color":"#ffffff","text-halo-width":2}}
     ]
   }
 });
-}
+map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
-function shieldImage(){
-  var r=2, w=24*r, h=24*r, c=document.createElement("canvas"); c.width=w; c.height=h;
-  var g=c.getContext("2d"); function rr(x,y,ww,hh,rad){ g.beginPath(); g.moveTo(x+rad,y); g.arcTo(x+ww,y,x+ww,y+hh,rad); g.arcTo(x+ww,y+hh,x,y+hh,rad); g.arcTo(x,y+hh,x,y,rad); g.arcTo(x,y,x+ww,y,rad); g.closePath(); }
-  g.fillStyle="#ffffff"; rr(0,0,w,h,7*r); g.fill();
-  g.fillStyle="#0b7a4b"; rr(2*r,2*r,w-4*r,h-4*r,5*r); g.fill();
-  return {width:w,height:h,data:g.getImageData(0,0,w,h).data};
-}
-function circlePoly(c,km){
-  var pts=[]; for(var i=0;i<=64;i++){ var a=i/64*2*Math.PI;
-    pts.push([c[1]+km/(111.32*Math.cos(c[0]*Math.PI/180))*Math.sin(a), c[0]+km/110.57*Math.cos(a)]); }
-  return {type:"Feature",geometry:{type:"LineString",coordinates:pts},properties:{}};
-}
-var EMPTY={type:"FeatureCollection",features:[]};
-
-map.once("style.load",function(){
-  map.addImage("shield", shieldImage(), {pixelRatio:2, stretchX:[[16,32]], stretchY:[[16,32]], content:[10,8,38,40]});
-  map.addSource("ring",{type:"geojson",data:EMPTY});
-  map.addSource("inc",{type:"geojson",data:EMPTY});
-  map.addLayer({id:"ring",type:"line",source:"ring",paint:{"line-color":"#0b7a4b","line-opacity":.45,"line-width":1,"line-dasharray":[3,4]}});
-  map.addLayer({id:"inc-line",type:"line",source:"inc",filter:["==",["geometry-type"],"LineString"],layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],6,4,12,8],"line-opacity":.95}});
-  // ルート表示中だけ出す一般道の詳細（細い道と道路名）
-  map.addLayer({id:"road-detail",type:"line",source:"gsi","source-layer":"RdCL",minzoom:11,filter:["all",["!",MOTORWAY],["!",["in",["get","vt_rdctg"],["literal",["国道","主要道路"]]]]],
-    layout:{"line-cap":"round","line-join":"round",visibility:"none"},paint:{"line-color":"#e6e0d2","line-width":["interpolate",["linear"],["zoom"],11,0.6,16,4]}},"road");
-  map.addLayer({id:"lbl-road",type:"symbol",source:"gsi","source-layer":"Anno",minzoom:10,filter:["all",["==",ANNO_CODE,411],["!",HWY_NAME]],
-    layout:{visibility:"none","text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":12,"symbol-placement":"line","symbol-sort-key":5},
-    paint:{"text-color":"#6b5a3a","text-halo-color":"#ffffff","text-halo-width":2}});
-  // 路線名・番号・IC/JCT/SA/PA名
-  var IC=["in",ANNO_CODE,["literal",[2941,2942,2945]]], SAPA=["in",ANNO_CODE,["literal",[2943,2944]]];
-  map.addLayer({id:"ic-dot",type:"circle",source:"gsi","source-layer":"Anno",minzoom:8,filter:["all",["==",["geometry-type"],"Point"],["any",IC,SAPA]],
-    paint:{"circle-radius":["interpolate",["linear"],["zoom"],8,3,13,5.5],"circle-color":["case",SAPA,"#5bb4f0","#1c252b"],"circle-stroke-color":"#ffffff","circle-stroke-width":1.5}});
-  map.addLayer({id:"lbl-ic",type:"symbol",source:"gsi","source-layer":"Anno",minzoom:8,filter:["all",["==",["geometry-type"],"Point"],["any",IC,SAPA]],
-    layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],8,11,13,13],
-      "text-anchor":"left","text-offset":[0.7,0],"text-variable-anchor":["left","right","top","bottom"],"text-radial-offset":0.7,"symbol-sort-key":3},
-    paint:{"text-color":["case",SAPA,"#1a73c9","#1c252b"],"text-halo-color":"#ffffff","text-halo-width":2}});
-  map.addLayer({id:"lbl-name",type:"symbol",source:"gsi","source-layer":"Anno",filter:["all",["==",ANNO_CODE,411],HWY_NAME],
-    layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],6,12,12,15],
-      "symbol-placement":"line-center","text-letter-spacing":0.05},
-    paint:{"text-color":"#1560b8","text-halo-color":"#ffffff","text-halo-width":2.5}});
-  map.setFilter("lbl-name",["all",["==",ANNO_CODE,411],HWY_NAME,["==",["geometry-type"],"LineString"]]);
-  map.addLayer({id:"lbl-name-pt",type:"symbol",source:"gsi","source-layer":"Anno",filter:["all",["==",ANNO_CODE,411],HWY_NAME,["==",["geometry-type"],"Point"]],
-    layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],6,12,12,15],"symbol-sort-key":1},
-    paint:{"text-color":"#1560b8","text-halo-color":"#ffffff","text-halo-width":2.5}});
-  map.addLayer({id:"lbl-no",type:"symbol",source:"gsi","source-layer":"Anno",filter:["all",["==",ANNO_CODE,2904],["==",["geometry-type"],"Point"]],
-    layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":12,"icon-image":"shield","icon-text-fit":"both",
-      "icon-text-fit-padding":[1,3,1,3],"symbol-sort-key":2},
-    paint:{"text-color":"#ffffff"}});
-  ready=true;
-  if(!USE_G) loadXW(function(X){ if(map.getSource("xw")) return;
-    map.addSource("xw",{type:"geojson",attribution:"高速道路 &copy; OpenStreetMap contributors",data:{type:"FeatureCollection",features:X.lines.map(function(l){ var cs=[]; for(var i=0;i<l.c.length;i+=2) cs.push([l.c[i],l.c[i+1]]);
-      return {type:"Feature",properties:{},geometry:{type:"LineString",coordinates:cs}}; })}});
-    var bf=map.getLayer("flow")?"flow":"ic-dot";
-    map.addLayer({id:"xw-case",type:"line",source:"xw",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#27323a","line-width":["interpolate",["linear"],["zoom"],5,2.6,10,5,14,9]}},bf);
-    map.addLayer({id:"xw-fill",type:"line",source:"xw",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ffffff","line-width":["interpolate",["linear"],["zoom"],5,1.2,10,3,14,6.5]}},bf); });
-  setFlow();
-  if(focus) drawFocus(false);
-  render();
-});
-
-// ---- TomTom 混雑度（高速道路のみ） ----
-function flowUrl(){ return "https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.pbf?key="+encodeURIComponent(key)+"&t="+Date.now(); }
-function setFlow(){
-  if(!ready) return;
-  if(map.getLayer("flow")) map.removeLayer("flow");
-  if(map.getSource("flow")) map.removeSource("flow");
-  if(!key) return;
-  map.addSource("flow",{type:"vector",tiles:[flowUrl()],maxzoom:18,attribution:"交通情報 &copy; TomTom"});
-  var lvl=["to-number",["get","traffic_level"],1];
-  map.addLayer({id:"flow",type:"line",source:"flow","source-layer":"Traffic flow",filter:["all",["==",["get","road_type"],"Motorway"],["any",["<",["to-number",["get","traffic_level"],1],0.75],["==",["to-string",["get","road_closure"]],"true"]]],
-    layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":["case",["==",["to-string",["get","road_closure"]],"true"],"#b36bff",
-      ["step",lvl,"#e8302a",0.5,"#f39a1e"]],
-      "line-width":["interpolate",["linear"],["zoom"],5,1.4,9,3.6,12,6.5,15,11]}}, "ic-dot");
-}
-function refreshFlow(){ var s=map.getSource("flow"); if(s && s.setTiles) s.setTiles([flowUrl()]); }
-
-// ---- 位置 ----
-function km(a,b){ var R=6371,dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;
-  var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
-  return 2*R*Math.asin(Math.sqrt(s)); }
-function bearing(a,b){ var y=Math.sin((b[1]-a[1])*Math.PI/180)*Math.cos(b[0]*Math.PI/180);
-  var x=Math.cos(a[0]*Math.PI/180)*Math.sin(b[0]*Math.PI/180)-Math.sin(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.cos((b[1]-a[1])*Math.PI/180);
-  return Math.atan2(y,x); }
-function pad(){ return {top:130,bottom:(window.innerWidth>=900?40:180),left:(window.innerWidth>=900?420:20),right:70}; }
-function drawFocus(animate){
-  var ring=circlePoly(focus,RADIUS_KM);
-  if(ready) map.getSource("ring").setData(ring);
-  var b=new ML.LngLatBounds(); ring.geometry.coordinates.forEach(function(c){ b.extend(c); });
-  map.fitBounds(b,{padding:pad(),animate:animate});
-}
-function setFocus(ll,label){
-  focus=ll; loadOrbis(ll);
-  $("where").textContent=label+"から半径"+RADIUS_KM+"km";
-  drawFocus(true);
-  $("searchHere").hidden=true;
-  load();
-}
-var meMarker=null;
+// ---- 現在地 ----
+var me=null, meMarker=null;
 function placeMe(){
-  if(!meMarker){ var el=document.createElement("div"); el.className="me"; meMarker=new ML.Marker({element:el}).setLngLat([me[1],me[0]]).addTo(map); }
+  if(!meMarker){ var el=document.createElement("div"); el.className="me"; el.setAttribute("aria-label","現在地"); meMarker=new maplibregl.Marker({element:el}).setLngLat([me[1],me[0]]).addTo(map); }
   else meMarker.setLngLat([me[1],me[0]]);
 }
 function locate(){
-  if(!navigator.geolocation){ noLocation(); return; }
-  $("where").textContent="現在地を探しています…";
+  if(!navigator.geolocation){ say("この端末では現在地を使えません"); return; }
+  say("現在地を探しています…");
   navigator.geolocation.getCurrentPosition(function(p){
-    me=[p.coords.latitude,p.coords.longitude]; placeMe(); setFocus(me,"現在地");
-  }, noLocation, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+    me=[p.coords.latitude,p.coords.longitude]; placeMe(); say("");
+    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),16)});
+  }, function(){ say("現在地が取れませんでした。端末の設定で位置情報を許可してください"); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
-function noLocation(){
-  $("where").textContent="現在地が取れませんでした";
-  $("verdict").textContent="「地方」から場所を選んでください";
-  if(!focus) setFocus([35.68,139.77],"東京周辺");
-}
-if(navigator.geolocation){
-  navigator.geolocation.watchPosition(function(p){ me=[p.coords.latitude,p.coords.longitude]; if(meMarker) placeMe(); checkOrbis(p.coords); if(typeof navTick==="function") navTick(p.coords); },function(){}, {enableHighAccuracy:true,maximumAge:30000});
-}
+$("btnLocate").onclick=locate;
+$("btnHome").onclick=function(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:16}); };
 
-// ---- 事故・渋滞データ ----
-function isHighway(inc){
-  var p=inc.properties||{}, rn=(p.roadNumbers||[]).join(" ");
-  if(/(^|\s)[EC]\d/.test(rn)) return true;
-  var txt=(p.from||"")+" "+(p.to||"")+" "+rn;
-  return /IC|JCT|ＩＣ|ＪＣＴ|SA|PA|料金所|インター|ジャンクション|高速|自動車道|首都高|阪神高速/.test(txt);
-}
-function roadLabel(p){
-  var nums=p.roadNumbers||[]; var e=nums.filter(function(n){return /^[EC]\d/.test(n);})[0];
-  return {no:e||nums[0]||"", name:e&&ROADS[e]?ROADS[e]:(nums.length?"":"路線名不明")};
-}
-function coordsOf(inc){
-  var g=inc.geometry||{}, c=g.coordinates||[];
-  var pts = g.type==="Point" ? [c] : c;
-  return pts.map(function(x){return [x[1],x[0]];});
-}
-function nearest(pts,ll){ var best=pts[0],bd=1e9; pts.forEach(function(p){ var d=km(ll,p); if(d<bd){bd=d;best=p;} }); return {p:best,d:bd}; }
-
-// ---- オービス（固定式速度取締機。OpenStreetMapの登録データ） ----
-var orbOn = ls("orbOn")!=="0", orbs=[], orbMarkers=[], orbCenter=null, orbWarned={};
-function loadOrbis(c){
-  orbCenter=c;
-  var dLat=RADIUS_KM/111, dLon=RADIUS_KM/(111*Math.cos(c[0]*Math.PI/180));
-  var bb=[c[0]-dLat,c[1]-dLon,c[0]+dLat,c[1]+dLon].map(function(v){return v.toFixed(4);}).join(",");
-  var q='[out:json][timeout:25];(node["highway"="speed_camera"]('+bb+');node["enforcement"="maxspeed"]('+bb+');relation["enforcement"="maxspeed"]('+bb+'););out center tags;';
-  // 前回取れたデータがあればすぐ表示（7日以内）。取得は混雑時に別のサーバーへ切り替えて再試行する
-  var ck="orb_"+(Math.round(c[0]*5)/5)+"_"+(Math.round(c[1]*5)/5), cache=null;
-  try{ cache=JSON.parse(ls(ck)||"null"); }catch(e){}
-  if(cache && Date.now()-cache.t<7*864e5){ orbs=cache.o; drawOrbis(); checkOrbis(); }
-  overpass(q)
-    .then(function(j){
-      var seen={};
-      orbs=(j.elements||[]).map(function(e){
-        var lat=e.lat!=null?e.lat:(e.center&&e.center.lat), lon=e.lon!=null?e.lon:(e.center&&e.center.lon);
-        if(lat==null) return null;
-        var k=lat.toFixed(4)+","+lon.toFixed(4); if(seen[k]) return null; seen[k]=1;
-        var t=e.tags||{};
-        return {id:e.type+e.id, ll:[lat,lon], max:t.maxspeed||"", name:t.name||t.description||""};
-      }).filter(Boolean);
-      if(orbCenter!==c) return;
-      drawOrbis(); checkOrbis();
-      try{ ls(ck,JSON.stringify({t:Date.now(),o:orbs})); }catch(e){}
-    }).catch(function(){ if(!cache) $("cOrb").textContent="?"; });
-}
-var OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
-function overpass(q,start){
-  var i=start||0;
-  function go(k){
-    if(k>=OVERPASS.length) return Promise.reject(new Error("overpass"));
-    return fetch(OVERPASS[(i+k)%OVERPASS.length],{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded"}})
-      .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-      .catch(function(){ return go(k+1); });
-  }
-  return go(0);
-}
-var CAM_SVG='<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path fill="#ff2d55" d="M9 4h6l1.5 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.5z"/><circle cx="12" cy="13" r="4.2" fill="#fff"/><circle cx="12" cy="13" r="2.4" fill="#ff2d55"/></svg>';
-function orbZoom(){ document.documentElement.classList.toggle("lowz",map.getZoom()<9); }
-map.on("moveend",orbZoom);
-function drawOrbis(){
-  orbMarkers.forEach(function(m){ m.remove(); }); orbMarkers=[];
-  $("cOrb").textContent = orbOn ? orbs.length : "OFF";
-  if(!orbOn) return;
-  orbs.forEach(function(o){
-    var el=document.createElement("div"); el.className="orbis"; el.setAttribute("aria-label","オービス"); el.innerHTML=CAM_SVG;
-    el.onclick=function(ev){ ev.stopPropagation(); if(popup) popup.remove();
-      popup=new ML.Popup({offset:14}).setLngLat([o.ll[1],o.ll[0]]).setHTML("<b>オービス</b>"+(o.max?"　制限 "+esc(o.max)+"km/h":"")+(o.name?"<br>"+esc(o.name):"")+(me?"<br>現在地から "+km(me,o.ll).toFixed(1)+"km":"")).addTo(map); };
-    orbMarkers.push(new ML.Marker({element:el}).setLngLat([o.ll[1],o.ll[0]]).addTo(map));
-  });
-}
-function checkOrbis(c){
-  if(!orbOn || !me) { $("orbAlert").hidden=true; return; }
-  if(orbCenter && km(orbCenter,me) > RADIUS_KM*0.5) loadOrbis(me);
-  if(R.nav && R.cur && R.cur.r.orbs) return;
-  var hd = (c && c.heading!=null && !isNaN(c.heading) && c.speed>3) ? c.heading : null, best=null, bd=1e9;
-  orbs.forEach(function(o){
-    var d=km(me,o.ll); if(d>1.0) return;
-    if(hd!=null){ var b=(bearing(me,o.ll)*180/Math.PI+360)%360, diff=Math.abs(((b-hd)+540)%360-180); if(diff>50) return; }
-    if(d<bd){ bd=d; best=o; }
-  });
-  if(!best){ $("orbAlert").hidden=true; return; }
-  $("orbDist").textContent = Math.round(bd*1000/10)*10+"m";
-  $("orbText").textContent = "先にオービス"+(best.max?"（制限"+best.max+"km/h）":"");
-  $("orbAlert").hidden=false;
-  if(!orbWarned[best.id]){ orbWarned[best.id]=1; try{ navigator.vibrate && navigator.vibrate([300,150,300]); }catch(e){} }
-}
-$("orbAlert").onclick=function(){ $("orbAlert").hidden=true; };
-$("btnOrb").onclick=function(){ orbOn=!orbOn; ls("orbOn",orbOn?"1":"0"); this.classList.toggle("on",orbOn); this.setAttribute("aria-pressed",orbOn); drawOrbis(); checkOrbis(); };
-$("btnOrb").classList.toggle("on",orbOn); $("btnOrb").setAttribute("aria-pressed",orbOn);
-
-function load(){
-  if(!focus) return;
-  if(!key && !demo){ render(); return; }
-  var my=++seq;
-  $("updated").textContent="取得中…";
-  if(demo){ incidents=sampleData(); render(); stamp(); return; }
-  var dLat=RADIUS_KM/111, dLon=RADIUS_KM/(111*Math.cos(focus[0]*Math.PI/180));
-  var bbox=[focus[1]-dLon,focus[0]-dLat,focus[1]+dLon,focus[0]+dLat].map(function(v){return v.toFixed(4);}).join(",");
-  var fields="{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,events{description,code},startTime,from,to,length,delay,roadNumbers}}}";
-  var url="https://api.tomtom.com/traffic/services/5/incidentDetails?key="+encodeURIComponent(key)+"&bbox="+bbox+
-    "&fields="+encodeURIComponent(fields)+"&language=ja-JP&timeValidityFilter=present";
-  fetch(url).then(function(r){ if(r.status===403||r.status===401) throw new Error("key"); if(!r.ok) throw new Error(r.status); return r.json(); })
-  .then(function(j){ if(my!==seq) return; incidents=j.incidents||[]; render(); stamp(); })
-  .catch(function(e){ if(my!==seq) return;
-    $("updated").textContent="";
-    $("verdict").textContent = e.message==="key" ? "APIキーが使えません。設定を確認してください" : "交通情報を取得できませんでした";
-    $("list").innerHTML='<div class="empty">通信状況を確認して「更新」を押してください。</div>';
-  });
-}
-function stamp(){ $("updated").textContent=new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+" 更新"; if(demo) $("updated").innerHTML+='<span class="demo-flag">サンプル</span>'; }
-
-var pins=[], popup=null;
-function showPopup(r,html){ if(popup) popup.remove(); popup=new ML.Popup({offset:16,maxWidth:"260px"}).setLngLat([r.pts[0][1],r.pts[0][0]]).setHTML(html).addTo(map); }
-function render(){
-  if(R && R.nav) return;
-  pins.forEach(function(m){ m.remove(); }); pins=[];
-  if(ready) map.getSource("inc").setData(EMPTY);
-  if(!focus) return;
-  if(!key && !demo){
-    $("verdict").textContent="渋滞データが未接続です";
-    ["cAcc","cJam","cCls"].forEach(function(id){ $(id).textContent="–"; });
-    $("blips").innerHTML="";
-    $("list").innerHTML='<div class="empty">右の「設定」から渋滞データを接続すると、ここに高速道路の事故・渋滞が並びます。地図上の緑の番号は高速道路の路線番号です。</div>';
-    return;
-  }
-  var rows = incidents.filter(isHighway).map(function(i){
-    var pts=coordsOf(i); if(!pts.length) return null;
-    var n=nearest(pts,focus);
-    return {i:i,p:i.properties||{},pts:pts,near:n.p,dist:n.d,cat:cat((i.properties||{}).iconCategory)};
-  }).filter(function(r){ return r && r.dist<=RADIUS_KM*1.05; });
-  var rank={acc:0,cls:1,jam:2,etc:3};
-  rows.sort(function(a,b){ return a.dist-b.dist; });
-
-  var n={acc:0,jam:0,cls:0};
-  rows.forEach(function(r){ if(n[r.cat.k]!==undefined) n[r.cat.k]++; });
-  $("cAcc").textContent=n.acc; $("cJam").textContent=n.jam; $("cCls").textContent=n.cls;
-  $("verdict").textContent = n.acc ? "事故 "+n.acc+"件。近くの高速道路に注意" :
-    n.jam ? "事故なし。渋滞が"+n.jam+"か所" : n.cls ? "事故・渋滞なし。規制が"+n.cls+"か所" : "周辺の高速道路は順調です";
-
-  var g=$("blips"); g.innerHTML="";
-  rows.slice().sort(function(a,b){return rank[b.cat.k]-rank[a.cat.k];}).forEach(function(r){
-    var d=Math.min(r.dist,RADIUS_KM)/RADIUS_KM*46, a=bearing(focus,r.near);
-    var c=document.createElementNS("http://www.w3.org/2000/svg","circle");
-    c.setAttribute("cx",(50+d*Math.sin(a)).toFixed(1)); c.setAttribute("cy",(50-d*Math.cos(a)).toFixed(1)); c.setAttribute("r",r.cat.k==="acc"?3.6:2.6);
-    c.setAttribute("fill",r.cat.h); c.setAttribute("stroke","#ffffff"); c.setAttribute("stroke-width","1");
-    g.appendChild(c);
-  });
-
-  var feats=[], list=$("list"); list.innerHTML="";
-  if(!rows.length) list.innerHTML='<div class="empty">半径'+RADIUS_KM+'km以内の高速道路に事故・渋滞・規制はありません。</div>';
-  rows.forEach(function(r){
-    var p=r.p, rl=roadLabel(p);
-    var desc=(p.events||[]).map(function(e){return e.description;}).filter(Boolean).join("・");
-    var delayMin=p.delay?Math.round(p.delay/60):0, lenKm=p.length?(p.length/1000):0;
-    var sect=(p.from||"")+(p.to?" → "+p.to:"");
-    if(r.pts.length>1) feats.push({type:"Feature",properties:{color:r.cat.h},geometry:{type:"LineString",coordinates:r.pts.map(function(x){return [x[1],x[0]];})}});
-    var html='<b>'+esc(r.cat.t)+'</b>　'+esc(rl.no)+' '+esc(rl.name)+'<br>'+esc(sect)+(desc?'<br>'+esc(desc):'')+
-      (delayMin?'<br>遅れ 約'+delayMin+'分':'')+(lenKm?'・長さ '+lenKm.toFixed(1)+'km':'');
-    var el=document.createElement("div"); el.className="pinwrap";
-    el.innerHTML='<span class="pin" style="background:'+r.cat.h+'">'+esc(r.cat.t.charAt(0))+'</span>'+
-      (rl.no||rl.name?'<span class="pinlbl">'+(rl.no?'<span class="e-no">'+esc(rl.no)+'</span>':'')+esc(rl.name)+'</span>':'');
-    el.onclick=function(ev){ ev.stopPropagation(); showPopup(r,html); };
-    pins.push(new ML.Marker({element:el,anchor:"left",offset:[-13,0]}).setLngLat([r.pts[0][1],r.pts[0][0]]).addTo(map));
-
-    var b=document.createElement("button"); b.type="button"; b.className="item";
-    b.innerHTML='<span class="stripe" style="background:'+r.cat.h+'"></span>'+
-      '<span class="main"><span class="road"><span class="tag" style="background:'+r.cat.h+'">'+esc(r.cat.t)+'</span>'+
-      (rl.no?'<span class="e-no">'+esc(rl.no)+'</span>':'')+'<span class="rname">'+esc(rl.name)+'</span></span>'+
-      '<span class="sect">'+esc(sect||"区間情報なし")+'</span>'+(desc?'<span class="desc">'+esc(desc)+'</span>':'')+'</span>'+
-      '<span class="side"><span><b class="num">'+(r.dist<1?"<1":Math.round(r.dist))+'</b> km先</span>'+
-      (delayMin?'<span class="num">+'+delayMin+'分</span>':'')+(lenKm>=0.1?'<span class="num">'+lenKm.toFixed(1)+'km</span>':'')+'</span>';
-    b.onclick=function(){
-      var bb=new ML.LngLatBounds(); r.pts.forEach(function(x){ bb.extend([x[1],x[0]]); });
-      map.fitBounds(bb,{padding:pad(),maxZoom:13}); showPopup(r,html); setSheet(false);
-    };
-    list.appendChild(b);
-  });
-  if(ready) map.getSource("inc").setData({type:"FeatureCollection",features:feats});
-}
-
-// ---- サンプル（実在のIC・JCTの位置、東京駅周辺） ----
-function sampleData(){
-  function ln(a,b){ return {type:"LineString",coordinates:[[a[1],a[0]],[b[1],b[0]]]}; }
-  return [
-    {geometry:ln([35.456,139.378],[35.439,139.392]),properties:{iconCategory:1,roadNumbers:["E1"],from:"厚木IC",to:"海老名JCT",delay:1320,length:4200,events:[{description:"事故・車線規制"}]}},
-    {geometry:ln([35.672,139.318],[35.676,139.463]),properties:{iconCategory:6,roadNumbers:["E20"],from:"八王子JCT",to:"国立府中IC",delay:900,length:13500,events:[{description:"渋滞"}]}},
-    {geometry:ln([35.772,139.690],[35.751,139.696]),properties:{iconCategory:6,roadNumbers:["C2"],from:"板橋JCT",to:"熊野町JCT",delay:420,length:2400,events:[{description:"渋滞"}]}},
-    {geometry:ln([35.659,140.071],[35.630,140.123]),properties:{iconCategory:8,roadNumbers:["E14"],from:"武石IC",to:"穴川IC",delay:0,length:5600,events:[{description:"工事のため通行止め"}]}},
-    {geometry:ln([35.796,139.496],[35.893,139.461]),properties:{iconCategory:6,roadNumbers:["E17"],from:"所沢IC",to:"川越IC",delay:300,length:11000,events:[{description:"混雑"}]}}
-  ];
-}
-
-// ---- ルート探索（TomTom Routing API） ----
-var R={dest:null, hwy:ls("rHwy")!=="0", routes:[], picks:[], sel:0, nav:false, timer:null, seen:{}, lastDelay:null, audio:null, wake:null};
-function tt(path,params){ return "https://api.tomtom.com"+path+"?key="+encodeURIComponent(key)+"&"+params; }
-function fmtDur(sec){ var m=Math.round(sec/60); return m>=60 ? Math.floor(m/60)+"時間"+(m%60?(m%60)+"分":"") : m+"分"; }
-function fmtClock(d){ return d.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"}); }
-function tollYen(km){ return km>0 ? Math.round((150+24.6*km)*1.1/10)*10 : 0; } // NEXCO普通車の目安
-function origin(){ return me || focus; }
-function hereName(){ return me?"現在地":(focus?"地図で選んだ場所":"現在地（取得中）"); }
-// 出発地と目的地の表示（入れ替え中は目的地→現在地）
-function updateEnds(){
-  var d=R.dest?R.dest.name:"下の欄で目的地を探す";
-  $("endA").textContent=R.swap?d:hereName(); $("endB").textContent=R.swap?hereName():d;
-  $("destInput").placeholder=R.swap?"出発地：施設名・住所・電話番号":"施設名・住所・電話番号";
-}
-$("btnViewMap").onclick=function(){
-  $("routePanel").hidden=true; $("backRoute").hidden=false; $("searchHere").hidden=true; document.querySelector(".gauge").hidden=true;
-  var r=R.picks[R.sel]&&R.picks[R.sel].r; if(!r) return; var bb=new ML.LngLatBounds(); r.pts.forEach(function(p){ bb.extend([p[1],p[0]]); });
-  map.fitBounds(bb,{padding:{top:70,bottom:(parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sheet-h"))||180)+20,left:30,right:80},maxZoom:14});
-};
-$("backRoute").onclick=function(){ $("backRoute").hidden=true; document.querySelector(".gauge").hidden=false; $("routePanel").hidden=false; };
-$("btnSwap").onclick=function(){ R.swap=!R.swap; updateEnds(); if(R.dest) searchRoutes(); };
-function setHwy(h){ R.hwy=h; ls("rHwy",h?"1":"0"); $("rHwy").setAttribute("aria-pressed",h); $("rGen").setAttribute("aria-pressed",!h); if(R.dest) searchRoutes(); }
-$("rHwy").onclick=function(){ setHwy(true); }; $("rGen").onclick=function(){ setHwy(false); };
-setHwy(R.hwy);
-
-$("btnRoute").onclick=function(){
-  if(!key && !gKey){ openKey(); return; }
-  updateEnds(); $("backRoute").hidden=true; document.querySelector(".gauge").hidden=R.nav;
-  $("routePanel").hidden=false; setTimeout(function(){ $("destInput").focus(); },50);
-};
-// 「閉じる」はルート検索をすべて終了し、地図を元に戻す
-$("closeRoute").onclick=function(){
-  $("routePanel").hidden=true; clearTimeout(destTimer); destSeq++;
-  if(!R.nav){ clearRoute(); R.dest=null; R.swap=false; updateEnds(); $("btnViewMap").hidden=true; R.routes=[]; R.picks=[]; $("rCards").innerHTML=""; $("rSteps").hidden=true; $("btnGo").hidden=true; $("routeNote").textContent="";
-    $("destInput").value=""; $("destSugg").hidden=true; $("destSugg").innerHTML=""; }
-};
-$("routePanel").addEventListener("click",function(e){ if(e.target===this) this.hidden=true; });
-
-// 目的地検索：TomTom・OpenStreetMap・国土地理院をまとめて探し、候補を一覧にする
-function norm(t){ return (t||"").normalize("NFKC").replace(/[\s・･\-－ー]/g,function(c){ return c==="ー"?c:""; }).toLowerCase(); }
-function match(q,n){
-  if(!q||!n) return 0;
-  if(n.indexOf(q)===0) return 3;
-  if(n.indexOf(q)>=0) return 2.5;
-  var hit=0, tot=Math.max(1,q.length-1);
-  for(var i=0;i<q.length-1;i++) if(n.indexOf(q.substr(i,2))>=0) hit++;
-  return 2*hit/tot;
-}
-// TomTom は1秒あたりの回数制限があるので、同時に2件までにして 429 のときは1回だけ待って再試行する
-var ttBusy=0, ttWait=[];
-function ttFetch(url){
-  return new Promise(function(ok,ng){
-    function go(tries){
-      ttBusy++;
-      fetch(url).then(function(r){
-        if(r.status===429 && tries<2){ ttBusy--; next(); setTimeout(function(){ queue(function(){ go(tries+1); }); },700); return; }
-        if(!r.ok) throw new Error("TomTom "+r.status); return r.json().then(function(j){ ttBusy--; next();
-          ok((j.results||[]).map(function(x){ return {name:(x.poi&&x.poi.name)||x.address.freeformAddress, addr:x.address.freeformAddress||"", tel:(x.poi&&x.poi.phone)||"", ll:[x.position.lat,x.position.lon]}; })); });
-      }).catch(function(e){ ttBusy--; next(); ng(e); });
-    }
-    queue(function(){ go(0); });
-  });
-}
-function queue(f){ if(ttBusy<2) f(); else ttWait.push(f); }
-function next(){ if(ttWait.length && ttBusy<2) ttWait.shift()(); }
-var jpN=0;
-function jsonp(url){
-  return new Promise(function(ok,ng){
-    var cb="__jp"+(++jpN), sc=document.createElement("script"), t=setTimeout(function(){ done(); ng(new Error("Yahoo 応答なし")); },8000);
-    function done(){ clearTimeout(t); try{ delete window[cb]; }catch(e){ window[cb]=undefined; } sc.remove(); }
-    window[cb]=function(j){ done(); ok(j); };
-    sc.onerror=function(){ done(); ng(new Error("Yahoo 接続エラー")); };
-    sc.src=url+"&callback="+cb; document.head.appendChild(sc);
-  });
-}
-// 電話番号（0から始まる10〜11桁）なら数字だけにして返す
-function telDigits(t){ var d=(t||"").normalize("NFKC").replace(/[\s()\-‐－ー]/g,""); if(/^\+?81/.test(d)) d="0"+d.replace(/^\+?81/,""); return /^0\d{9,10}$/.test(d)?d:""; }
-function isAddr(t){ return /[都道府県]|[市区町村郡].*\d|丁目|番地/.test(t); }
-function searchPlaces(q,o,typing,onUpdate){
-  var ph=telDigits(q);
-  if(ph){ var hy=q.normalize("NFKC"); q=/-/.test(hy)?hy:ph; }
-  var near=o?"&lat="+o[0]+"&lon="+o[1]:"";
-  function ttq(kind,extra){ return ttFetch(tt("/search/2/"+kind+"/"+encodeURIComponent(q)+".json","language=ja-JP&countrySet=JP&limit=10"+near+extra)); }
-  var tomtom=Promise.resolve([]);
-  var tomtom2=ttq("search",typing?"&typeahead=true":"");
-  // Photon（OpenStreetMapのデータ、入力中の候補表示向け）
-  var photon=ph?Promise.resolve([]):fetch("https://photon.komoot.io/api/?lang=default&limit=8&q="+encodeURIComponent(q)+(o?"&lat="+o[0]+"&lon="+o[1]:"")+"&bbox=122,20,154,46")
-    .then(function(r){ if(!r.ok) throw new Error("Photon "+r.status); return r.json(); })
-    .then(function(j){ return (j.features||[]).map(function(f){ var pr=f.properties||{};
-      return {name:pr.name||pr.street||"", addr:[pr.state,pr.county,pr.city,pr.district,pr.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}; })
+// ---- 場所の検索（国土地理院の地名・住所＋OpenStreetMap） ----
+function photon(q){
+  return fetch("https://photon.komoot.io/api/?lang=default&limit=8&q="+encodeURIComponent(q)+"&lat="+AKABANE[0]+"&lon="+AKABANE[1]+"&bbox=122,20,154,46")
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(j){ return (j.features||[]).map(function(f){ var p=f.properties||{};
+      return {name:p.name||p.street||"", addr:[p.state,p.county,p.city,p.district,p.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}; })
       .filter(function(c){ return c.name; }); });
-  // OpenStreetMapの検索は入力中の自動検索が禁止されているため、確定時だけ使う
-  var osm=(typing||ph)?Promise.resolve([]):fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=jp&accept-language=ja&limit=8&q="+encodeURIComponent(q))
-    .then(function(r){ if(!r.ok) throw new Error("OSM "+r.status); return r.json(); })
+}
+function nominatim(q){
+  return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=jp&accept-language=ja&limit=8&q="+encodeURIComponent(q))
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(a){ return a.map(function(x){ var parts=(x.display_name||"").split(",").map(function(t){return t.trim();});
       return {name:x.name||parts[0], addr:parts.slice(1).reverse().filter(function(t){return !/^\d{3}-?\d{4}$/.test(t)&&t!=="日本";}).join(""), ll:[+x.lat,+x.lon]}; }); });
-  var gsiRaw=ph?Promise.resolve([]):fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q))
+}
+function gsi(q){
+  return fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q))
     .then(function(r){ return r.json(); })
-    .then(function(a){ return (a||[]).map(function(x){ return {name:x.properties.title, addr:"住所・地名", ll:[x.geometry.coordinates[1],x.geometry.coordinates[0]]}; }); });
-  var gsi=gsiRaw.then(function(a){ return a.slice(0,5); });
-  // 「館山カントリー」のように地名で始まる入力は、その地名の周りに絞って施設を探す
-  var area=gsiRaw.then(function(a){
-    var anchors=[];
-    a.forEach(function(c){
-      var t=c.name.replace(/^.+?[都道府県]/,""), stems=[t.replace(/[市町村区]$/,""), t.replace(/^.*[市町村区郡]/,"")];
-      stems.forEach(function(st){ if(st.length>=2 && q.indexOf(st)===0 && q.length>st.length && anchors.length<3 && !anchors.some(function(x){ return km(x.ll,c.ll)<5; })) anchors.push({ll:c.ll,rest:q.slice(st.length)}); });
+    .then(function(a){ return (a||[]).slice(0,5).map(function(x){ return {name:x.properties.title, addr:"住所・地名", ll:[x.geometry.coordinates[1],x.geometry.coordinates[0]]}; }); });
+}
+var seq=0, destMarker=null;
+function search(q){
+  var my=++seq; q=q.trim(); if(!q) return;
+  say("探しています…"); $("sugg").hidden=true;
+  Promise.all([photon(q),nominatim(q),gsi(q)].map(function(p){ return p.catch(function(){ return []; }); })).then(function(rs){
+    if(my!==seq) return;
+    var out=[], base=me||AKABANE;
+    [].concat.apply([],rs).forEach(function(c){
+      if(!c.ll||isNaN(c.ll[0])) return;
+      if(out.some(function(d){ return d.name===c.name && km(d.ll,c.ll)<0.2; })) return;
+      c.d=km(base,c.ll); out.push(c);
     });
-    if(o) anchors.sort(function(x,y){ return km(o,x.ll)-km(o,y.ll); });
-    anchors=anchors.slice(0,2);
-    return Promise.all(anchors.map(function(an){
-      var near2="&lat="+an.ll[0]+"&lon="+an.ll[1]+"&radius=30000";
-      var jobs=[ttFetch(tt("/search/2/poiSearch/"+encodeURIComponent(q)+".json","language=ja-JP&countrySet=JP&limit=5"+near2+(typing?"&typeahead=true":"")))];
-      // OpenStreetMap の施設名（地名を除いた部分）で周辺を探す。確定時のみ
-      if(!typing && an.rest.length>=2){
-        var ql='[out:json][timeout:15];nwr["name"~"'+an.rest.replace(/[\\"\[\]().*+?^$|{}]/g,"")+'"](around:30000,'+an.ll[0]+','+an.ll[1]+');out center 10;';
-        jobs.push(overpass(ql,1)
-          .then(function(j){ return (j.elements||[]).map(function(e){ var la=e.lat!=null?e.lat:(e.center||{}).lat, lo=e.lon!=null?e.lon:(e.center||{}).lon;
-            var tg=e.tags||{}; return {name:tg.name, addr:[tg["addr:province"],tg["addr:city"]].filter(Boolean).join("")||"OpenStreetMap", ll:[la,lo]}; }).filter(function(c){ return c.name&&c.ll[0]!=null; }); }).catch(function(){ return []; }));
-      }
-      return Promise.all(jobs.map(function(p){ return p.catch(function(){ return []; }); })).then(function(rs){ return [].concat.apply([],rs); });
-    })).then(function(rs){ return [].concat.apply([],rs); });
-  });
-  // 位置を渡すと Yahoo! は現在地の近くだけに絞ってしまうため渡さない（距離は手元で計算）
-  var yahoo=yjId?jsonp("https://map.yahooapis.jp/search/local/V1/localSearch?appid="+encodeURIComponent(yjId)+"&output=json&results=10&detail=full&query="+encodeURIComponent(q))
-    .then(function(j){ if(j&&j.Error) throw new Error("Yahoo "+(j.Error.Message||"エラー")); return ((j&&j.Feature)||[]).map(function(f){ var c=((f.Geometry||{}).Coordinates||"").split(",");
-      return {name:f.Name, addr:(f.Property||{}).Address||"", tel:(f.Property||{}).Tel1||"", src:"y", ll:[+c[1],+c[0]]}; }); }):Promise.resolve([]);
-  // 住所：Yahoo! ジオコーダ（番地まで）
-  var yaddr=(yjId && !ph && isAddr(q))?jsonp("https://map.yahooapis.jp/geocode/V1/geoCoder?appid="+encodeURIComponent(yjId)+"&output=json&results=3&query="+encodeURIComponent(q))
-    .then(function(j){ return ((j&&j.Feature)||[]).map(function(f){ var c=((f.Geometry||{}).Coordinates||"").split(","); return {name:f.Name, addr:"住所", ll:[+c[1],+c[0]]}; }); }):Promise.resolve([]);
-  // 返ってきた検索元から順に一覧を更新する。遅い検索元は8秒で打ち切る
-  // Google の施設検索（入力中の候補。位置は選んだときに取得する）
-  var gpl=(!ph && gKey && gCnt().a<9000)?gAuto(q,o):Promise.resolve([]);
-  var srcs=ph?[yahoo,tomtom2]:[gpl,yaddr,yahoo,area,tomtom,tomtom2,photon,osm,gsi], got=srcs.map(function(){ return null; }), left=srcs.length;
-  function merge(){
-      var out=[], errs=[];
-      got.forEach(function(r){ if(!r) return; if(!r.ok){ errs.push(r.e); return; }
-        r.v.forEach(function(c){
-          if(c.pid){ if(!out.some(function(d){ return norm(d.name)===norm(c.name); })) out.push(c); return; }
-          if(!c.ll||isNaN(c.ll[0])) return;
-          if(out.some(function(d){ return d.pid && norm(d.name)===norm(c.name); })) return;
-          if(ph){ var td=telDigits(c.tel); c.telExact=(td===ph); c.telNear=!c.telExact && (td ? td.slice(0,6)===ph.slice(0,6) : c.src==="y");
-            if(!c.telExact && !c.telNear) return; if(!c.telShown && c.tel){ c.telShown=1; c.addr=c.tel+"・"+c.addr; } }
-          if(out.some(function(d){ return d.ll && km(d.ll,c.ll)<0.3; })) return; out.push(c); }); });
-      if(o) out.forEach(function(c){ if(c.ll) c.d=km(o,c.ll); });
-      // 入力した文字に近い名前ほど上に。同じくらいなら近い順
-      var nq=norm(q);
-      out.forEach(function(c){ c.m=Math.max(match(nq,norm(c.name)), match(nq,norm(c.addr))*0.95); });
-      out.sort(function(a,b){ return (b.m-a.m) || ((a.d||0)-(b.d||0)); });
-      if(ph){ var ex=out.filter(function(c){ return c.telExact; }); if(ex.length) out=ex; else out.forEach(function(c){ c.approx=1; }); }
-      return {list:out.slice(0,12), errs:errs, pending:left>0};
-  }
-  return new Promise(function(done){
-    srcs.forEach(function(p,i){
-      var to=new Promise(function(_,ng){ setTimeout(function(){ ng(new Error("応答が遅いため省略")); },8000); });
-      Promise.race([p,to]).then(function(v){ return {ok:true,v:v}; },function(e){ return {ok:false,e:String(e.message||e)}; })
-        .then(function(r){ got[i]=r; left--; var m=merge(); if(left>0){ if(onUpdate) onUpdate(m); } else done(m); });
+    out.sort(function(a,b){ return a.d-b.d; }); out=out.slice(0,10);
+    var ul=$("sugg"); ul.innerHTML="";
+    if(!out.length){ say("見つかりませんでした。別の言い方で試してください"); return; }
+    out.forEach(function(c){
+      var li=document.createElement("li"), b=document.createElement("button"); b.type="button";
+      b.innerHTML=esc(c.name)+"<small>"+esc(c.addr)+"・"+(c.d<1?Math.round(c.d*1000)+"m":c.d.toFixed(1)+"km")+"</small>";
+      b.onclick=function(){ pick(c); };
+      li.appendChild(b); ul.appendChild(li);
     });
+    ul.hidden=false; say(out.length+"件見つかりました");
   });
 }
-var destSeq=0, destTimer=null;
-// 入力履歴（このスマホの中だけに最大15件）
-function getHist(){ try{ return JSON.parse(ls("destHist")||"[]"); }catch(e){ return []; } }
-function addHist(x){
-  var h=getHist().filter(function(y){ return !(y.name===x.name && km(y.ll,x.ll)<0.3); });
-  h.unshift({name:x.name, addr:x.addr||"", ll:x.ll}); ls("destHist",JSON.stringify(h.slice(0,15)));
+function pick(c){
+  $("sugg").hidden=true; say("");
+  if(!destMarker){ var el=document.createElement("div"); el.className="pin"; destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
+  destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
+  map.flyTo({center:[c.ll[1],c.ll[0]],zoom:17});
+  $("sheetTitle").textContent=c.name;
+  $("sheetText").textContent=(c.addr?c.addr+"。":"")+"この場所までの段差・道幅・坂の情報は準備中です。";
 }
-function showHist(){
-  var box=$("destSugg"), h=getHist(), o=origin(); destSeq++;
-  if(!h.length){ box.hidden=true; return; }
-  box.hidden=false; box.innerHTML='<button type="button" disabled><small>最近の目的地</small></button>';
-  h.forEach(function(x){
-    var b=document.createElement("button"); b.type="button";
-    b.innerHTML='🕘 '+esc(x.name)+'<small>'+esc(x.addr)+(o?'・約'+Math.round(km(o,x.ll))+'km':'')+'</small>';
-    b.onclick=function(){ pickDest(x); };
-    box.appendChild(b);
-  });
-  var c=document.createElement("button"); c.type="button"; c.className="hint"; c.textContent="履歴を消す";
-  c.onclick=function(){ ls("destHist",null); box.hidden=true; }; box.appendChild(c);
-}
-// 候補を選んだとき。Google の候補は位置をここで取得する
-function pickDest(x){
-  clearTimeout(destTimer); destSeq++; var box=$("destSugg");
-  $("destInput").value=x.name; box.hidden=true; $("destInput").blur();
-  (x.ll?Promise.resolve(x):gDetail(x)).then(function(y){
-    R.dest={name:y.name,ll:y.ll}; addHist(y); searchRoutes();
-  }).catch(function(e){ $("rCards").innerHTML='<div class="empty">場所を取得できませんでした（'+esc(e.message||"")+'）</div>'; });
-}
-var gSess=null;
-function gAuto(q,o){
-  if(!gSess) gSess=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():String(Date.now())+Math.random();
-  var body={input:q,languageCode:"ja",regionCode:"jp",includedRegionCodes:["jp"],sessionToken:gSess};
-  if(o){ body.locationBias={circle:{center:{latitude:o[0],longitude:o[1]},radius:50000}}; body.origin={latitude:o[0],longitude:o[1]}; }
-  var c=gCnt(); c.a=(c.a||0)+1; ls("g_cnt",JSON.stringify(c));
-  return fetch("https://places.googleapis.com/v1/places:autocomplete",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":gKey},body:JSON.stringify(body)})
-    .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error("Google検索 "+r.status); return j; }); })
-    .then(function(j){ return (j.suggestions||[]).map(function(sg){ var p=sg.placePrediction; if(!p) return null; var sf=p.structuredFormat||{};
-      return {pid:p.placeId, name:((sf.mainText||{}).text)||((p.text||{}).text)||"", addr:(((sf.secondaryText||{}).text)||"").replace(/^日本、\s*/,""), d:p.distanceMeters!=null?p.distanceMeters/1000:undefined}; }).filter(Boolean); });
-}
-function gDetail(x){
-  var c=gCnt(); c.d=(c.d||0)+1; ls("g_cnt",JSON.stringify(c));
-  var tok=gSess; gSess=null;
-  return fetch("https://places.googleapis.com/v1/places/"+encodeURIComponent(x.pid)+"?languageCode=ja"+(tok?"&sessionToken="+encodeURIComponent(tok):""),
-    {headers:{"X-Goog-Api-Key":gKey,"X-Goog-FieldMask":"location,formattedAddress"}})
-    .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error("Google "+r.status); return j; }); })
-    .then(function(j){ if(!j.location) throw new Error("位置なし"); return {name:x.name, addr:x.addr||j.formattedAddress||"", ll:[j.location.latitude,j.location.longitude]}; });
-}
-function addYjHint(){ var box=$("destSugg"), h=document.createElement("button"); h.type="button"; h.className="hint"; h.innerHTML='探している施設が出ないときは<small>Yahoo! の施設検索を追加（無料）</small>';
-  h.onclick=function(){ $("routePanel").hidden=true; openKey(); setTimeout(function(){ $("yjInput").scrollIntoView({block:"center"}); },50); }; box.appendChild(h); }
-function suggest(q,typing){
-  var my=++destSeq, o=origin(), box=$("destSugg");
-  if(q.length<2){ box.hidden=true; return; }
-  if(/^[\d０-９\s\-‐－()+]+$/.test(q) && !telDigits(q)){ box.hidden=false; box.innerHTML='<button type="button" disabled>電話番号は市外局番から最後まで入力してください</button>'; return; }
-  box.hidden=false; if(!box.children.length || !typing) box.innerHTML='<button type="button" disabled>「'+esc(q)+'」の候補を探しています…</button>';
-  function show(res){
-    if(my!==destSeq) return;
-    if(res.pending && !res.list.length) return;
-    box.innerHTML="";
-    if(!res.list.length && telDigits(q)){ box.innerHTML='<button type="button" disabled>この電話番号の施設は見つかりませんでした'+(yjId?'<small>施設名や住所でも試してください'+(res.errs.length?'（'+esc(res.errs.join(" / "))+'）':'')+'</small>':'<small>電話番号での検索は Yahoo! の施設検索を追加すると確実になります</small>')+'</button>'; if(!yjId){ addYjHint(); } return; }
-    if(res.list.length && res.list[0].approx){ var ap=document.createElement("button"); ap.type="button"; ap.disabled=true; ap.innerHTML='<small>番号が完全に一致する施設はありませんでした。近い候補：</small>'; box.appendChild(ap); }
-    if(!res.list.length){ box.innerHTML='<button type="button" disabled>候補が見つかりません。続けて入力するか、施設名・住所で試してください'+(res.errs.length?'<small>'+esc(res.errs.join(" / "))+'</small>':'')+'</button>'; return; }
-    res.list.forEach(function(x){
-      var b=document.createElement("button"); b.type="button";
-      b.innerHTML=esc(x.name)+'<small>'+esc(x.addr)+(x.d!=null?'・約'+Math.round(x.d)+'km':'')+'</small>';
-      b.onclick=function(){ pickDest(x); };
-      box.appendChild(b);
-    });
-    if(res.pending){ var pd=document.createElement("button"); pd.type="button"; pd.disabled=true; pd.innerHTML='<small>ほかの候補も探しています…</small>'; box.appendChild(pd); return; }
-    if(res.errs.length){ var er=document.createElement("button"); er.type="button"; er.disabled=true; er.innerHTML='<small>取得できなかった検索元：'+esc(res.errs.join(" / "))+'</small>'; box.appendChild(er); }
-    if(!yjId && !gKey) addYjHint();
-  }
-  searchPlaces(q,o,typing,show).then(show);
-}
-$("destInput").addEventListener("focus",function(){ if(!this.value.trim()) showHist(); });
-$("destInput").addEventListener("input",function(){
-  var q=this.value.trim(); clearTimeout(destTimer);
-  if(!q){ showHist(); return; }
-  destTimer=setTimeout(function(){ suggest(q,true); },350);
-});
-$("routeForm").addEventListener("submit",function(e){
-  e.preventDefault(); clearTimeout(destTimer); suggest($("destInput").value.trim(),false);
-});
+$("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
 
-function routeUrl(o,d,extra){
-  var av = R.hwy ? "" : "&avoid=tollRoads&avoid=motorways";
-  return tt("/routing/1/calculateRoute/"+o[0]+","+o[1]+":"+d[0]+","+d[1]+"/json",
-    "traffic=true&travelMode=car&language=ja-JP&instructionsType=text&sectionType=traffic&sectionType=tollRoad&sectionType=motorway&computeTravelTimeFor=all"+av+(extra||""));
-}
-function parseRoute(rt){
-  var pts=[]; (rt.legs||[]).forEach(function(l){ (l.points||[]).forEach(function(p){ pts.push([p.latitude,p.longitude]); }); });
-  var cum=[0]; for(var i=1;i<pts.length;i++) cum.push(cum[i-1]+km(pts[i-1],pts[i]));
-  var toll=0, mw=0, traffic=[];
-  (rt.sections||[]).forEach(function(sc){
-    if(sc.sectionType==="TOLL_ROAD") toll+=cum[sc.endPointIndex]-cum[sc.startPointIndex];
-    if(sc.sectionType==="MOTORWAY") mw+=cum[sc.endPointIndex]-cum[sc.startPointIndex];
-    if(sc.sectionType==="TRAFFIC"){
-      var causes=((sc.tec||{}).causes||[]).map(function(c){return c.mainCauseCode;});
-      var kind = causes.indexOf(2)>=0 ? "acc" : sc.simpleCategory==="ROAD_CLOSURE" ? "cls" : sc.simpleCategory==="ROAD_WORK" ? "works" : sc.simpleCategory==="JAM" ? "jam" : "etc";
-      traffic.push({kind:kind,s:sc.startPointIndex,e:sc.endPointIndex,delay:sc.delayInSeconds||0,speed:sc.effectiveSpeedInKmh,mag:sc.magnitudeOfDelay,
-        at:cum[sc.startPointIndex],len:cum[sc.endPointIndex]-cum[sc.startPointIndex]});
-    }
-  });
-  var steps=(((rt.guidance||{}).instructions)||[]).filter(function(g){ return g.point; }).map(function(g){
-    var road=(g.roadNumbers||[]).join("・")||g.street||g.signpostText||"";
-    return {off:(g.routeOffsetInMeters||0)/1000, msg:(g.message && /[぀-ヿ一-鿿]/.test(g.message)) ? g.message : (MAN[g.maneuver]||"道なり")+(road?"（"+road+"）":""), road:road, man:g.maneuver||"", ll:[g.point.latitude,g.point.longitude]}; });
-  var sm=rt.summary||{};
-  // 日本の高速は基本的に有料なので、有料区間の情報が無いときは高速区間の距離で料金を見積もる
-  if(toll<0.5 && mw>0) toll=mw;
-  return {steps:steps,mw:mw,pts:pts,cum:cum,toll:toll,yen:tollYen(toll),traffic:traffic,time:sm.travelTimeInSeconds,delay:sm.trafficDelayInSeconds||0,
-    len:(sm.lengthInMeters||0)/1000,arrive:sm.arrivalTime?new Date(sm.arrivalTime):null};
-}
-var MAN={DEPART:"出発",ARRIVE:"目的地に到着",ARRIVE_LEFT:"目的地に到着（左側）",ARRIVE_RIGHT:"目的地に到着（右側）",TURN_LEFT:"左折",TURN_RIGHT:"右折",
-  SHARP_LEFT:"左に大きく曲がる",SHARP_RIGHT:"右に大きく曲がる",BEAR_LEFT:"左方向",BEAR_RIGHT:"右方向",KEEP_LEFT:"左側を進む",KEEP_RIGHT:"右側を進む",STRAIGHT:"直進",
-  MOTORWAY_ENTER:"高速道路に入る",MOTORWAY_EXIT_LEFT:"左の出口で降りる",MOTORWAY_EXIT_RIGHT:"右の出口で降りる",TAKE_EXIT:"出口で降りる",
-  ROUNDABOUT_LEFT:"ロータリーを左へ",ROUNDABOUT_RIGHT:"ロータリーを右へ",ROUNDABOUT_CROSS:"ロータリーを直進",MAKE_UTURN:"Uターン",TRY_MAKE_UTURN:"Uターン",FOLLOW:"道なり",
-  SWITCH_PARALLEL_ROAD:"側道へ",SWITCH_MAIN_ROAD:"本線へ",ENTRANCE_RAMP:"ランプに入る",WAYPOINT_LEFT:"経由地",WAYPOINT_RIGHT:"経由地",WAYPOINT_REACHED:"経由地"};
-function fmtKm(k){ return k<1 ? Math.max(10,Math.round(k*100)*10)+"m" : k.toFixed(k<10?1:0)+"km"; }
-function drawSteps(r){
-  var box=$("rStepsList"); box.innerHTML="";
-  if(!r||!r.steps.length){ $("rSteps").hidden=true; return; }
-  $("rSteps").hidden=false; $("rStepsSum").textContent="道順（"+r.steps.length+"か所）";
-  r.steps.forEach(function(st){
-    var li=document.createElement("li");
-    li.innerHTML='<b class="num">'+(st.off>0?fmtKm(st.off):"出発")+'</b><span>'+esc(st.msg)+(st.road&&st.msg.indexOf(st.road)<0?'<small>'+esc(st.road)+'</small>':'')+'</span>';
-    li.onclick=function(){ map.easeTo({center:[st.ll[1],st.ll[0]],zoom:16}); };
-    box.appendChild(li);
-  });
-}
-function setDetail(on){
-  if(!ready) return;
-  ["road-detail","lbl-road"].forEach(function(id){ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",on?"visible":"none"); });
-}
-// ---- Google Routes API（日本の道路で精度が高い。キーがあればこちらを使う） ----
-function decodePoly(s){ var i=0,lat=0,lng=0,out=[]; while(i<s.length){ var b,sh=0,r=0; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5; }while(b>=32); lat+=(r&1)?~(r>>1):(r>>1);
-  sh=0; r=0; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5; }while(b>=32); lng+=(r&1)?~(r>>1):(r>>1); out.push([lat/1e5,lng/1e5]); } return out; }
-var GMAN={TURN_LEFT:"TURN_LEFT",TURN_RIGHT:"TURN_RIGHT",TURN_SLIGHT_LEFT:"BEAR_LEFT",TURN_SLIGHT_RIGHT:"BEAR_RIGHT",TURN_SHARP_LEFT:"SHARP_LEFT",TURN_SHARP_RIGHT:"SHARP_RIGHT",
-  UTURN_LEFT:"MAKE_UTURN",UTURN_RIGHT:"MAKE_UTURN",STRAIGHT:"STRAIGHT",RAMP_LEFT:"MOTORWAY_EXIT_LEFT",RAMP_RIGHT:"MOTORWAY_EXIT_RIGHT",MERGE:"FOLLOW",FORK_LEFT:"KEEP_LEFT",FORK_RIGHT:"KEEP_RIGHT",
-  ROUNDABOUT_LEFT:"ROUNDABOUT_LEFT",ROUNDABOUT_RIGHT:"ROUNDABOUT_RIGHT",DEPART:"DEPART",NAME_CHANGE:"FOLLOW"};
-function gParse(rt){
-  var pts=decodePoly(((rt.polyline||{}).encodedPolyline)||""), cum=[0];
-  for(var i=1;i<pts.length;i++) cum.push(cum[i-1]+km(pts[i-1],pts[i]));
-  var traffic=[];
-  (((rt.travelAdvisory||{}).speedReadingIntervals)||[]).forEach(function(v){
-    if(v.speed!=="TRAFFIC_JAM" && v.speed!=="SLOW") return;
-    var a=v.startPolylinePointIndex||0, b=v.endPolylinePointIndex||a;
-    traffic.push({kind:v.speed==="TRAFFIC_JAM"?"jam":"etc",s:a,e:b,delay:0,at:cum[a]||0,len:(cum[b]||0)-(cum[a]||0)});
-  });
-  var steps=[], off=0;
-  (rt.legs||[]).forEach(function(l){ (l.steps||[]).forEach(function(st){
-    var ni=st.navigationInstruction||{}, ll=((st.startLocation||{}).latLng)||{};
-    if(ni.instructions) steps.push({off:off/1000, msg:ni.instructions.replace(/\n/g," "), road:"", man:GMAN[ni.maneuver]||ni.maneuver||"", ll:[ll.latitude,ll.longitude]});
-    off+=st.distanceMeters||0; }); });
-  steps.push({off:off/1000,msg:"目的地に到着",road:"",man:"ARRIVE",ll:pts[pts.length-1]});
-  var sec=function(d){ return parseInt(d||"0",10)||0; }, time=sec(rt.duration), stat=sec(rt.staticDuration);
-  var ti=(rt.travelAdvisory||{}).tollInfo, yen=0, toll=0;
-  if(ti){ (ti.estimatedPrice||[]).forEach(function(p){ if(p.currencyCode==="JPY") yen+=parseInt(p.units||"0",10); }); toll=1; }
-  return {steps:steps,mw:0,pts:pts,cum:cum,toll:toll,yen:yen,tollKnown:!!(ti&&ti.estimatedPrice),traffic:traffic,time:time,delay:Math.max(0,time-stat),
-    len:(rt.distanceMeters||0)/1000,arrive:new Date(Date.now()+time*1000),g:1};
-}
-// 無料枠を超えないよう、月ごとの利用回数をこのスマホで数える
-// 渋滞・料金付き（Enterprise）は月1,000回無料、渋滞込みのみ（Pro）は月5,000回無料。余裕をもって手前で止める
-function gCnt(){ var m=new Date().toISOString().slice(0,7), c; try{ c=JSON.parse(ls("g_cnt")||"{}"); }catch(e){ c={}; } if(c.m!==m) c={m:m,e:0,p:0,m2:0,a:0,d:0}; return c; }
-function gTier(rich){ var c=gCnt(); if(rich && c.e<900) return "e"; if(c.p<4500) return "p"; return null; }
-function gOk(){ return !!gKey && !!gTier(false); }
-function gRoutes(o,d,opt){
-  opt=opt||{};
-  var tier=gTier(opt.rich!==false); if(!tier) return Promise.reject(new Error("Googleの今月の無料枠の上限です"));
-  var c=gCnt(); c[tier]++; ls("g_cnt",JSON.stringify(c));
-  var body={origin:{location:{latLng:{latitude:o[0],longitude:o[1]}}},destination:{location:{latLng:{latitude:d[0],longitude:d[1]}}},
-    travelMode:"DRIVE",routingPreference:"TRAFFIC_AWARE",computeAlternativeRoutes:!opt.via,languageCode:"ja",units:"METRIC",
-    routeModifiers:{avoidTolls:!!opt.avoidTolls,avoidHighways:!!opt.avoidHighways}};
-  if(tier==="e") body.extraComputations=opt.noToll?["TRAFFIC_ON_POLYLINE"]:["TOLLS","TRAFFIC_ON_POLYLINE"];
-  if(opt.via) body.intermediates=opt.via.map(function(p){ return {via:true,location:{latLng:{latitude:p[0],longitude:p[1]}}}; });
-  return fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":gKey,
-    "X-Goog-FieldMask":"routes.duration,routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline,routes.travelAdvisory,routes.legs.steps.navigationInstruction,routes.legs.steps.distanceMeters,routes.legs.steps.startLocation"},
-    body:JSON.stringify(body)})
-  .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error("Google "+r.status+((j.error&&j.error.message)?"："+j.error.message:"")); return j; }); })
-  .then(function(j){ return (j.routes||[]).map(gParse).filter(function(r){ return r.pts.length>1; }); })
-  .then(withIncidents);
-}
-// Googleは事故・通行止めを返さないので、TomTomの事故情報のうちルート沿い（300m以内）のものを重ねる
-function withIncidents(rs){
-  if(!key||!rs.length) return rs;
-  var bb=[180,90,-180,-90]; rs.forEach(function(r){ r.pts.forEach(function(p){ bb[0]=Math.min(bb[0],p[1]); bb[1]=Math.min(bb[1],p[0]); bb[2]=Math.max(bb[2],p[1]); bb[3]=Math.max(bb[3],p[0]); }); });
-  if((bb[2]-bb[0])*(bb[3]-bb[1])>9) return rs; // 範囲が広すぎるときは省略（TomTomの上限）
-  var fields="{incidents{type,geometry{type,coordinates},properties{iconCategory,delay}}}";
-  return fetch("https://api.tomtom.com/traffic/services/5/incidentDetails?key="+encodeURIComponent(key)+"&bbox="+bb.map(function(v){return v.toFixed(4);}).join(",")+
-    "&fields="+encodeURIComponent(fields)+"&timeValidityFilter=present").then(function(r){ return r.ok?r.json():{}; })
-  .then(function(j){
-    var inc=(j.incidents||[]).filter(function(i){ var c=(i.properties||{}).iconCategory; return c===1||c===8; });
-    rs.forEach(function(r){ var step=Math.max(1,Math.floor(r.pts.length/800));
-      inc.forEach(function(i){ var cs=coordsOf(i); if(!cs.length) return; var p=cs[0], bi=-1, bd=0.3;
-        for(var k=0;k<r.pts.length;k+=step){ var dd=km(p,r.pts[k]); if(dd<bd){ bd=dd; bi=k; } }
-        if(bi<0) return; var kind=(i.properties.iconCategory===1)?"acc":"cls";
-        var e=Math.min(r.pts.length-1,bi+step*2);
-        r.traffic.push({kind:kind,s:bi,e:e,delay:(i.properties.delay)||0,at:r.cum[bi],len:r.cum[e]-r.cum[bi]}); });
-      r.traffic.sort(function(a,b){ return a.at-b.at; }); });
-    return rs;
-  }).catch(function(){ return rs; });
-}
-function sig(r){ return Math.round(r.len*10)+"_"+Math.round(r.time/60); }
-function searchRoutes(){
-  var here=origin(); if(!here||!R.dest) return;
-  updateEnds();
-  var o=R.swap?R.dest.ll:here, dll=R.swap?here:R.dest.ll;
-  $("rCards").innerHTML='<div class="empty">ルートを探しています…</div>'; $("btnGo").hidden=true; $("btnViewMap").hidden=true; $("routeNote").textContent=""; $("rSteps").hidden=true; $("arrBox").hidden=true; $("arrOut").textContent="";
-  var reqs;
-  if(gOk()){
-    reqs=[gRoutes(o,dll,{avoidTolls:!R.hwy,avoidHighways:!R.hwy})];
-    if(R.hwy) reqs.push(gRoutes(o,dll,{avoidTolls:true}).catch(function(){ return []; }));
-  }else{
-    reqs=[fetch(routeUrl(o,dll,"&routeType=fastest&maxAlternatives=2")).then(function(r){ if(!r.ok) throw new Error("TomTom "+r.status); return r.json();})];
-    if(R.hwy) reqs.push(fetch(routeUrl(o,dll,"&routeType=fastest&avoid=tollRoads")).then(function(r){return r.json();}).catch(function(){return {};}));
-    else reqs.push(fetch(routeUrl(o,dll,"&routeType=shortest")).then(function(r){return r.json();}).catch(function(){return {};}));
-    reqs=reqs.map(function(p){ return p.then(function(j){ return (j.routes||[]).map(parseRoute); }); });
-  }
-  Promise.all(reqs).then(function(js){
-    var all=[], seen={};
-    js.forEach(function(list){ list.forEach(function(r){ var k=sig(r); if(!seen[k]){ seen[k]=1; all.push(r); } }); });
-    if(!all.length) throw new Error("none");
-    R.routes=all;
-    var byTime=all.slice().sort(function(a,b){return a.time-b.time;})[0];
-    var cheap = R.hwy ? all.slice().sort(function(a,b){return (a.yen-b.yen)||(a.time-b.time);})[0] : all.slice().sort(function(a,b){return a.len-b.len;})[0];
-    // おすすめ：時間と料金の釣り合い（1分あたり40円で換算）＋渋滞・事故の少なさ
-    var best=recommend(all, byTime);
-    var raw=[{k:"おすすめ",r:best},{k:"時間優先",r:byTime},{k:R.hwy?"料金優先":"距離優先",r:cheap}];
-    // 同じルートは1枚にまとめる
-    R.picks=[]; raw.forEach(function(p){ var same=R.picks.filter(function(x){ return x.r===p.r; })[0]; if(same) same.also=(same.also||[]).concat(p.k); else R.picks.push({k:p.k,r:p.r}); });
-    R.sel=0; drawCards(); pickRoute(0);
-  }).catch(function(e){ $("rCards").innerHTML='<div class="empty">ルートを計算できませんでした（'+esc(e.message||"")+'）。'+(/Google 40[03]/.test(e.message||"")?'Googleのキーの設定（Routes APIの有効化やサイトの制限）を確認してください。':/40[13]/.test(e.message||"")?'TomTomのキーでRouting APIが使えない可能性があります。':'目的地や道路の設定を変えて試してください。')+'</div>'; });
-}
-function bad(r){ return r.traffic.filter(function(t){return t.kind==="acc"||t.kind==="cls";}).length; }
-// おすすめ：基本は一番早いルート。5分以内の遅れで500円以上安くなる、または事故・通行止めを避けられる場合だけ別のルートにする
-function recommend(all, fast){
-  var cand=all.filter(function(r){ return r!==fast && r.time<=fast.time+300 && (fast.yen-r.yen>=500 || bad(r)<bad(fast)); });
-  cand.sort(function(a,b){ return (bad(a)-bad(b)) || (a.time-b.time); });
-  return cand[0] || fast;
-}
-function trafficCount(r){ var n={jam:0,acc:0,cls:0}; r.traffic.forEach(function(t){ if(t.kind==="jam") n.jam++; else if(t.kind==="acc") n.acc++; else if(t.kind==="cls") n.cls++; }); return n; }
-function drawCards(){
-  var box=$("rCards"); box.innerHTML="";
-  R.picks.forEach(function(p,i){
-    var r=p.r, n=trafficCount(r), arr=r.arrive||new Date(Date.now()+r.time*1000);
-    var b=document.createElement("button"); b.type="button"; b.className="rcard"; b.setAttribute("aria-pressed",i===R.sel);
-    b.innerHTML='<span class="kind">'+p.k+'</span>'+
-      '<span class="big num">'+fmtDur(r.time)+'</span>'+
-      '<span class="warn">'+(n.acc?'<span class="chip" style="background:var(--accident)">事故 '+n.acc+'</span>':'')+
-        (n.jam?'<span class="chip" style="background:var(--jam)">渋滞 '+n.jam+'</span>':'')+
-        (n.cls?'<span class="chip" style="background:var(--closed)">通行止 '+n.cls+'</span>':'')+
-        (!n.acc&&!n.jam&&!n.cls?'<span class="chip" style="background:var(--ok)">順調</span>':'')+(r.orbs&&r.orbs.length?'<span class="chip" style="background:#ff2d55">オービス '+r.orbs.length+'</span>':'')+'</span>'+
-      '<span class="sub num">'+fmtClock(arr)+'着・'+r.len.toFixed(1)+'km'+(r.delay>=60?'・渋滞で+'+fmtDur(r.delay):'')+
-        (r.g ? (r.toll ? (r.yen?'・有料 '+r.yen.toLocaleString()+'円':'・有料道路あり') : '・有料道路なし') : (r.toll>0?'・高速'+Math.round(r.toll)+'km 約'+r.yen.toLocaleString()+'円':'・高速道路なし'))+(p.also?'<br>'+p.also.join("・")+'でも同じルート':'')+'</span>';
-    b.onclick=function(){ R.sel=i; drawCards(); pickRoute(i); };
-    box.appendChild(b);
-  });
-  var cur=R.picks[R.sel].r;
-  $("routeNote").textContent = (R.picks.length===1?"ほかに良いルート候補はありませんでした。":"")+
-    (!R.hwy && cur.mw>0.5 ? "一般道だけのルートが見つからず、一部で高速道路を通ります。" : "")+
-    (cur.g ? (cur.toll ? "料金はGoogleの見積もり（ETC・普通車）です。" : "") : (cur.toll>0 ? "料金は高速道路（普通車）の目安です。首都高などの都市高速や割引は反映していません。" : ""));
-  $("btnGo").hidden=!!R.swap; $("btnViewMap").hidden=false;
-  $("arrBox").hidden=!gOk();
-  if(R.swap) $("routeNote").textContent="入れ替え中は帰り道などの確認用です。案内を始めるときは⇅で元に戻してください。"+$("routeNote").textContent;
-}
-// ---- 到着時刻から出発時刻を逆算（Googleの渋滞予測を使う。1回の逆算で最大4回計算） ----
-function gDur(o,d,dep,opt){
-  var tier=gTier(false); if(!tier) return Promise.reject(new Error("Googleの今月の無料枠の上限です"));
-  var c=gCnt(); c.p++; ls("g_cnt",JSON.stringify(c));
-  var body={origin:{location:{latLng:{latitude:o[0],longitude:o[1]}}},destination:{location:{latLng:{latitude:d[0],longitude:d[1]}}},
-    travelMode:"DRIVE",routingPreference:"TRAFFIC_AWARE",departureTime:new Date(dep).toISOString(),languageCode:"ja",
-    routeModifiers:{avoidTolls:!!opt.avoidTolls,avoidHighways:!!opt.avoidHighways}};
-  return fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":gKey,
-    "X-Goog-FieldMask":"routes.duration,routes.distanceMeters"},body:JSON.stringify(body)})
-  .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error("Google "+r.status); var rt=(j.routes||[])[0]; if(!rt) throw new Error("none"); return parseInt(rt.duration,10)||0; }); });
-}
-function arriveTarget(){
-  var v=$("arrTime").value; if(!/^\d\d:\d\d$/.test(v)) return null;
-  var t=new Date(); t.setHours(+v.slice(0,2),+v.slice(3,5),0,0);
-  if(t.getTime()<Date.now()+5*6e4) t.setDate(t.getDate()+1); // もう過ぎた時刻なら明日
-  return t.getTime();
-}
-$("btnArr").onclick=function(){
-  var arr=arriveTarget(), out=$("arrOut"); if(!arr){ out.textContent="着きたい時刻を入れてください。"; return; }
-  ls("arrTime",$("arrTime").value);
-  var here=origin(); if(!here||!R.dest) return;
-  var o=R.swap?R.dest.ll:here, d=R.swap?here:R.dest.ll, p=R.picks[R.sel], cur=p&&p.r;
-  var opt={avoidTolls:!R.hwy||/料金優先/.test(p?p.k:""), avoidHighways:!R.hwy};
-  out.textContent="渋滞予測で計算しています…"; this.disabled=true; var btn=this;
-  var now=Date.now(), dep=Math.max(now+6e4, arr-(cur?cur.time*1000:3600e3)-10*6e4), n=0, dur=0, tried=[];
-  // 出発時刻を動かしながら所要時間を計算し直し、「着きたい時刻に間に合う一番遅い出発」を選ぶ
-  (function step(){
-    n++;
-    gDur(o,d,dep,opt).then(function(s){
-      tried.push({dep:dep,dur:s});
-      var fits=function(t){ return t.dep+t.dur*1000<=arr+6e4; };
-      var lo=tried.filter(fits).sort(function(x,y){ return y.dep-x.dep; })[0];
-      var hi=tried.filter(function(t){ return !fits(t) && (!lo || t.dep>lo.dep); }).sort(function(x,y){ return x.dep-y.dep; })[0];
-      if(!lo && dep<=now+6e4){ dur=s; return done(true); }
-      if(lo && (n>=6 || (hi && hi.dep-lo.dep<=5*6e4))){ dep=lo.dep; dur=lo.dur; return done(false); }
-      if(!lo && n>=6){ dep=tried[tried.length-1].dep; dur=s; return done(false,true); }
-      if(!lo){ dep=Math.max(now+6e4, dep-(dep+s*1000-arr)-5*6e4); return step(); }
-      if(!hi){ var nd=arr-lo.dur*1000; if(nd-lo.dep<3*6e4){ dep=lo.dep; dur=lo.dur; return done(false); } dep=nd; return step(); }
-      dep=Math.round((lo.dep+hi.dep)/2/6e4)*6e4; step();
-    }).catch(function(e){ btn.disabled=false; out.textContent="計算できませんでした（"+(e.message||"")+"）。"; });
-  })();
-  function done(late,rough){
-    btn.disabled=false;
-    var dt=function(t){ var x=new Date(t), td=new Date(); var tm=x.getDate()!==td.getDate()?"明日":""; return tm+fmtClock(x); };
-    if(late){ var eta=now+dur*1000;
-      out.innerHTML="今すぐ出ても到着は <b>"+esc(dt(eta))+"</b> ごろの見込みです"+(eta>arr?"（"+fmtDur(Math.round((eta-arr)/1000))+"遅れ）":"")+"。"; return; }
-    var nowDur=cur?cur.time:0, diff=dur-nowDur;
-    out.innerHTML="<b>"+esc(dt(dep))+"</b> に出発すれば、"+esc(dt(dep+dur*1000))+" ごろ到着の見込みです（所要"+fmtDur(dur)+"・渋滞予測込み）。"+(rough?"渋滞の変化が大きく、目安です。":"")+
-      "<br>余裕を15分みるなら "+esc(dt(dep-15*6e4))+" 出発。"+
-      (nowDur && Math.abs(diff)>=600 ? "<br>その時間帯は今より"+(diff>0?fmtDur(diff)+"長く":fmtDur(-diff)+"短く")+"かかる予測です。" : "");
-  }
-};
-try{ if(ls("arrTime")) $("arrTime").value=ls("arrTime"); }catch(e){}
-var routeMarkers=[];
-function ensureRouteLayers(){
-  if(!ready || map.getSource("route")) return;
-  map.addSource("route",{type:"geojson",data:EMPTY});
-  map.addLayer({id:"route-alt",type:"line",source:"route",filter:["==",["get","role"],"alt"],layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":"#9aa7ae","line-width":["interpolate",["linear"],["zoom"],6,4,14,9],"line-opacity":.7}},"ic-dot");
-  map.addLayer({id:"route-case",type:"line",source:"route",filter:["==",["get","role"],"main"],layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":"#0b3f86","line-width":["interpolate",["linear"],["zoom"],6,8,14,16]}},"ic-dot");
-  map.addLayer({id:"route-main",type:"line",source:"route",filter:["==",["get","role"],"main"],layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":"#2f86ff","line-width":["interpolate",["linear"],["zoom"],6,5,14,11]}},"ic-dot");
-  map.addLayer({id:"route-traffic",type:"line",source:"route",filter:["==",["get","role"],"traffic"],layout:{"line-cap":"round","line-join":"round"},
-    paint:{"line-color":["get","color"],"line-width":["interpolate",["linear"],["zoom"],6,5,14,11]}},"ic-dot");
-}
-var KCOL={acc:"#ff4d4f",jam:"#ff9f1a",cls:"#b36bff",works:"#4db8ff",etc:"#ffd23f"}, KNAME={acc:"事故",jam:"渋滞",cls:"通行止",works:"工事",etc:"注意"};
-function lineOf(pts){ return pts.map(function(p){return [p[1],p[0]];}); }
-function pickRoute(i, noFit){
-  ensureRouteLayers(); setDetail(true);
-  var main=R.picks[i].r, feats=[];
-  drawSteps(main);
-  routeOrbis(main);
-  R.picks.forEach(function(p){ if(p.r!==main) feats.push({type:"Feature",properties:{role:"alt"},geometry:{type:"LineString",coordinates:lineOf(p.r.pts)}}); });
-  feats.push({type:"Feature",properties:{role:"main"},geometry:{type:"LineString",coordinates:lineOf(main.pts)}});
-  main.traffic.forEach(function(t){ if(t.e>t.s) feats.push({type:"Feature",properties:{role:"traffic",color:KCOL[t.kind]},geometry:{type:"LineString",coordinates:lineOf(main.pts.slice(t.s,t.e+1))}}); });
-  if(map.getSource("route")) map.getSource("route").setData({type:"FeatureCollection",features:feats});
-  routeMarkers.forEach(function(m){m.remove();}); routeMarkers=[];
-  // 出発・到着の印をルートの両端に置く
-  [["発","#0b7a4b",main.pts[0]],["着","#2f86ff",main.pts[main.pts.length-1]]].forEach(function(m){ if(!m[2]) return;
-    var el=document.createElement("div"); el.className="pin"; el.style.background=m[1]; el.style.color="#fff"; el.textContent=m[0];
-    routeMarkers.push(new ML.Marker({element:el}).setLngLat([m[2][1],m[2][0]]).addTo(map)); });
-  if(!noFit){ var bb=new ML.LngLatBounds(); main.pts.forEach(function(p){ bb.extend([p[1],p[0]]); });
-    map.fitBounds(bb,{padding:$("routePanel").hidden?pad():{top:40,bottom:Math.round(window.innerHeight*0.6),left:30,right:30},maxZoom:14}); }
-}
-function clearRoute(){
-  setDetail(false);
-  if(map.getSource("route")) map.getSource("route").setData(EMPTY);
-  routeMarkers.forEach(function(m){m.remove();}); routeMarkers=[];
-}
-
-// ---- ルート上のオービス（ルートの線から60m以内のもの）。走行中は2km・1km・500m手前で知らせる ----
-function segKm(p,a,b){ var k=Math.cos(p[0]*Math.PI/180), ax=(a[1]-p[1])*k*111.32, ay=(a[0]-p[0])*111.32, bx=(b[1]-p[1])*k*111.32, by=(b[0]-p[0])*111.32;
-  var dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy, t=L?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L)):0, x=ax+dx*t, y=ay+dy*t; return {d:Math.sqrt(x*x+y*y),t:t}; }
-function placeOnRoute(r,list){ var out=[], seen={};
-  list.forEach(function(o){ if(seen[o.id]) return; var bd=1e9, bi=0, bt=0;
-    for(var i=0;i<r.pts.length-1;i++){ if(Math.abs(r.pts[i][0]-o.ll[0])>0.05&&Math.abs(r.pts[i+1][0]-o.ll[0])>0.05) continue;
-      var q=segKm(o.ll,r.pts[i],r.pts[i+1]); if(q.d<bd){ bd=q.d; bi=i; bt=q.t; } }
-    if(bd<=0.06){ seen[o.id]=1; out.push({id:o.id,ll:o.ll,max:o.max,name:o.name,at:(r.cum[bi]||0)+((r.cum[bi+1]||0)-(r.cum[bi]||0))*bt}); } });
-  return out.sort(function(a,b){ return a.at-b.at; }); }
-var orbPool={};
-function routeOrbis(r){
-  if(!orbOn || r.orbs || r.orbLoading || !r.pts || r.pts.length<2) return;
-  orbs.forEach(function(o){ orbPool[o.id]=o; });
-  var pool=function(){ return Object.keys(orbPool).map(function(k){ return orbPool[k]; }); };
-  if(R.orbRoute && !differs(R.orbRoute,r)){ r.orbs=placeOnRoute(r,pool()); return; }
-  r.orbLoading=true;
-  var st=Math.max(1,Math.floor(r.pts.length/300)), pl=[];
-  for(var i=0;i<r.pts.length;i+=st) pl.push(r.pts[i][0].toFixed(5)+","+r.pts[i][1].toFixed(5));
-  var l=r.pts[r.pts.length-1]; pl.push(l[0].toFixed(5)+","+l[1].toFixed(5));
-  var a="around:250,"+pl.join(",");
-  overpass('[out:json][timeout:40];(node["highway"="speed_camera"]('+a+');node["enforcement"="maxspeed"]('+a+'););out tags;')
-    .then(function(j){
-      (j.elements||[]).forEach(function(e){ if(e.lat==null) return; var t=e.tags||{};
-        orbPool[e.type+e.id]={id:e.type+e.id,ll:[e.lat,e.lon],max:t.maxspeed||"",name:t.name||t.description||""}; });
-      r.orbs=placeOnRoute(r,pool()); R.orbRoute=r; r.orbLoading=false;
-      var known={}; orbs.forEach(function(o){ known[o.id]=1; }); r.orbs.forEach(function(o){ if(!known[o.id]) orbs.push(o); });
-      drawOrbis(); if(!$("routePanel").hidden && R.picks && R.picks.length) drawCards(); if(R.nav) navTick();
-    }).catch(function(){ r.orbLoading=false; r.orbs=placeOnRoute(r,pool()); });
-}
-function navOrbis(r,done){
-  if(!orbOn || !r.orbs) return false;
-  var no=null; for(var k=0;k<r.orbs.length;k++){ if(r.orbs[k].at>done-0.03){ no=r.orbs[k]; break; } }
-  var busy=!!$("orbAlert").style.background;
-  if(!no || no.at-done>2.05){ if(!busy) $("orbAlert").hidden=true; return true; }
-  var dd=Math.max(0,no.at-done), lv=dd<=0.5?3:dd<=1.05?2:1;
-  if(!busy){ $("orbDist").textContent=fmtKm(dd); $("orbText").textContent="先 ルート上にオービス"+(no.max?"（制限"+no.max+"km/h）":""); $("orbAlert").hidden=false; }
-  R.orbW=R.orbW||{}; if(!R.orbW[no.id+"_"+lv]){ R.orbW[no.id+"_"+lv]=1; beep(); try{ navigator.vibrate && navigator.vibrate(lv===3?[300,120,300,120,300]:[300,150,300]); }catch(e){} }
-  return true;
-}
-// 通行止めの詳細はGoogleの開発者向けAPIでは取れないので、同じ場所をGoogleマップ（交通状況つき）で開けるようにする
-$("btnGmaps").onclick=function(){ var c=map.getCenter(), z=Math.round(map.getZoom?map.getZoom():11);
-  window.open("https://www.google.com/maps/@?api=1&map_action=map&center="+c.lat.toFixed(5)+","+c.lng.toFixed(5)+"&zoom="+Math.max(8,Math.min(18,z))+"&layer=traffic","_blank","noopener"); };
-// ---- 走行中のリアルタイム監視 ----
-$("btnGo").onclick=function(){
-  R.nav=true; R.seen={}; R.lastDelay=null; R.cur=R.picks[R.sel];
-  $("routePanel").hidden=true; $("navBar").hidden=false; document.querySelector(".gauge").hidden=true;
-  $("listTitle").textContent="ルート上の渋滞・事故（進む順）";
-  try{ var AC=window.AudioContext||window.webkitAudioContext; R.audio=new AC(); }catch(e){}
-  try{ navigator.wakeLock && navigator.wakeLock.request("screen").then(function(w){R.wake=w;}).catch(function(){}); }catch(e){}
-  showNav(R.cur.r, true);
-  clearInterval(R.timer); R.timer=setInterval(refreshNav, 60000);
-};
-$("navEnd").onclick=function(){
-  R.nav=false; clearInterval(R.timer); $("navBar").hidden=true; document.querySelector(".gauge").hidden=false;
-  $("listTitle").textContent="高速道路の事故・渋滞（近い順）"; clearRoute(); if(R.wake){ try{R.wake.release();}catch(e){} R.wake=null; } render();
-};
-function beep(){
-  try{ if(!R.audio) return; var o=R.audio.createOscillator(), g=R.audio.createGain(); o.frequency.value=880; o.connect(g); g.connect(R.audio.destination);
-    g.gain.setValueAtTime(.25,R.audio.currentTime); g.gain.exponentialRampToValueAtTime(.001,R.audio.currentTime+.6); o.start(); o.stop(R.audio.currentTime+.6); }catch(e){}
-}
-function notify(text){
-  $("orbDist").textContent="!"; $("orbText").textContent=text; $("orbAlert").style.background="#e8302a"; $("orbAlert").hidden=false;
-  try{ navigator.vibrate && navigator.vibrate([400,200,400]); }catch(e){} beep();
-  clearTimeout(R.alertT); R.alertT=setTimeout(function(){ $("orbAlert").hidden=true; $("orbAlert").style.background=""; },12000);
-}
-function progressIdx(r){ var o=me; if(!o) return 0; var bi=0,bd=1e9; for(var i=0;i<r.pts.length;i+=Math.max(1,Math.floor(r.pts.length/400))){ var d=km(o,r.pts[i]); if(d<bd){bd=d;bi=i;} } return bi; }
-// 1分ごと：今のルートを最新の渋滞で計算し直し、同時に最適ルートも探す。
-// 最適ルートが3分以上早く、別の道を通るなら切り替えて理由と一緒に知らせる
-function refreshNav(reroute){
-  if(!R.nav) return;
-  var o=origin(); R.lastReroute=Date.now();
-  var mode=(/距離優先/.test(R.cur.k)?"&routeType=shortest":"&routeType=fastest")+(/料金優先/.test(R.cur.k)?"&avoid=tollRoads":"");
-  var best, keep=Promise.resolve(null);
-  if(gOk()){
-    // Googleは5分ごと（ルートを外れたときは1分あけて）に1回だけ計算し、今のルートの残り時間の見込みと比べる
-    if(Date.now()-(R.lastG||0) < (reroute===true?60000:290000)) return;
-    R.lastG=Date.now();
-    var gopt={avoidTolls:!R.hwy||/料金優先/.test(R.cur.k),avoidHighways:!R.hwy,noToll:true};
-    best=gRoutes(o,R.dest.ll,gopt).then(function(rs){ return rs[0]||null; });
-    if(!reroute && me){ var ol=R.cur.r, di=progressIdx(ol), remKm=ol.len-(ol.cum[di]||0);
-      keep=Promise.resolve(Object.assign({},ol,{time:ol.len>0?ol.time*remKm/ol.len:ol.time,estimate:true})); }
-  }else{
-  best=fetch(routeUrl(o,R.dest.ll,mode)).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function(j){ return j.routes&&j.routes.length?parseRoute(j.routes[0]):null; });
-  if(!reroute && me){
-    var old=R.cur.r, bi=progressIdx(old), rest=old.pts.slice(bi), st=Math.max(1,Math.ceil(rest.length/150)), sp=[];
-    for(var k=0;k<rest.length;k+=st) sp.push({latitude:rest[k][0],longitude:rest[k][1]});
-    sp.push({latitude:rest[rest.length-1][0],longitude:rest[rest.length-1][1]});
-    if(sp.length>=2) keep=fetch(routeUrl(o,R.dest.ll,mode+"&minDeviationDistance=0&minDeviationTime=0"),
-      {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({supportingPoints:sp})})
-      .then(function(r){ return r.ok?r.json():null; }).then(function(j){ return j&&j.routes&&j.routes.length?parseRoute(j.routes[0]):null; }).catch(function(){ return null; });
-  }
-  }
-  Promise.all([best,keep]).then(function(js){
-    var b=js[0], c=js[1];
-    if(!b&&!c) return;
-    var use=c||b, why="";
-    // Google：同じ道なら最新の計算結果を使い、別の道で3分以上早くなければ今のルートのまま
-    if(c && c.estimate){ if(b && !differs(c,b)) c=b; else if(!(b && b.time<c.time-180)) c=R.cur.r; }
-    if(b && c && b.time<c.time-180 && differs(c,b)){
-      use=b; var t=c.traffic.filter(function(x){ return x.kind==="acc"||x.kind==="cls"||x.kind==="jam"; }).sort(function(x,y){ return x.at-y.at; })[0];
-      why=(t?Math.round(t.at)+"km先で"+KNAME[t.kind]+"のため、":"")+"早いルートに切り替えました（"+fmtDur(c.time-b.time)+"短縮・"+fmtClock(b.arrive||new Date(Date.now()+b.time*1000))+"着）";
-    }
-    R.cur={k:R.cur.k,r:use}; R.picks[R.sel]=R.cur;
-    if(why){ R.skipNotify=true; R.seen={}; }
-    showNav(use,false); R.skipNotify=false;
-    if(reroute===true) notify("ルートを外れたため、新しいルートに切り替えました");
-    else if(why) notify(why);
-  }).catch(function(){ $("navSub").textContent="更新できませんでした（通信を確認）"; });
-}
-// 走行中：次の曲がり角を表示し、ルートから外れたらすぐ再探索する
-function navTick(c){
-  if(!R.nav||!R.cur||!me) return;
-  var r=R.cur.r, bi=0, bd=1e9;
-  for(var i=0;i<r.pts.length;i++){ var d=km(me,r.pts[i]); if(d<bd){ bd=d; bi=i; } }
-  var done=r.cum[bi]||0, nx=null;
-  for(var j=0;j<r.steps.length;j++){ if(r.steps[j].off>done+0.02 && r.steps[j].man!=="DEPART"){ nx=r.steps[j]; break; } }
-  $("navNext").textContent = nx ? "次："+fmtKm(nx.off-done)+"先 "+nx.msg : "";
-  navOrbis(r,done);
-  var acc=(c&&c.accuracy)||50;
-  if(bd>Math.max(0.15,acc/1000*1.5) && Date.now()-(R.lastReroute||0)>15000) refreshNav(true);
-}
-// 新しいルートが今のルートと別の道を通るか（新ルートの点の2割以上が今のルートから300m以上離れている）
-function differs(a,b){
-  var n=0, far=0, st=Math.max(1,Math.floor(b.pts.length/60));
-  for(var i=0;i<b.pts.length;i+=st){ n++; var near=false;
-    for(var k=0;k<a.pts.length;k+=Math.max(1,Math.floor(a.pts.length/600))){ if(km(a.pts[k],b.pts[i])<0.3){ near=true; break; } }
-    if(!near) far++; }
-  return n>0 && far/n>0.2;
-}
-function showNav(r, first){
-  var arr=r.arrive||new Date(Date.now()+r.time*1000);
-  $("navEta").textContent=fmtClock(arr);
-  var n=trafficCount(r);
-  $("navStat").firstChild.textContent = n.acc ? "ルート上に事故 "+n.acc+"件" : n.jam ? "ルート上に渋滞 "+n.jam+"か所" : "この先は順調です";
-  $("navSub").textContent = "残り"+r.len.toFixed(0)+"km・"+fmtDur(r.time)+(r.delay>=60?"（渋滞で+"+fmtDur(r.delay)+"）":"")+"・"+fmtClock(new Date())+"更新";
-  // 新しく現れた事故・渋滞を通知
-  var fresh=[];
-  r.traffic.forEach(function(t){ if(t.kind==="works"||t.kind==="etc") return;
-    var p=r.pts[t.s], id=t.kind+"_"+p[0].toFixed(2)+"_"+p[1].toFixed(2);
-    if(!R.seen[id]){ R.seen[id]=1; if(!first) fresh.push(t); } });
-  if(R.skipNotify){}
-  else if(fresh.length){ var t=fresh.sort(function(a,b){return a.at-b.at;})[0]; notify(Math.round(t.at)+"km先で"+KNAME[t.kind]+"が発生"+(t.delay>=60?"（+"+fmtDur(t.delay)+"）":"")); }
-  else if(!first && R.lastDelay!=null && r.delay-R.lastDelay>=300) notify("渋滞が悪化し、到着が"+fmtDur(r.delay-R.lastDelay)+"遅れる見込みです");
-  R.lastDelay=r.delay;
-  pickRoute(R.sel, !first); navTick();
-  // 下の一覧をルート上のできごとにする
-  var list=$("list"); list.innerHTML="";
-  var ev=r.traffic.filter(function(t){return t.kind!=="etc";}).sort(function(a,b){return a.at-b.at;});
-  if(!ev.length) list.innerHTML='<div class="empty">ルート上に渋滞・事故・通行止めはありません。1分ごとに確認し、発生したら画面と振動でお知らせします。</div>';
-  ev.forEach(function(t){
-    var b=document.createElement("button"); b.type="button"; b.className="item";
-    b.innerHTML='<span class="stripe" style="background:'+KCOL[t.kind]+'"></span><span class="main"><span class="road"><span class="tag" style="background:'+KCOL[t.kind]+'">'+KNAME[t.kind]+'</span></span>'+
-      '<span class="sect">長さ '+t.len.toFixed(1)+'km'+(t.speed?'・平均'+Math.round(t.speed)+'km/h':'')+'</span></span>'+
-      '<span class="side"><span><b class="num">'+Math.round(t.at)+'</b> km先</span>'+(t.delay>=60?'<span class="num">+'+fmtDur(t.delay)+'</span>':'')+'</span>';
-    b.onclick=function(){ var bb=new ML.LngLatBounds(); r.pts.slice(t.s,t.e+1).forEach(function(p){bb.extend([p[1],p[0]]);}); map.fitBounds(bb,{padding:pad(),maxZoom:14}); setSheet(false); };
-    list.appendChild(b);
-  });
-  if(r.steps.length){
-    var h=document.createElement("div"); h.className="empty"; h.style.textAlign="left"; h.style.fontWeight="700"; h.textContent="道順"; list.appendChild(h);
-    var d=document.createElement("details"); d.className="rsteps"; d.open=true; d.innerHTML='<summary>'+r.steps.length+'か所</summary>'; d.appendChild($("rStepsList").cloneNode(true)); d.querySelector("ol").removeAttribute("id");
-    Array.prototype.forEach.call(d.querySelectorAll("li"),function(li,k){ var st=r.steps[k]; li.onclick=function(){ map.easeTo({center:[st.ll[1],st.ll[0]],zoom:16}); setSheet(false); }; });
-    list.appendChild(d);
-  }
-}
-
-// ---- 画面操作 ----
-function setSheet(open){
-  document.documentElement.style.setProperty("--sheet-h",(open?Math.round(window.innerHeight*0.62):168)+"px");
-  $("handle").setAttribute("aria-expanded",open?"true":"false");
-}
-$("handle").onclick=function(){ setSheet($("handle").getAttribute("aria-expanded")!=="true"); };
-$("btnRefresh").onclick=function(){ refreshFlow(); load(); };
-$("btnLocate").onclick=locate;
-
-function openKey(){ $("keyInput").value=key; $("yjInput").value=yjId; $("gInput").value=gKey; $("keyPanel").hidden=false; }
-$("btnKey").onclick=openKey;
-$("btnPaste").onclick=function(){
-  if(!navigator.clipboard||!navigator.clipboard.readText){ $("keyInput").focus(); return; }
-  navigator.clipboard.readText().then(function(t){ t=(t||"").trim(); $("keyInput").value=t; $("keyInput").focus();
-    $("btnPaste").textContent = t ? "貼り付けました。「接続」を押してください" : "コピーされた文字がありません";
-  }).catch(function(){ $("btnPaste").textContent="欄を長押しして「貼り付け」を選んでください"; $("keyInput").focus(); });
-};
-$("closeKey").onclick=function(){ $("keyPanel").hidden=true; };
-$("gForm").addEventListener("submit",function(e){ e.preventDefault(); gKey=$("gInput").value.trim(); ls("g_key",gKey||null); $("gForm").querySelector("button").textContent=gKey?"保存しました":"保存"; });
-$("yjForm").addEventListener("submit",function(e){ e.preventDefault(); yjId=$("yjInput").value.trim(); ls("yj_id",yjId||null); $("yjForm").querySelector("button").textContent=yjId?"保存しました":"保存"; });
-$("keyForm").addEventListener("submit",function(e){ e.preventDefault(); key=$("keyInput").value.trim(); ls("tt_key",key||null); demo=false; $("keyPanel").hidden=true; setFlow(); load(); });
-$("btnDemo").onclick=function(){ demo=true; $("keyPanel").hidden=true; setFocus([35.681,139.767],"東京駅（サンプル）"); };
-
-var rg=$("regions");
-REGIONS.forEach(function(r){ var b=document.createElement("button"); b.type="button"; b.innerHTML=esc(r[0])+"<small>"+esc(r[1])+"周辺</small>";
-  b.onclick=function(){ $("placePanel").hidden=true; setFocus([r[2],r[3]],r[1]+"周辺"); }; rg.appendChild(b); });
-$("btnPlace").onclick=function(){ $("placePanel").hidden=false; };
-$("closePlace").onclick=function(){ $("placePanel").hidden=true; };
-[$("keyPanel"),$("placePanel")].forEach(function(p){ p.addEventListener("click",function(e){ if(e.target===p) p.hidden=true; }); });
-$("placeForm").addEventListener("submit",function(e){
-  e.preventDefault(); var q=$("placeInput").value.trim(); if(!q) return;
-  fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q)).then(function(r){return r.json();}).then(function(a){
-    if(!a||!a.length){ $("placeInput").value=""; $("placeInput").placeholder="見つかりませんでした。別の地名で"; return; }
-    var c=a[0].geometry.coordinates; $("placePanel").hidden=true; setFocus([c[1],c[0]],q+"周辺");
-  }).catch(function(){ $("placeInput").placeholder="地名検索に接続できませんでした"; });
-});
-
-map.on("moveend",function(){ if(!focus) return; var c=map.getCenter(); $("searchHere").hidden = (R&&R.nav) || !$("routePanel").hidden || !$("backRoute").hidden || km(focus,[c.lat,c.lng]) < RADIUS_KM*0.5; });
-$("searchHere").onclick=function(){ var c=map.getCenter(); setFocus([c.lat,c.lng],"地図の中心"); };
-
-setInterval(function(){ if(document.visibilityState==="visible"){ refreshFlow(); load(); } }, REFRESH_MS);
-document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") load(); });
-
-$("rLabel").textContent=Math.round(RADIUS_KM*2/3);
-setSheet(false);
-if(!key) openKey();
-locate();
+// ---- オフラインでも開けるように（PWA） ----
+if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
 })();
 </script>
 </body>
