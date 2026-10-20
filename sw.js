@@ -22,7 +22,9 @@ self.addEventListener("fetch", function(e){
   // アプリ本体：新しい版を優先し、つながらなければ保存した版
   if (req.mode === "navigate" || (url.origin === location.origin)) {
     // 端末やブラウザに残った古い版を使わず、毎回サーバーに新しい版があるか確かめる
-    e.respondWith(fetch(req, {cache: "no-cache"}).then(function(r){
+    // （画面を開くリクエストはそのまま作り直せないので URL から作る）
+    var fresh = req.mode === "navigate" ? new Request(req.url, {cache: "no-cache"}) : new Request(req, {cache: "no-cache"});
+    e.respondWith(fetch(fresh).then(function(r){
       var copy = r.clone(); caches.open(CACHE).then(function(c){ c.put(req, copy); }); return r;
     }).catch(function(){ return caches.match(req).then(function(r){ return r || caches.match("index.html"); }); }));
     return;
