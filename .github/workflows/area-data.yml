@@ -1,0 +1,24 @@
+name: Build area data
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 18 * * 0"   # 毎週月曜 3:00（日本時間）。OSM の更新を取り込む
+  push:
+    paths: [scripts/build_area.py, .github/workflows/area-data.yml]
+permissions:
+  contents: write
+concurrency:
+  group: area-data-${{ github.ref }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p data && python3 scripts/build_area.py
+      - run: ls -la data && gzip -c data/akabane.json | wc -c
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add data/akabane.json
+          git diff --cached --quiet || (git commit -m "Update Akabane accessibility data" && git push)
