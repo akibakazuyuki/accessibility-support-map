@@ -75,6 +75,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sugg .pinic svg{width:18px;height:18px}
 .sugg span{min-width:0}
 .sugg small{display:block;color:var(--muted);font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lhead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 8px 4px 14px;font-size:13px;font-weight:800;color:#3a4540}
 .msg{margin:0;padding:10px 14px;font-size:13px;color:var(--muted)}
 .msg:empty{display:none}
 
@@ -303,7 +304,7 @@ details.adv summary::-webkit-details-marker{display:none}
     <button class="chip" type="button" data-f="park" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="currentColor" stroke="none"/><path d="M10 17V7.5h3a3 3 0 0 1 0 6h-3" stroke="#fff"/></svg>駐車場</button>
     <button class="chip" type="button" data-f="indoor" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>屋内</button>
   </div>
-  <div class="drop"><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
+  <div class="drop"><div class="lhead" id="listHead" hidden><span id="listTitle">一覧</span><button class="ibtn" id="listClose" type="button" aria-label="一覧を閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
 </section>
 
 <div class="fabs">
@@ -1058,7 +1059,7 @@ function settle(ps){ return Promise.all(ps.map(function(p){ return p.catch(funct
 var seq=0, destMarker=null;
 function search(q){
   var my=++seq; q=q.trim(); if(!q) return;
-  say("探しています…"); $("sugg").hidden=true;
+  say("探しています…"); $("sugg").hidden=true; $("listHead").hidden=true;
   var bb=near(), base=me||AKABANE, mine=local(q);
   function inBox(c){ return c.ll[0]>=bb[0]&&c.ll[0]<=bb[2]&&c.ll[1]>=bb[1]&&c.ll[1]<=bb[3]; }
   var bare=q.replace(/赤羽(駅|周辺|付近|近く)?|北区|の近く|近く|周辺/g," ").trim()||q;
@@ -1079,7 +1080,9 @@ function search(q){
     showList(out.slice(0,15),"件見つかりました（近い順）");
   });
 }
-function showList(out,note){
+// 一覧・検索結果を閉じる（×・地図をタップ・Esc）
+function closeList(){ $("sugg").hidden=true; $("listHead").hidden=true; $("btnList").setAttribute("aria-expanded","false"); say(""); }
+function showList(out,note,title){
   var ul=$("sugg"), fk=favs().map(function(f){ return f.k; }); ul.innerHTML="";
   out.forEach(function(c){
     var ct=CATS[c.cat||"dest"], li=document.createElement("li"), b=document.createElement("button"); b.type="button";
@@ -1087,11 +1090,11 @@ function showList(out,note){
     b.onclick=function(){ pick(c); };
     li.appendChild(b); ul.appendChild(li);
   });
-  ul.hidden=false; say(out.length+note);
+  ul.hidden=false; $("listHead").hidden=false; $("listTitle").textContent=title||"検索結果"; say(out.length+note);
 }
 // 「一覧」：いま地図に出しているピンを近い順に（お気に入りは先頭）
 $("btnList").onclick=function(){
-  if(!$("sugg").hidden){ $("sugg").hidden=true; say(""); return; }
+  if(!$("sugg").hidden){ closeList(); return; }
   if(!area) return;
   var base=me&&km(me,AKABANE)<3?me:[map.getCenter().lat,map.getCenter().lng], out=[];
   pinFeats.forEach(function(f){ var pr=f.properties;
@@ -1100,10 +1103,13 @@ $("btnList").onclick=function(){
   favs().forEach(function(f){ out=out.filter(function(c){ return favKey(c)!==f.k; }); out.unshift({name:f.name,addr:f.addr,ll:f.ll,cat:f.cat,d:km(base,f.ll)}); });
   var nf=favs().length; out=out.slice(0,nf).concat(out.slice(nf).sort(function(a,b){ return a.d-b.d; })).slice(0,40);
   if(!out.length){ say("この条件のピンはありません"); return; }
-  showList(out,"件（近い順）");
+  showList(out,"件（近い順）","近い順の一覧"); $("btnList").setAttribute("aria-expanded","true");
 };
+$("listClose").onclick=closeList;
+document.addEventListener("click",function(e){ if(!$("sugg").hidden&&!e.target.closest(".drop")&&!e.target.closest("#btnList")&&!e.target.closest(".chip")&&!e.target.closest("#searchForm")) closeList(); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("sugg").hidden) closeList(); });
 function pick(c){
-  $("sugg").hidden=true; say(""); showLayers(false); $("sheet").hidden=false; $("sheet").scrollTop=0; setSheet("mid");
+  closeList(); showLayers(false); $("sheet").hidden=false; $("sheet").scrollTop=0; setSheet("mid");
   if(!destMarker){ var el=document.createElement("div"); el.className="pin";
     el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
@@ -1111,7 +1117,7 @@ function pick(c){
   if(pop) pop.remove();
   judge(c);
 }
-document.querySelectorAll(".chip[data-f]").forEach(function(b){ b.onclick=function(){ applyFilter(b.dataset.f); if(!$("sugg").hidden){ $("sugg").hidden=true; $("btnList").click(); } }; });
+document.querySelectorAll(".chip[data-f]").forEach(function(b){ b.onclick=function(){ applyFilter(b.dataset.f); if(!$("sugg").hidden&&$("btnList").getAttribute("aria-expanded")==="true"){ $("sugg").hidden=true; $("btnList").click(); } }; });
 $("btnLegend").onclick=function(){ setNet(!showNet); say(showNet?"歩道の通りやすさを色で表示しています（緑：通れる・赤：合わない・灰：未調査）":""); };
 setNet(showNet);
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
