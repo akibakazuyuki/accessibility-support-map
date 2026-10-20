@@ -53,7 +53,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .msg{margin:8px 0 0;font-size:14px;color:var(--muted)}
 
 /* ---- 右：操作ボタン ---- */
-.fabs{position:fixed;right:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:10;display:flex;flex-direction:column;gap:10px}
+.fabs{position:fixed;right:12px;bottom:calc(var(--sheet-h,150px) + 12px);z-index:10;display:flex;flex-direction:column;gap:10px}
 .fab{width:56px;height:56px;border-radius:16px;border:1px solid var(--line);background:var(--card);box-shadow:0 3px 12px rgba(20,30,30,.16);
   display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:1.2;gap:2px}
 .fab svg{width:22px;height:22px}
@@ -63,8 +63,25 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
   border-radius:18px 18px 0 0;box-shadow:0 -4px 18px rgba(20,30,30,.12);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px))}
 .sheet h2{font-size:17px;margin:0 0 4px}
 .sheet p{margin:0;font-size:14px;color:var(--muted)}
-@media (min-width:900px){ .sheet{left:12px;bottom:12px;border-radius:18px;border:1px solid var(--line)} .fabs{bottom:24px} }
+@media (min-width:900px){ .sheet{left:12px;bottom:12px;border-radius:18px;border:1px solid var(--line)} }
 
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;padding:0;list-style:none;font-size:13px}
+.legend li{display:flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:22px;height:5px;border-radius:3px}
+.legend i.dash{background:repeating-linear-gradient(90deg,#8a9599 0 5px,transparent 5px 9px)!important}
+.legend b{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:18px;border-radius:9px;color:#fff;font-size:10px;padding:0 4px}
+.src{margin-top:6px!important;font-size:12px!important}
+.src a{color:var(--muted)}
+.maplibregl-popup-content{font:14px/1.6 "BIZ UDPGothic","Hiragino Sans",sans-serif;color:var(--ink);padding:12px 14px;border-radius:12px}
+.maplibregl-popup-close-button{width:32px;height:32px;font-size:20px}
+.pop h3{font-size:15px;margin:0 32px 6px 0}
+.pop dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0}
+.pop dt{color:var(--muted)}
+.pop dd{margin:0}
+.pop .bad{color:#b3261e;font-weight:700}
+.pop .warn{color:#8a5300;font-weight:700}
+.pop small{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+.pop small a{color:var(--muted)}
 .me{width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.2)}
 .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
@@ -94,7 +111,17 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 <section class="sheet" aria-labelledby="sheetTitle">
   <h2 id="sheetTitle">赤羽駅周辺</h2>
-  <p id="sheetText">段差・道幅・坂・エレベーター・トイレの情報を準備しています。あなたの移動条件で「行けるか」を判定する機能は順次追加します。</p>
+  <p id="sheetText">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p>
+  <ul class="legend" id="legend" aria-label="凡例" hidden>
+    <li><i style="background:#1f8a5b"></i>段差・坂・幅に支障なし</li>
+    <li><i style="background:#e08a00"></i>注意（小さな段差・やや急な坂）</li>
+    <li><i style="background:#c62828"></i>支障あり（段差・急坂・階段・狭い）</li>
+    <li><i class="dash"></i>未調査</li>
+    <li><b style="background:#0a6a8c">WC</b>トイレ</li>
+    <li><b style="background:#6a3fa0">EV</b>エレベーター</li>
+    <li><b style="background:#37474f">入</b>入口</li>
+  </ul>
+  <p class="src" id="src"></p>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -139,6 +166,108 @@ var map = new maplibregl.Map({
   }
 });
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
+
+// ---- 赤羽駅周辺の歩行空間データ（国交省）と施設（OpenStreetMap） ----
+// コードの意味は「歩行空間ネットワークデータ整備仕様」による。99 は不明
+var CODE = {
+  st:{1:"歩道（車道と分離）",2:"歩道なしの道",3:"横断歩道",4:"横断部（標示なし）",5:"地下通路",6:"歩道橋",7:"建物内の通路",8:"その他"},
+  rt:{2:"動く歩道",3:"踏切",4:"エレベーター",5:"エスカレーター",6:"階段",7:"スロープ"},
+  w:{1:"1.0m未満",2:"1.0〜2.0m",3:"2.0〜3.0m",4:"3.0m以上"},
+  sl:{1:"5%以下",2:"5〜8%（上り）",3:"5〜8%（下り）",4:"8〜18%（上り）",5:"8〜18%（下り）",6:"18%超（上り）",7:"18%超（下り）"},
+  lv:{1:"2cm以下",2:"2〜5cm",3:"5〜10cm",4:"10cm超"},
+  ev:{1:"なし",2:"あり（バリアフリー非対応）",3:"あり（車椅子対応）",4:"あり（視覚障害者対応）",5:"あり（車椅子・視覚障害者対応）"},
+  rf:{1:"なし",2:"あり"},
+  cd:{1:"車椅子の通行に支障なし",2:"車椅子の通行に支障あり"},
+  dr:{2:"自動ドア",3:"自動ドア（押しボタン）",4:"手動の引き戸",5:"手動の開き戸",6:"回転ドア",7:"その他の扉"},
+  sg:{1:"なし",2:"歩車分離式",3:"押しボタン式",4:"あり"},
+  hr:{1:"なし",2:"右側",3:"左側",4:"両側"}
+};
+// 一般的な車椅子利用を想定した色分け（本人の条件での判定はプロフィール機能で行う）
+function linkLevel(L){
+  if(L.rt===6||L.rt===3||L.lv===3||L.lv===4||(L.sl>=4&&L.sl<=7)||L.w===1||L.cd===2) return "bad";
+  if(L.rt===5||L.lv===2||L.sl===2||L.sl===3) return "warn";
+  if(L.lv===99&&L.sl===99&&L.w===99&&L.rt!==4&&L.rt!==7) return "unknown";
+  return "ok";
+}
+function why(L){
+  var r=[];
+  if(L.rt===6) r.push(["bad","階段"]); if(L.rt===3) r.push(["bad","踏切"]); if(L.rt===5) r.push(["warn","エスカレーター"]);
+  if(L.lv===3||L.lv===4) r.push(["bad","段差 "+CODE.lv[L.lv]]); else if(L.lv===2) r.push(["warn","段差 "+CODE.lv[L.lv]]);
+  if(L.sl>=4&&L.sl<=7) r.push(["bad","坂 "+CODE.sl[L.sl]]); else if(L.sl===2||L.sl===3) r.push(["warn","坂 "+CODE.sl[L.sl]]);
+  if(L.w===1) r.push(["bad","幅 "+CODE.w[1]]); if(L.cd===2) r.push(["bad","路面に支障あり"]);
+  return r;
+}
+function row(k,v){ return v==null?"":"<dt>"+esc(k)+"</dt><dd>"+v+"</dd>"; }
+function code(t,v){ return CODE[t][v]?esc(CODE[t][v]):(v===99?"不明":null); }
+function linkHtml(L){
+  var w=why(L), lv=linkLevel(L);
+  var head={bad:"車椅子では通りにくい区間",warn:"注意が必要な区間",ok:"段差・坂・幅に支障なし",unknown:"段差・坂・幅は未調査"}[lv];
+  var h='<div class="pop"><h3>'+esc(head)+'</h3><dl>';
+  h+=row("種類",esc(CODE.rt[L.rt]||CODE.st[L.st]||"通路"));
+  if(w.length) h+=row("理由",w.map(function(x){ return '<span class="'+x[0]+'">'+esc(x[1])+'</span>'; }).join("、"));
+  h+=row("段差",code("lv",L.lv))+row("幅",code("w",L.w))+row("坂",code("sl",L.sl))+row("長さ",L.d?Math.round(L.d)+"m":null);
+  if(L.ev!==1&&L.ev!==99) h+=row("エレベーター",code("ev",L.ev));
+  if(L.dr!==1&&L.dr!==99) h+=row("扉",code("dr",L.dr));
+  if(L.rf===2) h+=row("屋根","あり");
+  if(L.sg>1&&L.sg!==99) h+=row("信号",code("sg",L.sg));
+  return h+'</dl><small>出典：国土交通省 歩行空間ネットワークデータ'+(L.md?'（調査 '+esc(L.md)+'）':'')+'</small></div>';
+}
+var WC={yes:"車椅子で利用可",limited:"一部利用可",no:"車椅子では利用不可",designated:"車椅子専用あり"};
+function poiHtml(p){
+  var t=p.t, kind={toilet:"トイレ",elevator:"エレベーター",entrance:"入口",place:"施設"}[p.k];
+  var h='<div class="pop"><h3>'+esc(t.name||kind)+'</h3><dl>'+row("種類",esc(kind));
+  var wc=t["toilets:wheelchair"]&&p.k!=="toilet"?t["toilets:wheelchair"]:null;
+  h+=row("車椅子",t.wheelchair?esc(WC[t.wheelchair]||t.wheelchair):"未確認");
+  if(wc) h+=row("車椅子トイレ",esc(WC[wc]||wc));
+  if(p.k==="toilet"&&t.changing_table) h+=row("おむつ台",t.changing_table==="yes"?"あり":"なし");
+  if(t.door||t.automatic_door) h+=row("扉",esc(t.automatic_door==="yes"?"自動ドア":t.door));
+  if(t.step_count) h+=row("段数",esc(t.step_count)+"段");
+  if(t.width) h+=row("幅",esc(t.width)+"m");
+  if(t.level) h+=row("階",esc(t.level));
+  if(t.opening_hours) h+=row("利用時間",esc(t.opening_hours));
+  if(t["wheelchair:description"]) h+=row("メモ",esc(t["wheelchair:description"]));
+  var id=p.osm, url="https://www.openstreetmap.org/"+({n:"node",w:"way",r:"relation"}[id[0]])+"/"+id.slice(1);
+  return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small></div>';
+}
+var LEVEL_COLOR=["match",["get","lv"],"bad","#c62828","warn","#e08a00","ok","#1f8a5b","#8a9599"];
+var area=null, pop=null;
+function showPop(ll,html){ if(pop) pop.remove(); pop=new maplibregl.Popup({offset:10,maxWidth:"300px"}).setLngLat(ll).setHTML(html).addTo(map); }
+function loadArea(){
+  fetch("data/akabane.json").then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(A){
+    area=A;
+    var lf=A.links.map(function(L,i){ return {type:"Feature",properties:{i:i,lv:linkLevel(L)},geometry:{type:"LineString",coordinates:L.c}}; });
+    var pf=A.pois.map(function(p,i){ var wc=p.t.wheelchair||p.t["toilets:wheelchair"];
+      return {type:"Feature",properties:{i:i,k:p.k,ok:wc==="yes"||wc==="designated"?1:wc==="no"?-1:0},geometry:{type:"Point",coordinates:p.ll}}; });
+    map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:lf},attribution:"歩行空間データ：国土交通省"});
+    map.addSource("pois",{type:"geojson",data:{type:"FeatureCollection",features:pf},attribution:"施設 &copy; OpenStreetMap contributors"});
+    map.addLayer({id:"links-unknown",type:"line",source:"links",filter:["==",["get","lv"],"unknown"],layout:{"line-cap":"butt"},
+      paint:{"line-color":"#8a9599","line-width":["interpolate",["linear"],["zoom"],14,1.5,18,5],"line-dasharray":[2,1.5]}});
+    map.addLayer({id:"links",type:"line",source:"links",filter:["!=",["get","lv"],"unknown"],layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":LEVEL_COLOR,"line-width":["interpolate",["linear"],["zoom"],14,2.5,18,8]}});
+    map.addLayer({id:"pois",type:"circle",source:"pois",filter:["!=",["get","k"],"place"],
+      paint:{"circle-radius":["interpolate",["linear"],["zoom"],14,5,18,11],
+        "circle-color":["match",["get","k"],"toilet","#0a6a8c","elevator","#6a3fa0","#37474f"],"circle-stroke-color":"#ffffff","circle-stroke-width":2}});
+    map.addLayer({id:"pois-label",type:"symbol",source:"pois",minzoom:16,filter:["!=",["get","k"],"place"],
+      layout:{"text-field":["match",["get","k"],"toilet","WC","elevator","EV","入"],"text-font":["NotoSansJP-Regular"],"text-size":10,"text-allow-overlap":true},
+      paint:{"text-color":"#ffffff"}});
+    ["links","links-unknown"].forEach(function(id){
+      map.on("click",id,function(e){ showPop(e.lngLat,linkHtml(A.links[e.features[0].properties.i])); });
+      map.on("mouseenter",id,function(){ map.getCanvas().style.cursor="pointer"; }); map.on("mouseleave",id,function(){ map.getCanvas().style.cursor=""; });
+    });
+    map.on("click","pois",function(e){ var p=A.pois[e.features[0].properties.i]; showPop(p.ll,poiHtml(p)); });
+    var n={bad:0,warn:0,ok:0,unknown:0}; lf.forEach(function(f){ n[f.properties.lv]++; });
+    var wcs=A.pois.filter(function(p){ return p.k==="toilet"; }).length, evs=A.pois.filter(function(p){ return p.k==="elevator"; }).length;
+    if(!destMarker) $("sheetText").textContent="歩道 "+A.links.length+"区間（支障あり "+n.bad+"・注意 "+n.warn+"・未調査 "+n.unknown+"）、トイレ "+wcs+"か所、エレベーター "+evs+"か所。線や印を押すと詳しい情報が出ます。";
+    $("legend").hidden=false;
+    var s=A.sources[0];
+    $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+'・施設は OpenStreetMap';
+  }).catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
+}
+if(map.isStyleLoaded()) loadArea(); else map.once("style.load",loadArea);
+
+// 右のボタンが下のシートに重ならないように
+if(window.ResizeObserver) new ResizeObserver(function(){ var wide=window.innerWidth>=900;
+  document.documentElement.style.setProperty("--sheet-h",wide?"12px":document.querySelector(".sheet").offsetHeight+"px"); }).observe(document.querySelector(".sheet"));
 
 // ---- 現在地 ----
 var me=null, meMarker=null;
@@ -206,7 +335,8 @@ function pick(c){
   destMarker.setLngLat([c.ll[1],c.ll[0]]).addTo(map);
   map.flyTo({center:[c.ll[1],c.ll[0]],zoom:17});
   $("sheetTitle").textContent=c.name;
-  $("sheetText").textContent=(c.addr?c.addr+"。":"")+"この場所までの段差・道幅・坂の情報は準備中です。";
+  var inArea=area&&c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
+  $("sheetText").textContent=(c.addr?c.addr+"。":"")+(inArea?"周りの歩道の色と印で、段差・坂・トイレを確かめられます。":"段差・道幅・坂の情報は、いまは赤羽駅周辺だけです。");
 }
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
 
