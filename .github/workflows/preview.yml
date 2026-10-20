@@ -4,6 +4,8 @@ on:
   push:
     branches: ["claude/**"]
     paths: ["index.html", "scripts/preview.mjs", ".github/workflows/preview.yml"]
+permissions:
+  contents: write
 jobs:
   shot:
     runs-on: ubuntu-latest
@@ -13,5 +15,8 @@ jobs:
         with: { node-version: 20 }
       - run: npm i --no-save playwright@1.48.2 http-server@14.1.1 && npx playwright install --with-deps chromium
       - run: (npx http-server -p 8080 -s -c-1 &) && sleep 2 && node scripts/preview.mjs
-      - uses: actions/upload-artifact@v4
-        with: { name: preview, path: preview/ }
+      # 画像は preview-shots ブランチに置く（本体のブランチには入れない）
+      - run: |
+          cd preview && git init -q -b preview-shots && git add . \
+            && git -c user.name=preview -c user.email=preview@users.noreply.github.com commit -qm "Preview of ${GITHUB_SHA::7}" \
+            && git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" preview-shots
