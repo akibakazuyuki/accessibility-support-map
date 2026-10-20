@@ -7,7 +7,7 @@
 
 ## 構成
 
-- `index.html`：画面と処理のすべて（MapLibre GL JS ＋ 国土地理院ベクトルタイル）
+- `index.html`：画面と処理のすべて（MapLibre GL JS ＋ OpenFreeMap。予備に国土地理院ベクトルタイル）
 - `data/akabane.json`：赤羽駅周辺の歩道（段差・幅・坂など）と施設のデータ。`scripts/build_area.py` が GitHub Actions で毎週作り直す
 - `manifest.webmanifest`・`sw.js`・`icons/`：ホーム画面への追加とオフライン起動
 
@@ -15,5 +15,5 @@
 
 - 歩道の段差・幅・坂など：[国土交通省 歩行空間ネットワークデータ（赤羽駅周辺）](https://ckan.hokonavi.go.jp/dataset/nwd_akabane_station)（公共データ利用規約 第1.0版）
 - トイレ・エレベーター・入口：OpenStreetMap（Overpass API）
-- 地図：[国土地理院ベクトルタイル](https://github.com/gsi-cyberjapan/optimal_bvmap)
+- 地図：[OpenFreeMap](https://openfreemap.org/)（© OpenMapTiles、© OpenStreetMap contributors）。予備に[国土地理院ベクトルタイル](https://github.com/gsi-cyberjapan/optimal_bvmap)
 - 場所の検索：国土地理院 地名・住所検索、OpenStreetMap（Nominatim・Photon）。© OpenStreetMap contributors（ODbL）
