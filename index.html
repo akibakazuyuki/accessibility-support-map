@@ -354,7 +354,7 @@ function fmtLen(m){ return m<1000 ? Math.max(10,Math.round(m/10)*10)+"m" : (m/10
 // 普通の地図の細かさは要らないので、緑の地面・白い道・水色の川だけの、やわらかい絵地図にする
 var JA=["coalesce",["get","name:ja"],["get","name"]];
 function soft(id,type,layer,o){ var l={id:id,type:type,source:"omt","source-layer":layer}; for(var k in o) l[k]=o[k]; return l; }
-var ROAD_MAJOR=["motorway","trunk","primary","secondary"], ROAD_MINOR=["tertiary","minor","service"];
+var ROAD_MAJOR=["motorway","trunk","primary","secondary"], ROAD_MINOR=["tertiary","minor"];
 function roads(cls){ return ["all",["match",["get","class"],cls,true,false],["!=",["get","brunnel"],"tunnel"]]; }
 var BASE={
   version:8,
@@ -368,8 +368,8 @@ var BASE={
     soft("pitch","fill","landuse",{filter:["match",["get","class"],["pitch","stadium","school","cemetery"],true,false],paint:{"fill-color":"#dcedd2"}}),
     soft("water","fill","water",{paint:{"fill-color":"#a8d4f2"}}),
     soft("river","line","waterway",{paint:{"line-color":"#a8d4f2","line-width":["interpolate",["linear"],["zoom"],12,1,18,6]}}),
-    soft("bldg","fill","building",{minzoom:14,paint:{"fill-color":"#e2e9dc","fill-opacity":["interpolate",["linear"],["zoom"],14,0,15.5,0.9]}}),
-    soft("rail","line","transportation",{filter:roads(["rail","transit"]),paint:{"line-color":"#cfd8cb","line-width":["interpolate",["linear"],["zoom"],12,1,18,3]}}),
+    soft("bldg","fill","building",{minzoom:14,paint:{"fill-color":"#e3ebde","fill-outline-color":"#e3ebde","fill-opacity":["interpolate",["linear"],["zoom"],14,0,16,0.7]}}),
+    soft("rail","line","transportation",{filter:["all",roads(["rail","transit"]),["!",["has","service"]]],paint:{"line-color":"#d3dccf","line-width":["interpolate",["linear"],["zoom"],12,0.8,18,2.5]}}),
     soft("road-minor","line","transportation",{filter:roads(ROAD_MINOR),minzoom:13,layout:{"line-cap":"round","line-join":"round"},
       paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],13,0.6,15,2.5,18,13]}}),
     soft("road-major-case","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
