@@ -1,7 +1,7 @@
 // 画面の部品だけを端末に保存して、電波が弱い場所でもアプリを開けるようにする。
 // 地図タイルと検索結果は毎回ネットから取る（国土地理院・OSMの利用条件に合わせ、まとめて保存しない）
-var CACHE = "asm-v1";
-var SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];  // data/ はアプリ本体と同じく「新しい版を優先」で保存される
+var CACHE = "asm-v2";
+var SHELL = ["./", "index.html", "terms.html", "privacy.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];  // data/ はアプリ本体と同じく「新しい版を優先」で保存される
 var LIBS = ["https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js",
   "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css",
   "https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js"];

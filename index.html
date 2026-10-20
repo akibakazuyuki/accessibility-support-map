@@ -113,6 +113,13 @@ details.steps summary{min-height:44px;display:flex;align-items:center;cursor:poi
 details.steps ol{margin:0;padding-left:22px}
 .note{font-size:12px!important;margin-top:8px!important}
 .sheet{max-height:55vh;overflow:auto}
+.pop .rep{display:block;width:100%;margin-top:8px;min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card2);font-size:13px}
+.kinds{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;padding:0;border:0}
+.kinds label{display:flex;align-items:center;gap:6px;min-height:44px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:14px}
+.kinds input{width:18px;height:18px;accent-color:var(--brand)}
+.fields textarea{min-height:88px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card2);font:inherit;resize:vertical}
+.links{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px;font-size:12px}
+.links a,.links button{color:var(--muted);background:none;border:0;padding:0;font-size:12px;text-decoration:underline;min-height:32px}
 .me{width:18px;height:18px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.2)}
 .pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--brand);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
@@ -155,6 +162,7 @@ details.steps ol{margin:0;padding-left:22px}
     <li><b style="background:#37474f">入</b>入口</li>
   </ul>
   <p class="src" id="src"></p>
+  <p class="links"><button type="button" id="repGeneral">情報の誤りを報告</button><a href="terms.html">利用規約・免責</a><a href="privacy.html">プライバシーポリシー</a></p>
 </section>
 
 <div class="panel" id="profPanel" hidden>
@@ -173,12 +181,39 @@ details.steps ol{margin:0;padding-left:22px}
   </form>
 </div>
 
+<div class="panel" id="repPanel" hidden>
+  <form class="panel-card" id="repForm" role="dialog" aria-modal="true" aria-labelledby="repTitle">
+    <h2 id="repTitle">情報の誤りを報告</h2>
+    <p id="repTarget">地図の情報と現地が違うときに教えてください。確認して地図に反映します。</p>
+    <fieldset class="kinds"><legend class="sr">何が違いましたか</legend>
+      <label><input type="radio" name="kind" value="段差がある" required>段差がある</label>
+      <label><input type="radio" name="kind" value="通路が狭い">通路が狭い</label>
+      <label><input type="radio" name="kind" value="坂が急">坂が急</label>
+      <label><input type="radio" name="kind" value="工事・通行止め">工事・通行止め</label>
+      <label><input type="radio" name="kind" value="エレベーターが使えない">エレベーターが使えない</label>
+      <label><input type="radio" name="kind" value="入口が違う">入口が違う</label>
+      <label><input type="radio" name="kind" value="トイレの情報が違う">トイレ</label>
+      <label><input type="radio" name="kind" value="実は通れる">実は通れる</label>
+      <label><input type="radio" name="kind" value="その他">その他</label>
+    </fieldset>
+    <div class="fields">
+      <label>どのくらい続きそうですか<select id="repDur"><option>わからない</option><option>今だけ（工事・故障など）</option><option>ずっと</option></select></label>
+      <label>くわしく（任意）<textarea id="repText" maxlength="1000" placeholder="例：南口の手前に5cmくらいの段差。左側のスロープなら通れる"></textarea></label>
+    </div>
+    <p>人の顔や車のナンバーが写った写真、氏名などの個人情報は書かないでください。</p>
+    <div class="row"><button class="btn ghost" type="button" id="repCancel">閉じる</button><button class="btn" type="submit">報告画面へ進む</button></div>
+  </form>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/dist/pmtiles.js"></script>
 <script>
 (function(){
 "use strict";
 var AKABANE = [35.7780, 139.7208];   // JR赤羽駅
+// 誤り報告の受け取り先（Google フォーム）。フォームの「事前入力したURLを取得」で得た entry 番号を入れる。未設定ならメールで送る
+var REPORT = {form:"https://docs.google.com/forms/d/e/1FAIpQLSesOloKZTHVqgc1QlTQVUXLc0tlRr4Z9kVe6rE1gqIOIqWb_g/viewform",
+  entry:{target:"entry.612633900", kind:"entry.1771970137", dur:"entry.1684015251", text:"entry.2030489350", ll:"entry.1440004134", app:"entry.91218291"}, mail:""};
 function $(id){ return document.getElementById(id); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function km(a,b){ var R=6371,dLa=(b[0]-a[0])*Math.PI/180,dLo=(b[1]-a[1])*Math.PI/180;
@@ -279,7 +314,8 @@ function linkHtml(L){
   if(L.dr!==1&&L.dr!==99) h+=row("扉",code("dr",L.dr));
   if(L.rf===2) h+=row("屋根","あり");
   if(L.sg>1&&L.sg!==99) h+=row("信号",code("sg",L.sg));
-  return h+'</dl><small>出典：国土交通省 歩行空間ネットワークデータ'+(L.md?'（調査 '+esc(L.md)+'）':'')+'</small></div>';
+  var m=L.c[Math.floor(L.c.length/2)];
+  return h+'</dl><small>出典：国土交通省 歩行空間ネットワークデータ'+(L.md?'（調査 '+esc(L.md)+'）':'')+'</small><button type="button" class="rep" data-rep="nwd:'+esc(L.id)+'" data-ll="'+m[1]+','+m[0]+'" data-name="この区間">ここが違う・報告する</button></div>';
 }
 var WC={yes:"車椅子で利用可",limited:"一部利用可",no:"車椅子では利用不可",designated:"車椅子専用あり"};
 function poiHtml(p){
@@ -296,10 +332,10 @@ function poiHtml(p){
   if(t.opening_hours) h+=row("利用時間",esc(t.opening_hours));
   if(t["wheelchair:description"]) h+=row("メモ",esc(t["wheelchair:description"]));
   var id=p.osm, url="https://www.openstreetmap.org/"+({n:"node",w:"way",r:"relation"}[id[0]])+"/"+id.slice(1);
-  return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small></div>';
+  return h+'</dl><small>出典：<a href="'+url+'" target="_blank" rel="noopener">OpenStreetMap</a>（利用者による登録。現地と違う場合があります）</small><button type="button" class="rep" data-rep="osm:'+esc(id)+'" data-ll="'+p.ll[1]+','+p.ll[0]+'" data-name="'+esc(t.name||kind)+'">ここが違う・報告する</button></div>';
 }
 var LEVEL_COLOR=["match",["get","lv"],"bad","#c62828","warn","#e08a00","ok","#1f8a5b","#8a9599"];
-var area=null, pop=null, adj=null, routeTo=null;
+var area=null, pop=null, adj=null, routeTo=null, lastFocus=null;
 function showPop(ll,html){ if(pop) pop.remove(); pop=new maplibregl.Popup({offset:10,maxWidth:"300px"}).setLngLat(ll).setHTML(html).addTo(map); }
 function linkFeatures(){ return area.links.map(function(L,i){ return {type:"Feature",properties:{i:i,lv:linkLevel(L)},geometry:{type:"LineString",coordinates:L.c}}; }); }
 function overview(){
@@ -439,11 +475,34 @@ function judge(c){
   var ub=out.querySelector("[data-unk]"); if(ub) ub.onclick=function(){ var i=path.filter(function(i){ return evalLink(area.links[i]).unk.length; })[0], L=area.links[i]; map.flyTo({center:L.c[0],zoom:18}); showPop(L.c[0],linkHtml(L)); };
 }
 
+// ---- 誤り報告 ----
+var rep=null;
+function openRep(t){
+  rep=t; lastFocus=document.activeElement;
+  $("repTarget").textContent=t.id?"「"+t.name+"」について、現地と違う点を教えてください。確認して地図に反映します。":"地図の情報と現地が違うときに教えてください。確認して地図に反映します。";
+  $("repForm").reset(); $("repPanel").hidden=false; $("repForm").querySelector("input").focus();
+}
+function closeRep(){ $("repPanel").hidden=true; if(lastFocus) lastFocus.focus(); }
+document.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-rep]"); if(!b) return;
+  var ll=b.dataset.ll.split(",").map(Number); openRep({id:b.dataset.rep,name:b.dataset.name,ll:ll}); });
+$("repGeneral").onclick=function(){ var c=map.getCenter(); openRep({id:"",name:"",ll:[+c.lat.toFixed(6),+c.lng.toFixed(6)]}); };
+$("repCancel").onclick=closeRep; $("repPanel").addEventListener("keydown",function(e){ if(e.key==="Escape") closeRep(); });
+$("repForm").onsubmit=function(e){
+  e.preventDefault();
+  var v={target:rep.id||"（場所の指定なし）",kind:(document.querySelector('input[name="kind"]:checked')||{}).value||"",dur:$("repDur").value,text:$("repText").value.trim(),
+    ll:rep.ll[0].toFixed(6)+","+rep.ll[1].toFixed(6),app:(area&&area.built||"")+" / "+location.href.split("?")[0]};
+  var url;
+  if(REPORT.form){ url=REPORT.form+"?usp=pp_url"; Object.keys(v).forEach(function(k){ if(REPORT.entry[k]) url+="&"+REPORT.entry[k]+"="+encodeURIComponent(v[k]); }); }
+  else url="mailto:"+REPORT.mail+"?subject="+encodeURIComponent("【誤り報告】"+v.kind)+"&body="+encodeURIComponent(
+    "対象："+v.target+"\n場所："+v.ll+"（https://www.openstreetmap.org/?mlat="+rep.ll[0]+"&mlon="+rep.ll[1]+"#map=19/"+rep.ll[0]+"/"+rep.ll[1]+"）\n内容："+v.kind+"\n期間："+v.dur+"\n詳しく："+v.text+"\n\n（アプリ "+v.app+"）");
+  window.open(url,"_blank","noopener"); closeRep(); if(pop) pop.remove();
+  say("報告画面を開きました。送信してくださると地図の改善に使います。ありがとうございます");
+};
+
 // ---- 条件の設定画面 ----
 function profLabel(){ var p=P(); return (prof?p.label:"未設定（手動車いすで判定中）")+'<small>'+STEP_TXT[p.step]+"・"+SLOPE_TXT[p.slope]+(p.stairs?"・階段可":"・階段なし")+'</small>'; }
 function showProf(){ $("profText").innerHTML="移動の条件："+profLabel(); }
 function fillForm(p){ $("pStep").value=p.step; $("pSlope").value=p.slope; $("pWidth").value=p.width; $("pStairs").checked=p.stairs; $("pEsc").checked=p.esc; }
-var lastFocus=null;
 function openProf(){
   lastFocus=document.activeElement;
   var cur=prof&&prof.key||"manual", fs=$("presets"); fs.querySelectorAll("label").forEach(function(l){ l.remove(); });
