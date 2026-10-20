@@ -351,7 +351,39 @@ function fmtLen(m){ return m<1000 ? Math.max(10,Math.round(m/10)*10)+"m" : (m/10
 
 // ---- 地図 ----
 // 下地は OpenFreeMap（OpenStreetMap のベクトル地図）。読めないときは国土地理院ベクトルタイルに切り替える
-var BASE="https://tiles.openfreemap.org/styles/liberty";
+// 普通の地図の細かさは要らないので、緑の地面・白い道・水色の川だけの、やわらかい絵地図にする
+var JA=["coalesce",["get","name:ja"],["get","name"]];
+function soft(id,type,layer,o){ var l={id:id,type:type,source:"omt","source-layer":layer}; for(var k in o) l[k]=o[k]; return l; }
+var ROAD_MAJOR=["motorway","trunk","primary","secondary"], ROAD_MINOR=["tertiary","minor","service"];
+function roads(cls){ return ["all",["match",["get","class"],cls,true,false],["!=",["get","brunnel"],"tunnel"]]; }
+var BASE={
+  version:8,
+  glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  sources:{omt:{type:"vector",url:"https://tiles.openfreemap.org/planet",
+    attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}},
+  layers:[
+    {id:"bg",type:"background",paint:{"background-color":"#edf3e7"}},
+    soft("green","fill","landcover",{filter:["match",["get","class"],["grass","wood","farmland","wetland"],true,false],paint:{"fill-color":"#d3eac6"}}),
+    soft("park","fill","park",{paint:{"fill-color":"#c8e6b6"}}),
+    soft("pitch","fill","landuse",{filter:["match",["get","class"],["pitch","stadium","school","cemetery"],true,false],paint:{"fill-color":"#dcedd2"}}),
+    soft("water","fill","water",{paint:{"fill-color":"#a8d4f2"}}),
+    soft("river","line","waterway",{paint:{"line-color":"#a8d4f2","line-width":["interpolate",["linear"],["zoom"],12,1,18,6]}}),
+    soft("bldg","fill","building",{minzoom:14,paint:{"fill-color":"#e2e9dc","fill-opacity":["interpolate",["linear"],["zoom"],14,0,15.5,0.9]}}),
+    soft("rail","line","transportation",{filter:roads(["rail","transit"]),paint:{"line-color":"#cfd8cb","line-width":["interpolate",["linear"],["zoom"],12,1,18,3]}}),
+    soft("road-minor","line","transportation",{filter:roads(ROAD_MINOR),minzoom:13,layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],13,0.6,15,2.5,18,13]}}),
+    soft("road-major-case","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#d9e3d2","line-width":["interpolate",["exponential",1.6],["zoom"],10,1.5,15,9,18,30]}}),
+    soft("road-major","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],10,1,15,7,18,25]}}),
+    soft("place","symbol","place",{filter:["match",["get","class"],["suburb","quarter","neighbourhood"],true,false],
+      layout:{"text-field":JA,"text-font":["Noto Sans Regular"],"text-size":12,"text-max-width":8},
+      paint:{"text-color":"#7d8b81","text-halo-color":"rgba(255,255,255,.9)","text-halo-width":1.5}}),
+    soft("station","symbol","poi",{filter:["all",["match",["get","class"],["rail","railway"],true,false],["match",["get","subclass"],["station","halt"],true,false]],
+      layout:{"text-field":JA,"text-font":["Noto Sans Bold"],"text-size":13},
+      paint:{"text-color":"#2f5f4a","text-halo-color":"#ffffff","text-halo-width":2}})
+  ]
+};
 var pmProtocol = new pmtiles.Protocol();
 maplibregl.addProtocol("pmtiles", pmProtocol.tile);
 var ANNO_TEXT = ["to-string",["coalesce",["get","vt_text"],["get","knj"],""]];
@@ -383,21 +415,6 @@ var map = new maplibregl.Map({
 var usedGsi=false;
 map.on("error",function(){ if(!usedGsi&&!map.isStyleLoaded()){ usedGsi=true; map.setStyle(GSI_STYLE); } });
 // 地名は日本語で出し、地図のお店アイコンは間引いて、こちらのピンを見やすくする
-function tuneBase(){
-  if(usedGsi) return;
-  var JA=["coalesce",["get","name:ja"],["get","name"]];
-  map.getStyle().layers.forEach(function(l){
-    if(/^(poi_r20|poi_r7|building-3d|natural_earth|road_one_way_arrow.*|.*shield.*|.*rail_hatching)$/.test(l.id)) map.setLayoutProperty(l.id,"visibility","none");
-    else if(l.type==="symbol"&&l.layout&&l.layout["text-field"]) map.setLayoutProperty(l.id,"text-field",JA);
-  });
-  // 線路と幹線道路の色を落ち着かせ、公園を少し明るい緑に
-  [["road_major_rail","line-color","#c9ced6"],["road_transit_rail","line-color","#c9ced6"],["bridge_major_rail","line-color","#c9ced6"],
-   ["road_trunk_primary","line-color","#fde9b8"],["road_secondary_tertiary","line-color","#fff6dc"],["bridge_trunk_primary","line-color","#fde9b8"],
-   ["park","fill-color","#d8efd3"],["landcover_grass","fill-color","#dff1d9"],["landcover_wood","fill-color","#d3ebcc"],["water","fill-color","#b9dcf5"],
-   ["background","background-color","#f4f6f2"],["landuse_residential","fill-color","rgba(0,0,0,0)"],
-   ["building","fill-color","#e9ece6"],["building","fill-outline-color","#dde2da"]].forEach(function(x){
-    if(map.getLayer(x[0])) try{ map.setPaintProperty(x[0],x[1],x[2]); }catch(e){} });
-}
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
 // ---- 赤羽駅周辺の歩行空間データ（国交省）と施設（OpenStreetMap） ----
@@ -575,7 +592,7 @@ function pinCand(pr){
 var showNet=ls("net")==="1";
 function setNet(on){ showNet=on; ls("net",on?"1":null); ["links","links-unknown"].forEach(function(id){ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",on?"visible":"none"); });
   var b=$("btnLegend"); b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on)); }
-map.once("style.load",function(){ tuneBase(); loadArea(); });
+map.once("style.load",function(){ loadArea(); });
 // 検索欄と下のパネルに隠れないように経路を地図に収める
 function fitRoute(b){
   var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+56;  // 目的地のピンの高さぶん余白を足す

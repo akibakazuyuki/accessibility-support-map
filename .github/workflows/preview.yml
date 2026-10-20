@@ -1,0 +1,17 @@
+# 作業ブランチに push したとき、スマホ幅の画面を本物の地図つきで撮って、確認用に残す
+name: Preview screenshots
+on:
+  push:
+    branches: ["claude/**"]
+    paths: ["index.html", "scripts/preview.mjs", ".github/workflows/preview.yml"]
+jobs:
+  shot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm i --no-save playwright@1.48.2 http-server@14.1.1 && npx playwright install --with-deps chromium
+      - run: (npx http-server -p 8080 -s -c-1 &) && sleep 2 && node scripts/preview.mjs
+      - uses: actions/upload-artifact@v4
+        with: { name: preview, path: preview/ }
