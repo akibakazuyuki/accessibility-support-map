@@ -45,27 +45,25 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 @media (max-width:599px){ .maplibregl-ctrl-scale{display:none} }
 
 /* ---- 上部：ロゴ・検索・チップ ---- */
-.top{position:fixed;left:0;right:0;top:0;z-index:10;max-width:520px;padding:calc(8px + env(safe-area-inset-top,0px)) 0 4px;
-  background:linear-gradient(#fff 0,#fff 62%,rgba(255,255,255,0))}
-.brand{position:relative;display:flex;align-items:center;justify-content:flex-start;gap:7px;height:36px;margin:0 0 8px;padding:0 16px;font-size:19px;font-weight:800;color:var(--brand);letter-spacing:.02em}
-.brand img{width:26px;height:26px;border-radius:8px}
-.brand .beta{font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:6px;padding:1px 6px;letter-spacing:.06em}
-.search{display:flex;align-items:center;gap:8px;height:50px;margin:0 14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:0 6px 0 14px}
-.search .spark{font-size:18px;line-height:1;flex:none}
-.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:15px;font-weight:500;outline:none}
-.search input::placeholder{color:#8a948f}
+/* 白い帯は作らず、地図の上にうっすら白をかけてロゴと検索バーを浮かせる */
+.top{position:fixed;left:0;right:0;top:0;z-index:10;max-width:520px;padding:calc(10px + env(safe-area-inset-top,0px)) 0 4px;
+  background:linear-gradient(rgba(255,255,255,.88) 0,rgba(255,255,255,.6) 55%,rgba(255,255,255,0) 100%)}
+.brand{display:flex;align-items:center;justify-content:center;gap:6px;height:34px;margin:0 0 12px;font-size:24px;font-weight:800;color:var(--brand);letter-spacing:.02em;line-height:1}
+.brand svg{width:28px;height:28px;flex:none}
+.search{display:flex;align-items:center;gap:8px;height:44px;margin:0 16px;background:rgba(255,255,255,.96);border-radius:22px;box-shadow:0 2px 12px rgba(20,40,30,.08);padding:0 4px 0 14px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.search .spark{font-size:17px;line-height:1;flex:none}
+.search input{flex:1;min-width:0;height:100%;border:0;background:none;padding:0;font-size:13px;font-weight:500;outline:none}
+.search input::placeholder{color:#6b7570}
 .search input::-webkit-search-cancel-button{display:none}
 .go{width:40px;height:40px;border-radius:50%;border:0;background:none;color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
 .go svg{width:21px;height:21px}
 .go.rec{background:var(--brand);color:#fff;animation:pulse 1.2s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 8px rgba(23,160,88,.18)}}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 14px 6px;scrollbar-width:none}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:14px 13px 6px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:36px;border:0;border-radius:18px;background:var(--card);box-shadow:0 1px 3px rgba(20,40,30,.12);padding:0 13px 0 10px;font-size:13px;font-weight:700;color:var(--ink2);white-space:nowrap}
-.chip svg{width:17px;height:17px;flex:none}
-#profBtn{position:absolute;right:14px;top:2px;display:flex;align-items:center;gap:4px;height:32px;border:0;border-radius:16px;background:var(--brand-soft);color:var(--brand-dk);padding:0 10px 0 8px;font-size:12px;font-weight:800;letter-spacing:0}
-#profBtn svg{width:16px;height:16px}
-.chip.on{background:var(--brand);color:#fff;box-shadow:0 2px 6px rgba(23,160,88,.35)}
+.chip{flex:none;display:inline-flex;align-items:center;gap:3px;height:34px;border:0;border-radius:17px;background:rgba(255,255,255,.97);box-shadow:0 1px 6px rgba(20,40,30,.08);padding:0 8px 0 7px;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap;letter-spacing:-.01em}
+.chip svg{width:14px;height:14px;flex:none}
+.chip.on{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(23,160,88,.28)}
 .chip.on svg{color:#fff!important}
 .drop{margin:4px 14px 0;background:var(--card);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .drop:not(:has(:not([hidden]))){display:none}
@@ -81,29 +79,84 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .msg:empty{display:none}
 
 /* ---- 右：操作ボタン ---- */
-.fabs{position:fixed;right:14px;top:calc(var(--top-h,170px) + 10px);z-index:8;display:flex;flex-direction:column;gap:10px}
-.fab{width:50px;height:54px;border-radius:16px;border:0;background:rgba(255,255,255,.96);box-shadow:var(--shadow);color:var(--ink2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:9.5px;font-weight:800}
-.fab svg{width:20px;height:20px}
+.fabs{position:fixed;right:14px;top:calc(var(--top-h,170px) + 16px);z-index:8;display:flex;flex-direction:column;gap:14px}
+.fab{width:44px;height:58px;border-radius:22px;border:0;background:rgba(255,255,255,.97);box-shadow:0 2px 10px rgba(20,40,30,.09);color:#1f5e43;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:700;padding:0}
+.fab span{white-space:nowrap;letter-spacing:-.04em}
+.fab span{color:var(--ink2)}
+.fab svg{width:21px;height:21px}
+#btnLocate{color:var(--brand)}
+.fab[aria-expanded="true"]{background:var(--brand);color:#fff}.fab[aria-expanded="true"] span{color:#fff}
 @media (min-width:900px){ .fabs{top:auto;bottom:24px} }
 .fab.on{background:var(--brand);color:#fff}
 
+/* レイヤー：地図の表示・あなたの条件・エリアの情報 */
+.lpanel{position:fixed;z-index:11;right:68px;top:calc(var(--top-h,170px) + 16px);width:min(300px,calc(100vw - 84px));max-height:calc(100vh - var(--top-h,170px) - 40px);overflow:auto;
+  background:#fff;border-radius:20px;box-shadow:0 6px 28px rgba(20,40,30,.14);padding:16px}
+.lpanel h2{font-size:15px;font-weight:800;margin:0 0 8px}
+.lrow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;border:0;border-radius:14px;background:var(--soft);padding:8px 12px;margin:0 0 8px;text-align:left;font-size:13px;font-weight:700;color:var(--ink)}
+.lrow > span{flex:1;min-width:0}
+.lrow small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.lrow > svg{width:18px;height:18px;flex:none;color:var(--brand)}
+.sw{width:40px;height:24px;border-radius:12px;background:#cfd6d2;position:relative;flex:none;transition:background .15s}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:left .15s}
+.lrow[aria-pressed="true"] .sw{background:var(--brand)}.lrow[aria-pressed="true"] .sw::after{left:19px}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-top:2px solid var(--muted);transform:rotate(45deg);flex:none;margin-right:4px}
+#areaStats{margin:8px 0 4px}
+#areaStats h3{font-size:13px;font-weight:800;margin:0 0 6px}
+@media (min-width:900px){ .lpanel{right:72px;top:auto;bottom:24px} }
+
 /* ---- 下：シート ---- */
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:60vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
-  border-radius:24px 24px 0 0;box-shadow:0 -4px 30px rgba(20,40,30,.14);padding:0 16px calc(14px + env(safe-area-inset-bottom,0px))}
-@media (min-width:900px){ .sheet{left:16px;bottom:16px;width:380px;max-height:calc(100vh - 32px);border-radius:22px;padding-top:16px} .grab{display:none} .top{left:404px;background:none} }
-.grab{position:sticky;top:0;display:block;width:calc(100% + 32px);margin:0 -16px;height:22px;border:0;background:var(--card);z-index:1}
-.grab::after{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#d5dcd8;margin:8px auto 0}
-.sheet.min #result,.sheet.min .more,.sheet.min .foot,.sheet.min .tiles,.sheet.min .acts{display:none}
-.head{display:flex;align-items:center;gap:8px;margin:2px 0 2px}
-.head h2{font-size:19px;line-height:1.35;font-weight:800;margin:0;flex:1;min-width:0}
-.head .cat{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
-.head .cat svg{width:22px;height:22px}
-.ibtn{width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);color:var(--muted);display:flex;align-items:center;justify-content:center;flex:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;margin:0 auto;height:41vh;overflow:auto;overscroll-behavior:contain;background:#fff;
+  border-radius:28px 28px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.08);padding:0 20px;transition:height .28s cubic-bezier(.2,.8,.2,1)}
+.sheet.drag{transition:none}
+.sheet.full,.sheet.drag{z-index:30}
+.sheet.min{height:auto!important;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){ .sheet{left:16px;right:auto;margin:0;bottom:16px;width:380px;height:auto!important;max-height:calc(100vh - 32px);border-radius:22px;padding-top:16px} .grab{display:none} .top{left:404px;background:none} }
+.grab{position:sticky;top:0;display:block;width:calc(100% + 40px);margin:0 -20px;height:20px;border:0;background:#fff;z-index:2;touch-action:none;cursor:grab}
+.grab::after{content:"";display:block;width:36px;height:4px;border-radius:2px;background:#d9dedb;margin:8px auto 0}
+.shead{touch-action:none}
+.sheet.min .ahd,.sheet.min .agrid,.sheet.min .uinfo,.sheet.min #result,.sheet.min .acts{display:none}
+.head{display:flex;align-items:flex-start;gap:6px;margin:4px 0 0}
+.head h2{font-size:22px;line-height:29px;font-weight:800;color:#1c2420;margin:0;flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ibtn{width:36px;height:36px;border-radius:50%;border:0;background:#f3f5f4;color:#6b7570;display:flex;align-items:center;justify-content:center;flex:none}
 .ibtn svg{width:20px;height:20px}
-#fav[aria-pressed="true"]{color:var(--pink);background:var(--pink-soft)}
+#fav[aria-pressed="true"]{color:#ec4f8c}
 #fav[aria-pressed="true"] svg path{fill:currentColor}
-.meta{margin:0 0 10px;font-size:13px;color:var(--muted)}
-.meta b{color:var(--ink2)}
+.meta{display:flex;align-items:center;gap:8px;margin:4px 0 0;font-size:13px;line-height:19px;font-weight:500;color:#6b7570}
+.meta span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta b{display:inline-flex;align-items:center;gap:3px;font-weight:700;color:#3a4540;flex:none}
+.meta b svg{width:14px;height:14px;color:#8a948f}
+.addr{margin:2px 0 0;font-size:12px;line-height:17px;font-weight:500;color:#8a948f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* あなたの条件 */
+.cond{display:flex;align-items:center;gap:10px;margin:16px 0 0;min-height:60px;padding:12px 14px;border-radius:18px;background:#f3f5f4;color:#6b7570;width:100%;border:0;text-align:left;font:inherit}
+.cond .ck{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:#8a948f;color:#fff}
+.cond .ck svg{width:16px;height:16px}
+.cond div{flex:1;min-width:0}
+.cond b{display:block;font-size:13px;font-weight:800;line-height:18px}
+.cond small{display:block;font-size:12px;font-weight:500;line-height:17px;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cond .n{display:flex;align-items:center;gap:4px;font-size:24px;font-weight:800;line-height:1;flex:none;font-variant-numeric:tabular-nums}
+.cond .n svg{width:20px;height:20px}
+.cond.ok{background:#e9f7ef;color:#0f8a4a}.cond.ok .ck{background:#17a058}
+.cond.part{background:#fff4e5;color:#b45309}.cond.part .ck{background:#b45309}
+/* アクセシビリティ 2列×3段 */
+.ahd{margin:20px 0 10px;font-size:13px;font-weight:800;line-height:18px;color:#6b7570}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;padding:0;list-style:none}
+.ai{display:flex;align-items:center;gap:10px;min-height:68px;padding:12px;border-radius:18px;background:#f6f8f7;min-width:0}
+.ai .ic{width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none}
+.ai .ic svg{width:22px;height:22px}
+.ai div{min-width:0}
+.ai small{display:block;font-size:12px;font-weight:700;line-height:16px;color:#3a4540;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai b{display:block;font-size:15px;font-weight:800;line-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-ok b{color:#17a058}.s-ok .ic{background:#e9f7ef;color:#17a058}
+.s-mid b{color:#b45309}.s-mid .ic{background:#fff4e5;color:#b45309}
+.s-ng b{color:#dc2626}.s-ng .ic{background:#fdecec;color:#dc2626}
+.s-unk b{color:#8a948f}.s-unk .ic{background:#f1f3f2;color:#8a948f}
+.cnote{margin:8px 2px 0;font-size:12px;color:#8a948f}
+/* 利用者からの情報（データがあるときだけ） */
+.uinfo{margin:20px 0 0}
+.uinfo ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.uinfo li{border-radius:16px;background:#f6f8f7;padding:12px 14px;font-size:13px;font-weight:500;color:#3a4540}
+.uinfo li small{display:block;margin-top:4px;font-size:11px;color:#8a948f}
 .lead{margin:0 0 10px;font-size:13px;color:var(--muted)}
 .bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--soft);margin:0 0 8px}
 .bar i{display:block;height:100%}
@@ -115,7 +168,8 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 /* 設備タイル */
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 12px}
-.tile{display:flex;align-items:center;gap:7px;border-radius:14px;padding:9px 7px;min-width:0}
+.tile{display:flex;align-items:center;gap:6px;border-radius:14px;padding:9px 6px;min-width:0}
+#areaStats .tile small{font-size:10px;letter-spacing:-.03em}
 .tile .ti{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;color:#fff}
 .tile .ti svg{width:18px;height:18px}
 .tile div{min-width:0}
@@ -138,10 +192,10 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .v3{background:var(--orange-soft)}.v3 .mk{background:#e08a00}
 .v2{background:#fdecec}.v2 .mk{background:var(--bad)}
 .v1{background:var(--soft)}.v1 .mk{background:#7b8580}
-.acts{display:flex;gap:10px;margin:0 0 6px}
-.acts button{flex:1;min-height:50px;border-radius:25px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
-.acts .ol{border:2px solid var(--brand);background:#fff;color:var(--brand)}
-.acts .fill{border:0;background:var(--brand);color:#fff}
+.acts{position:sticky;bottom:0;z-index:2;display:flex;gap:10px;margin:16px -20px 0;padding:12px 20px calc(16px + env(safe-area-inset-bottom,0px));background:#fff}
+.acts button{min-height:52px;border:0;border-radius:26px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.acts .ol{flex:1;background:#e9f7ef;color:#0f8a4a}
+.acts .fill{flex:1.4;background:#17a058;color:#fff;box-shadow:0 4px 12px rgba(23,160,88,.25)}
 .acts svg{width:20px;height:20px}
 #detail{padding-top:8px}
 .facts{list-style:none;margin:0 0 12px;padding:0}
@@ -225,7 +279,7 @@ details.adv summary::-webkit-details-marker{display:none}
 .btn{flex:1;min-height:50px;border:0;border-radius:25px;padding:0 16px;background:var(--brand);color:#fff;font-weight:800;font-size:15px}
 .btn.ghost{flex:0 0 auto;background:var(--soft);color:var(--ink)}
 
-.me{width:18px;height:18px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 10px rgba(47,128,237,.18),0 1px 4px rgba(0,0,0,.3)}
+.me{width:20px;height:20px;border-radius:50%;background:#2f80ed;border:3px solid #fff;box-shadow:0 1px 6px rgba(20,60,120,.35)}
 .pin{width:36px;height:46px;filter:drop-shadow(0 3px 4px rgba(20,36,28,.3))}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
 </style>
@@ -235,39 +289,33 @@ details.adv summary::-webkit-details-marker{display:none}
 <div id="map" role="region" aria-label="地図"></div>
 
 <section class="top" aria-label="場所を探す">
-  <div class="brand"><img src="icons/icon.svg" alt=""><span>サポートマップ</span>
-    <button id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg><span id="profText">条件</span></button></div>
+  <h2 class="brand"><svg viewBox="0 0 28 28" aria-hidden="true"><circle cx="9" cy="9.5" r="2.4" fill="currentColor"/><circle cx="19" cy="9.5" r="2.4" fill="currentColor"/><path d="M5.5 15.5a8.5 8.5 0 0 0 17 0" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>サポートマップ</h2>
   <form class="search" id="searchForm" role="search">
     <span class="spark" aria-hidden="true">✨</span>
     <label for="q" class="sr">行きたい場所</label>
-    <input id="q" type="search" placeholder="車椅子で入れるお店・トイレを探す" autocomplete="off" enterkeyhint="search">
+    <input id="q" type="search" placeholder="車椅子で入りやすくて、駐車場がある場所" autocomplete="off" enterkeyhint="search">
     <button class="go" id="goBtn" type="submit" aria-label="探す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></button>
   </form>
   <div class="chips" role="toolbar" aria-label="地図に出すもの">
-    <button class="chip on" type="button" data-f="all" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>すべて</button>
+    <button class="chip on" type="button" data-f="all" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 1.5v-8z"/></svg>すべて</button>
     <button class="chip" type="button" data-f="wheel" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#2f80ed"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg>車椅子OK</button>
     <button class="chip" type="button" data-f="wc" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#ec4f8c"><circle cx="7" cy="4.5" r="1.8"/><circle cx="17" cy="4.5" r="1.8"/><path d="M7 8v13M4.5 8h5v6h-5zM17 8l-3 8h6zM16 16v5M18 16v5"/></svg>トイレ</button>
-    <button class="chip" type="button" data-f="food" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#f39c12"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 3c-2 1.5-3 4-3 7h3v11"/></svg>飲食</button>
-    <button class="chip" type="button" data-f="park" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M10 17V7.5h3a3 3 0 0 1 0 6h-3"/></svg>駐車場</button>
-    <button class="chip" type="button" data-f="shop" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#7c5cf0"><path d="M4 9l1.5-5h13L20 9z"/><path d="M5.5 9v11h13V9"/><path d="M10 20v-5h4v5"/></svg>買い物</button>
-    <button class="chip" type="button" data-f="health" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#e5484d"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>医療</button>
-    <button class="chip" type="button" data-f="ev" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#13a3a8"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M12 3v18"/><path d="M8 9.5l-1.5 2h3zM16 11.5l-1.5-2h3z" fill="currentColor"/></svg>エレベーター</button>
+    <button class="chip" type="button" data-f="park" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="currentColor" stroke="none"/><path d="M10 17V7.5h3a3 3 0 0 1 0 6h-3" stroke="#fff"/></svg>駐車場</button>
+    <button class="chip" type="button" data-f="indoor" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:#17a058"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>屋内</button>
   </div>
   <div class="drop"><ul class="sugg" id="sugg" aria-label="検索結果" hidden></ul><p class="msg" id="msg" role="status" aria-live="polite"></p></div>
 </section>
 
 <div class="fabs">
-  <button class="fab" id="btnList" type="button" aria-label="近い順の一覧"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg>一覧</button>
-  <button class="fab" id="btnLegend" type="button" aria-label="歩道の通りやすさを表示" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>歩道</button>
-  <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l16-7-7 16-2-7z"/></svg>現在地</button>
+  <button class="fab" id="btnList" type="button" aria-label="近い順の一覧"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg><span>一覧</span></button>
+  <button class="fab" id="btnLayers" type="button" aria-label="レイヤー（地図の表示と条件）" aria-expanded="false" aria-controls="layerPanel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg><span>レイヤー</span></button>
+  <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l16-7-7 16-2-7z" fill="currentColor" fill-opacity=".15"/></svg><span>現在地</span></button>
 </div>
-
-<section class="sheet min" id="sheet" aria-labelledby="sheetTitle">
-  <button class="grab" id="grab" type="button" aria-expanded="false" aria-controls="sheet"><span class="sr">詳しい情報を開く・閉じる</span></button>
-  <div class="head"><span class="cat" id="sheetCat" hidden></span><h2 id="sheetTitle">赤羽駅周辺</h2><button class="ibtn" id="fav" type="button" aria-label="お気に入り" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg></button><button class="ibtn" id="closeCard" type="button" aria-label="閉じる" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-  <p class="meta" id="sheetMeta"></p>
-  <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
-  <div id="result" aria-live="polite" hidden></div>
+<section class="lpanel" id="layerPanel" aria-label="地図の表示と条件" hidden>
+  <h2>地図の表示</h2>
+  <button class="lrow" id="btnLegend" type="button" aria-pressed="false"><span>歩道の通りやすさを色で表示<small>緑：通れる・赤：合わない・灰：未調査</small></span><i class="sw" aria-hidden="true"></i></button>
+  <button class="lrow" id="profBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="4" r="2" fill="currentColor" stroke="none"/><path d="M11 7.5v6h5.5l2.5 5.5"/><path d="M11 10.5h4.5"/><path d="M8 11a5.5 5.5 0 1 0 7.8 6.8"/></svg><span>あなたの条件<small id="profText">未設定</small></span><i class="chev" aria-hidden="true"></i></button>
+  <div id="areaStats"></div>
   <details class="more">
     <summary>地図の見かた・出典</summary>
     <ul class="legend" id="legend" aria-label="凡例" hidden>
@@ -287,6 +335,18 @@ details.adv summary::-webkit-details-marker{display:none}
     <p class="src" id="src"></p>
   </details>
   <p class="foot"><button type="button" class="linkbtn" id="repGeneral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>情報の誤りを報告</button><a href="terms.html">利用規約</a><a href="privacy.html">プライバシー</a></p>
+</section>
+
+<section class="sheet" id="sheet" hidden aria-labelledby="sheetTitle">
+  <button class="grab" id="grab" type="button" aria-expanded="false" aria-controls="sheet"><span class="sr">詳しい情報を広げる・戻す</span></button>
+  <div class="shead" id="shead">
+    <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2><button class="ibtn" id="fav" type="button" aria-label="お気に入り" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg></button><button class="ibtn" id="closeCard" type="button" aria-label="閉じる" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="meta" id="sheetMeta"></p>
+    <p class="addr" id="sheetAddr" hidden></p>
+  </div>
+  <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
+  <div id="result" aria-live="polite" hidden></div>
+  <div class="acts" id="acts" hidden></div>
 </section>
 
 <div class="panel" id="profPanel" hidden>
@@ -351,7 +411,47 @@ function fmtLen(m){ return m<1000 ? Math.max(10,Math.round(m/10)*10)+"m" : (m/10
 
 // ---- 地図 ----
 // 下地は OpenFreeMap（OpenStreetMap のベクトル地図）。読めないときは国土地理院ベクトルタイルに切り替える
-var BASE="https://tiles.openfreemap.org/styles/liberty";
+// 普通の地図の細かさは要らないので、緑の地面・白い道・水色の川だけの、やわらかい絵地図にする
+var JA=["coalesce",["get","name:ja"],["get","name"]];
+function soft(id,type,layer,o){ var l={id:id,type:type,source:"omt","source-layer":layer}; for(var k in o) l[k]=o[k]; return l; }
+var ROAD_MAJOR=["motorway","trunk","primary","secondary"], ROAD_MINOR=["tertiary","minor"];
+function roads(cls){ return ["all",["match",["get","class"],cls,true,false],["!=",["get","brunnel"],"tunnel"]]; }
+var BASE={
+  version:8,
+  light:{anchor:"viewport",color:"#ffffff",intensity:0.22,position:[1.4,200,35]},
+  sky:{"sky-color":"#bfe0f5","horizon-color":"#eaf5f0","fog-color":"#edf3e7","sky-horizon-blend":0.7,"horizon-fog-blend":0.6,"fog-ground-blend":0.85,"atmosphere-blend":0},
+  glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  sources:{omt:{type:"vector",url:"https://tiles.openfreemap.org/planet",
+    attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}},
+  layers:[
+    {id:"bg",type:"background",paint:{"background-color":"#edf3e7"}},
+    soft("green","fill","landcover",{filter:["match",["get","class"],["grass","wood","farmland","wetland"],true,false],paint:{"fill-color":"#d3eac6"}}),
+    soft("park","fill","park",{paint:{"fill-color":"#c8e6b6"}}),
+    soft("pitch","fill","landuse",{filter:["match",["get","class"],["pitch","stadium","school","cemetery"],true,false],paint:{"fill-color":"#dcedd2"}}),
+    soft("water","fill","water",{paint:{"fill-color":"#a8d4f2"}}),
+    soft("river","line","waterway",{paint:{"line-color":"#a8d4f2","line-width":["interpolate",["linear"],["zoom"],12,1,18,6]}}),
+    soft("bldg","fill","building",{minzoom:13,maxzoom:15,paint:{"fill-color":"#e3ebde","fill-outline-color":"#e3ebde","fill-opacity":["interpolate",["linear"],["zoom"],13,0,14.5,0.7]}}),
+    soft("rail","line","transportation",{filter:["all",roads(["rail","transit"]),["!",["has","service"]]],paint:{"line-color":"#d3dccf","line-width":["interpolate",["linear"],["zoom"],12,0.8,18,2.5]}}),
+    soft("road-minor","line","transportation",{filter:roads(ROAD_MINOR),minzoom:13,layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],13,0.6,15,2.5,18,13]}}),
+    soft("road-major-case","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#d9e3d2","line-width":["interpolate",["exponential",1.6],["zoom"],10,1.5,15,9,18,30]}}),
+    soft("road-major","line","transportation",{filter:roads(ROAD_MAJOR),layout:{"line-cap":"round","line-join":"round"},
+      paint:{"line-color":"#ffffff","line-width":["interpolate",["exponential",1.6],["zoom"],10,1,15,7,18,25]}}),
+    // 建物は立体に。低い建物は白っぽく、高い建物ほどやわらかいベージュ
+    soft("bldg-3d","fill-extrusion","building",{minzoom:14.5,paint:{
+      "fill-extrusion-color":["interpolate",["linear"],["coalesce",["get","render_height"],8],5,"#f7f8f4",20,"#faf3ea",50,"#f8ebe0"],
+      "fill-extrusion-height":["interpolate",["linear"],["zoom"],14.5,0,15.5,["coalesce",["get","render_height"],8]],
+      "fill-extrusion-base":["coalesce",["get","render_min_height"],0],
+      "fill-extrusion-opacity":0.85,"fill-extrusion-vertical-gradient":true}}),
+    soft("place","symbol","place",{filter:["match",["get","class"],["suburb","quarter","neighbourhood"],true,false],
+      layout:{"text-field":JA,"text-font":["Noto Sans Regular"],"text-size":12,"text-max-width":8},
+      paint:{"text-color":"#7d8b81","text-halo-color":"rgba(255,255,255,.9)","text-halo-width":1.5}}),
+    soft("station","symbol","poi",{filter:["all",["match",["get","class"],["rail","railway"],true,false],["match",["get","subclass"],["station","halt"],true,false]],
+      layout:{"text-field":JA,"text-font":["Noto Sans Bold"],"text-size":13},
+      paint:{"text-color":"#2f5f4a","text-halo-color":"#ffffff","text-halo-width":2}})
+  ]
+};
 var pmProtocol = new pmtiles.Protocol();
 maplibregl.addProtocol("pmtiles", pmProtocol.tile);
 var ANNO_TEXT = ["to-string",["coalesce",["get","vt_text"],["get","knj"],""]];
@@ -376,28 +476,13 @@ var GSI_STYLE={
     ]
 };
 var map = new maplibregl.Map({
-  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:15.6, minZoom:5, maxZoom:18, attributionControl:{compact:true},
-  pitchWithRotate:false, dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
+  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:15.7, pitch:48, bearing:-18, maxPitch:65, minZoom:5, maxZoom:18.5, attributionControl:{compact:true},
+  dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
   style:BASE
 });
 var usedGsi=false;
 map.on("error",function(){ if(!usedGsi&&!map.isStyleLoaded()){ usedGsi=true; map.setStyle(GSI_STYLE); } });
 // 地名は日本語で出し、地図のお店アイコンは間引いて、こちらのピンを見やすくする
-function tuneBase(){
-  if(usedGsi) return;
-  var JA=["coalesce",["get","name:ja"],["get","name"]];
-  map.getStyle().layers.forEach(function(l){
-    if(/^(poi_r20|poi_r7|building-3d|natural_earth|road_one_way_arrow.*|.*shield.*|.*rail_hatching)$/.test(l.id)) map.setLayoutProperty(l.id,"visibility","none");
-    else if(l.type==="symbol"&&l.layout&&l.layout["text-field"]) map.setLayoutProperty(l.id,"text-field",JA);
-  });
-  // 線路と幹線道路の色を落ち着かせ、公園を少し明るい緑に
-  [["road_major_rail","line-color","#c9ced6"],["road_transit_rail","line-color","#c9ced6"],["bridge_major_rail","line-color","#c9ced6"],
-   ["road_trunk_primary","line-color","#fde9b8"],["road_secondary_tertiary","line-color","#fff6dc"],["bridge_trunk_primary","line-color","#fde9b8"],
-   ["park","fill-color","#d8efd3"],["landcover_grass","fill-color","#dff1d9"],["landcover_wood","fill-color","#d3ebcc"],["water","fill-color","#b9dcf5"],
-   ["background","background-color","#f4f6f2"],["landuse_residential","fill-color","rgba(0,0,0,0)"],
-   ["building","fill-color","#e9ece6"],["building","fill-outline-color","#dde2da"]].forEach(function(x){
-    if(map.getLayer(x[0])) try{ map.setPaintProperty(x[0],x[1],x[2]); }catch(e){} });
-}
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
 // ---- 赤羽駅周辺の歩行空間データ（国交省）と施設（OpenStreetMap） ----
@@ -469,6 +554,10 @@ var WC={yes:"車椅子で利用可",limited:"一部利用可",no:"車椅子で�
 var CATS={wc:["#ec4f8c","wc","トイレ"],ev:["#13a3a8","ev","エレベーター"],"in":["#64748b","step","入口"],food:["#f39c12","food","飲食店"],cafe:["#f39c12","cafe","カフェ"],
   shop:["#7c5cf0","store","お店"],health:["#e5484d","hosp","病院・薬局"],park:["#17a058","park","駐車場"],wheel:["#2f80ed","wheel","施設"],dest:["#17a058","pin","目的地"]};
 var FILT={wheel:["wheel","food","cafe","shop","health"],wc:["wc"],food:["food","cafe"],park:["park"],shop:["shop"],health:["health"],ev:["ev"]};
+// 屋内：建物の中・地下・商業施設の中にあるもの（OpenStreetMap の登録から判断）
+function indoorOf(t){ return /^(yes|room|corridor|area)$/.test(t.indoor||"")||/^(indoor|underground)$/.test(t.location||"")||/^(mall|department_store)$/.test(t.shop||"")||!!t.level; }
+function filtExpr(f){ return f==="indoor"?["==",["get","ind"],1]:["in",["get","c"],["literal",FILT[f]]]; }
+function filtMatch(f,pr){ return f==="indoor"?pr.ind===1:FILT[f].indexOf(pr.c)>=0; }
 function tagStr(t){ return Object.keys(t).map(function(k){ return k+"="+t[k]; }).join("|"); }
 function catOf(s){ return /amenity=toilets/.test(s)?"wc":/amenity=parking/.test(s)?"park":/amenity=cafe/.test(s)?"cafe":
   /amenity=(restaurant|fast_food|food_court|pub|bar|biergarten|ice_cream)/.test(s)?"food":/amenity=(pharmacy|hospital|clinic|doctors|dentist)|healthcare=/.test(s)?"health":/shop=/.test(s)?"shop":"wheel"; }
@@ -484,37 +573,54 @@ function overview(){
   var oks=(area.places||[]).filter(function(x){ return x[4]==="yes"||x[4]==="designated"; }).length;
   function seg(k,c){ return n[k]?'<i style="flex:'+n[k]+';background:'+c+'"></i>':''; }
   function key(c,t,v){ return '<li><i style="background:'+c+'"></i>'+t+' <b class="num">'+v+'%</b></li>'; }
-  $("sheetTitle").textContent=area.name; $("sheetCat").hidden=$("fav").hidden=$("closeCard").hidden=true; dim(false);
-  $("sheetMeta").innerHTML="あなたの条件で通れる歩道 <b class=\"num\">"+(pc("ok")+pc("warn"))+"%</b>・未調査 "+pc("unknown")+"%";
   var pks=(area.places||[]).filter(function(x){ return /amenity=parking/.test(x[1]); }).length;
-  $("sheetText").innerHTML='<div class="bar" aria-hidden="true">'+seg("ok","#17a058")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#d5dcd8")+'</div>'+
-    '<div class="tiles" style="margin-top:12px">'+tile("blue","wheel","車椅子OK",oks+"か所")+tile("pink","wc","トイレ",wcs+"か所")+tile("green","park","駐車場",pks+"か所")+'</div>'+
-    '<ul class="keys">'+key("#17a058","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#d5dcd8","未調査",pc("unknown"))+'</ul>';
-  $("result").innerHTML=""; $("result").hidden=true;
+  // エリアの情報は「レイヤー」の中に出し、下のシートは場所を選んだときだけ出す
+  $("areaStats").innerHTML='<h3>'+esc(area.name)+'：あなたの条件で通れる歩道 <span class="num">'+(pc("ok")+pc("warn"))+'%</span></h3>'+
+    '<div class="bar" aria-hidden="true">'+seg("ok","#17a058")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#d5dcd8")+'</div>'+
+    '<ul class="keys">'+key("#17a058","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#d5dcd8","未調査",pc("unknown"))+'</ul>'+
+    '<div class="tiles">'+tile("blue","wheel","車椅子OK",oks)+tile("pink","wc","トイレ",wcs)+tile("green","park","駐車場",pks)+'</div>';
+  $("sheet").hidden=true; dim(false); layout();
 }
-// 色付きのしずく形ピンを描いて地図に登録する
+// 参考画像のピン：丸に短いしっぽ。色はバリアフリーの種類（車椅子＝青・トイレ＝ピンク・駐車場＝緑）だけ
+// 右上の小さな丸は「ほかにも対応あり」（ピンク＝車椅子トイレ・緑＝屋内）
+var PIN_IMG={wheel:["#2f80ed","wheel"],wc:["#ec4f8c","wc"],park:["#17a058","park"],wcx:["#9aa5a0","wc"],ev:["#8a948f","ev"],"in":["#8a948f","step"]};
+var BADGE={wc:["#ec4f8c","wc"],home:["#17a058","home"]};
+function iconOn(g,ic,x,y,size,lw){
+  g.save(); g.translate(x,y); g.scale(size/24,size/24); g.strokeStyle="#fff"; g.fillStyle="#fff"; g.lineWidth=lw; g.lineCap="round"; g.lineJoin="round";
+  var d=document.createElement("div"); d.innerHTML=SV+IP[ic]+"</svg>";
+  d.firstChild.querySelectorAll("path,circle,rect").forEach(function(el){
+    var p; if(el.tagName==="path") p=new Path2D(el.getAttribute("d"));
+    else if(el.tagName==="circle"){ p=new Path2D(); p.arc(+el.getAttribute("cx"),+el.getAttribute("cy"),+el.getAttribute("r"),0,Math.PI*2); }
+    else { p=new Path2D(); var x0=+el.getAttribute("x"),y0=+el.getAttribute("y"),ww=+el.getAttribute("width"),hh=+el.getAttribute("height"),rr=+el.getAttribute("rx")||0; p.roundRect?p.roundRect(x0,y0,ww,hh,rr):p.rect(x0,y0,ww,hh); }
+    if(el.getAttribute("fill")==="currentColor") g.fill(p); else g.stroke(p); });
+  g.restore();
+}
+function drawPin(id,color,ic,badge){
+  // 40×46 の枠：丸（直径34）＋しっぽ。バッジは右上に重ねる
+  var r=2, w=40*r, h=46*r, c=document.createElement("canvas"); c.width=w; c.height=h; var g=c.getContext("2d"), cx=20*r, cy=19*r, R=16*r;
+  g.shadowColor="rgba(20,40,30,.28)"; g.shadowBlur=5*r; g.shadowOffsetY=2*r;
+  g.beginPath(); g.arc(cx,cy,R,Math.PI*0.68,Math.PI*2.32); g.lineTo(cx,44*r); g.closePath(); g.fillStyle=color; g.fill();
+  g.shadowColor="transparent"; g.lineWidth=1.5*r; g.strokeStyle="rgba(255,255,255,.9)"; g.stroke();
+  iconOn(g,ic,cx-10*r,cy-10*r,20*r,2.3);
+  if(badge){ var bx=33*r, by=7*r; g.beginPath(); g.arc(bx,by,6.5*r,0,Math.PI*2); g.fillStyle=BADGE[badge][0]; g.fill(); g.lineWidth=1.5*r; g.strokeStyle="#fff"; g.stroke(); iconOn(g,BADGE[badge][1],bx-4.5*r,by-4.5*r,9*r,2.6); }
+  if(!map.hasImage(id)) map.addImage(id,g.getImageData(0,0,w,h),{pixelRatio:r});
+}
 function addPins(){
-  Object.keys(CATS).map(function(k){ return ["pin-"+k,CATS[k][0],CATS[k][1]]; }).forEach(function(x){
-    var r=2, w=34*r, h=44*r, c=document.createElement("canvas"); c.width=w; c.height=h; var g=c.getContext("2d");
-    g.shadowColor="rgba(0,0,0,.25)"; g.shadowBlur=4*r; g.shadowOffsetY=1*r;
-    g.beginPath(); g.moveTo(17*r,42*r); g.bezierCurveTo(17*r,42*r,3*r,28*r,3*r,17*r); g.arc(17*r,17*r,14*r,Math.PI,0); g.bezierCurveTo(31*r,28*r,17*r,42*r,17*r,42*r); g.closePath();
-    g.fillStyle=x[1]; g.fill(); g.shadowColor="transparent"; g.lineWidth=2.5*r; g.strokeStyle="#fff"; g.stroke();
-    g.save(); g.translate(7*r,7*r); g.scale(20*r/24,20*r/24); g.strokeStyle="#fff"; g.fillStyle="#fff"; g.lineWidth=2.2; g.lineCap="round"; g.lineJoin="round";
-    var d=document.createElement("div"); d.innerHTML=SV+IP[x[2]]+"</svg>";
-    d.firstChild.querySelectorAll("path,circle,rect").forEach(function(el){
-      var p; if(el.tagName==="path") p=new Path2D(el.getAttribute("d"));
-      else if(el.tagName==="circle"){ p=new Path2D(); p.arc(+el.getAttribute("cx"),+el.getAttribute("cy"),+el.getAttribute("r"),0,Math.PI*2); }
-      else { p=new Path2D(); var x0=+el.getAttribute("x"),y0=+el.getAttribute("y"),ww=+el.getAttribute("width"),hh=+el.getAttribute("height"),rr=+el.getAttribute("rx")||0; p.roundRect?p.roundRect(x0,y0,ww,hh,rr):p.rect(x0,y0,ww,hh); }
-      if(el.getAttribute("fill")==="currentColor") g.fill(p); else g.stroke(p); });
-    g.restore();
-    if(!map.hasImage(x[0])) map.addImage(x[0],g.getImageData(0,0,w,h),{pixelRatio:r});
-  });
+  Object.keys(PIN_IMG).forEach(function(k){ drawPin("pin-"+k,PIN_IMG[k][0],PIN_IMG[k][1]); });
+  Object.keys(BADGE).forEach(function(b){ drawPin("pin-wheel-"+b,PIN_IMG.wheel[0],"wheel",b); });
+}
+// 施設1件のピンの絵：車椅子OKの場所は青。車椅子トイレや屋内なら右上に印
+function pinOf(p,c){
+  if(p.k==="toilet") return /^(no)$/.test(p.t.wheelchair||"")?"pin-wcx":"pin-wc";
+  if(p.k==="elevator") return "pin-ev";
+  if(p.k==="entrance") return "pin-in";
+  return "pin-wheel"+(/^(yes|designated)$/.test(p.t["toilets:wheelchair"]||"")?"-wc":indoorOf(p.t)?"-home":"");
 }
 function loadArea(){
   fetch("data/akabane.json").then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(A){
     area=A;
     adj={}; A.links.forEach(function(L,i){ (adj[L.a]=adj[L.a]||[]).push([i,L.b]); (adj[L.b]=adj[L.b]||[]).push([i,L.a]); });
-    var pf=A.pois.map(function(p,i){ return {type:"Feature",properties:{src:"poi",i:i,k:p.k,c:({toilet:"wc",elevator:"ev",entrance:"in"})[p.k]||catOf(tagStr(p.t)),wc:p.t.wheelchair||""},geometry:{type:"Point",coordinates:p.ll}}; });
+    var pf=A.pois.map(function(p,i){ return {type:"Feature",properties:{src:"poi",i:i,k:p.k,c:({toilet:"wc",elevator:"ev",entrance:"in"})[p.k]||catOf(tagStr(p.t)),wc:p.t.wheelchair||"",ind:indoorOf(p.t)?1:0,pin:pinOf(p)},geometry:{type:"Point",coordinates:p.ll}}; });
     (A.places||[]).forEach(function(pl,i){ if(/amenity=parking/.test(pl[1])) pf.push({type:"Feature",properties:{src:"pl",i:i,k:"parking",c:"park",wc:pl[4]||""},geometry:{type:"Point",coordinates:[pl[2],pl[3]]}}); });
     map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:linkFeatures()},attribution:"歩行空間データ：国土交通省"});
     map.addSource("route",{type:"geojson",data:EMPTY});
@@ -536,13 +642,16 @@ function loadArea(){
       paint:{"line-color":"#94a3b8","line-width":["interpolate",["linear"],["zoom"],14,5,18,13],"line-dasharray":[1,0.8]}});
     addPins();
     // 車椅子OKのお店・駐車場は重なったら間引き、トイレ・エレベーター・入口は必ず出す
-    var SIZE=["interpolate",["linear"],["zoom"],14.5,0.62,16,0.8,18,1];
+    // 大きさは参考画像に合わせる（ズーム16前後で直径およそ30px、車椅子OKは少し大きく）
+    var SIZE=["interpolate",["linear"],["zoom"],14.5,0.66,16,0.86,18,1.05];
+    map.addLayer({id:"pins-detail",type:"symbol",source:"pois",minzoom:17,filter:PINF["pins-detail"],
+      layout:{"icon-image":["get","pin"],"icon-anchor":"bottom","icon-size":["interpolate",["linear"],["zoom"],17,0.6,18,0.75],"icon-padding":2}});
     map.addLayer({id:"pins-park",type:"symbol",source:"pois",minzoom:15,filter:PINF["pins-park"],
-      layout:{"icon-image":"pin-park","icon-anchor":"bottom","icon-size":["interpolate",["linear"],["zoom"],15,0.55,18,0.85],"icon-padding":6}});
-    map.addLayer({id:"pins-place",type:"symbol",source:"pois",minzoom:14.5,filter:PINF["pins-place"],
-      layout:{"icon-image":["concat","pin-",["get","c"]],"icon-anchor":"bottom","icon-size":SIZE,"icon-padding":3}});
+      layout:{"icon-image":"pin-park","icon-anchor":"bottom","icon-size":SIZE,"icon-padding":4}});
     map.addLayer({id:"pins-fac",type:"symbol",source:"pois",minzoom:14.5,filter:PINF["pins-fac"],
-      layout:{"icon-image":["concat","pin-",["get","c"]],"icon-anchor":"bottom","icon-size":SIZE,"icon-allow-overlap":true}});
+      layout:{"icon-image":["get","pin"],"icon-anchor":"bottom","icon-size":SIZE,"icon-padding":3}});
+    map.addLayer({id:"pins-place",type:"symbol",source:"pois",minzoom:14.5,filter:PINF["pins-place"],
+      layout:{"icon-image":["get","pin"],"icon-anchor":"bottom","icon-size":["interpolate",["linear"],["zoom"],14.5,0.74,16,0.98,18,1.15],"icon-padding":3,"symbol-sort-key":1}});
     applyFilter(filt);
     ["links","links-unknown","route","route-unknown"].forEach(function(id){
       map.on("click",id,function(e){ showPop(e.lngLat,linkHtml(A.links[e.features[0].properties.i])); });
@@ -560,10 +669,10 @@ function loadArea(){
 var EMPTY={type:"FeatureCollection",features:[]};
 // 上のチップで地図に出すピンを絞る
 var PINF={"pins-park":["==",["get","k"],"parking"],"pins-place":["all",["==",["get","k"],"place"],["in",["get","wc"],["literal",["yes","designated","limited"]]]],
-  "pins-fac":["in",["get","k"],["literal",["toilet","elevator","entrance"]]]};
+  "pins-fac":["==",["get","k"],"toilet"],"pins-detail":["in",["get","k"],["literal",["elevator","entrance"]]]};
 var filt="all";
 function applyFilter(f){ filt=f;
-  Object.keys(PINF).forEach(function(id){ if(map.getLayer(id)) map.setFilter(id,f==="all"?PINF[id]:["all",PINF[id],["in",["get","c"],["literal",FILT[f]]]]); });
+  Object.keys(PINF).forEach(function(id){ if(map.getLayer(id)) map.setFilter(id,f==="all"?PINF[id]:["all",PINF[id],filtExpr(f)]); });
   document.querySelectorAll(".chip[data-f]").forEach(function(x){ var on=x.dataset.f===f; x.classList.toggle("on",on); x.setAttribute("aria-pressed",String(on)); }); }
 // 地図のピンから行き先の候補を作る
 function pinCand(pr){
@@ -575,7 +684,7 @@ function pinCand(pr){
 var showNet=ls("net")==="1";
 function setNet(on){ showNet=on; ls("net",on?"1":null); ["links","links-unknown"].forEach(function(id){ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",on?"visible":"none"); });
   var b=$("btnLegend"); b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on)); }
-map.once("style.load",function(){ tuneBase(); loadArea(); });
+map.once("style.load",function(){ loadArea(); });
 // 検索欄と下のパネルに隠れないように経路を地図に収める
 function fitRoute(b){
   var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+56;  // 目的地のピンの高さぶん余白を足す
@@ -621,7 +730,7 @@ var STATUS={5:["◎","確認済み","必要な情報がそろっていて、直�
   3:["△","要確認","未調査の区間があります。現地や施設への確認をおすすめします"],2:["×","条件不一致","あなたの条件に合わない箇所を避けられませんでした"],1:["？","判定不能","判断に必要な情報が足りません"]};
 function vcard(n,text){ var t=STATUS[n]; return '<div class="verdict v'+n+'"><span class="mk" aria-hidden="true">'+t[0]+'</span><div><b>'+t[1]+'</b><span>'+esc(text||t[2])+'</span></div></div>'; }
 var SV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">', IP={"wheel": "<circle cx=\"11\" cy=\"4\" r=\"2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M11 7.5v6h5.5l2.5 5.5\"/><path d=\"M11 10.5h4.5\"/><path d=\"M8 11a5.5 5.5 0 1 0 7.8 6.8\"/>", "wc": "<circle cx=\"7\" cy=\"4.5\" r=\"1.8\"/><circle cx=\"17\" cy=\"4.5\" r=\"1.8\"/><path d=\"M7 8v13M4.5 8h5v6h-5zM17 8l-3 8h6zM16 16v5M18 16v5\"/>", "ev": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"3\"/><path d=\"M12 3v18\"/><path d=\"M8 9.5l-1.5 2h3zM16 11.5l-1.5-2h3z\" fill=\"currentColor\"/>", "cafe": "<path d=\"M5 9h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z\"/><path d=\"M16 10h1.5a2.5 2.5 0 0 1 0 5H16\"/><path d=\"M8 3.5v2.5M11.5 3.5v2.5\"/>", "food": "<path d=\"M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10\"/><path d=\"M17 3c-2 1.5-3 4-3 7h3v11\"/>", "beer": "<path d=\"M6 7h9v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z\"/><path d=\"M15 10h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2\"/><path d=\"M6 7a2.5 2.5 0 0 1 3-2.5A3 3 0 0 1 14 5a2 2 0 0 1 1 2\"/>", "store": "<path d=\"M4 9l1.5-5h13L20 9z\"/><path d=\"M5.5 9v11h13V9\"/><path d=\"M10 20v-5h4v5\"/>", "hosp": "<rect x=\"4\" y=\"4\" width=\"16\" height=\"16\" rx=\"4\"/><path d=\"M12 8v8M8 12h8\"/>", "step": "<path d=\"M3 19h5v-5h5V9h5V4h3\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v4.5l3 2\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M8.5 12.2l2.4 2.4 4.6-4.8\"/>", "nav": "<path d=\"M4 11l16-7-7 16-2-7z\"/>", "layers": "<path d=\"M12 3l9 5-9 5-9-5z\"/><path d=\"M3 13l9 5 9-5\"/>", "loc": "<circle cx=\"12\" cy=\"12\" r=\"3.5\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"7.5\"/><path d=\"M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3\"/>", "train": "<rect x=\"5\" y=\"3\" width=\"14\" height=\"14\" rx=\"3\"/><path d=\"M8 21l2-4M16 21l-2-4M5 11h14\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M16 16l4.5 4.5\"/>", "info": "<circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 11v5M12 8h.01\"/>"};
-IP.park='<path d="M9 19.5V4.5h4.5a4.5 4.5 0 0 1 0 9H9"/>'; IP.pin='<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>';
+IP.umb='<path d="M3 12.5a9 9 0 0 1 18 0z"/><path d="M12 12.5v6a2 2 0 0 0 4 0"/><path d="M12 3.5v-1"/>'; IP.baby='<path d="M4 5h2.5l2 7.5h10a6.5 6.5 0 0 0-6.5-6.5V4.5"/><path d="M8.5 12.5L7.5 16h11"/><circle cx="9" cy="19" r="1.8"/><circle cx="17" cy="19" r="1.8"/>'; IP.home='<path d="M3.5 11L12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>'; IP.park='<path d="M9 19.5V4.5h4.5a4.5 4.5 0 0 1 0 9H9"/>'; IP.pin='<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>';
 function svg(n){ return SV+IP[n]+"</svg>"; }
 var ICON={
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
@@ -640,59 +749,106 @@ function destInfo(ll,poi){
     if(p.k==="toilet"&&(p.t.wheelchair==="yes"||p.t.wheelchair==="designated")&&d<wd){ wc=p; wd=d; } });
   return {place:place,wc:wc,wcm:wd};
 }
+// ---- 場所のシート：施設名 → あなたの条件 → アクセシビリティ6項目 → 利用者の情報 → ボタン ----
+var ADDR_CACHE={}, MUNI={"13117":"東京都北区","13119":"東京都板橋区","13121":"東京都足立区","11203":"埼玉県川口市","11222":"埼玉県戸田市"};
+// 住所：OpenStreetMap の登録があれば使い、なければ国土地理院の住所検索で町名まで出す
+function addrOf(c,t,cb){
+  var a=t["addr:full"]||[t["addr:province"],t["addr:city"],t["addr:quarter"],t["addr:neighbourhood"],[t["addr:block_number"],t["addr:housenumber"]].filter(Boolean).join("-")].filter(Boolean).join("");
+  if(a) return cb(a);
+  if(c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr)) return cb(c.addr);
+  var k=c.ll[0].toFixed(4)+","+c.ll[1].toFixed(4); if(ADDR_CACHE[k]) return cb(ADDR_CACHE[k]);
+  fetch("https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat="+c.ll[0]+"&lon="+c.ll[1]).then(function(r){ return r.json(); }).then(function(j){
+    var r=j&&j.results; if(!r) return; ADDR_CACHE[k]=(MUNI[r.muniCd]||"")+(r.lv01Nm&&r.lv01Nm!=="－"?r.lv01Nm:"")+"付近"; cb(ADDR_CACHE[k]); }).catch(function(){});
+}
+// 状態：[記号, 言葉, ok|mid|ng|unk]。情報がないものは必ず「？ 情報なし」（×にしない）
+var UNK=["？","情報なし","unk"];
+function st3(v,yes,lim,no){ return /^(yes|designated)$/.test(v||"")?["◎",yes,"ok"]:v==="limited"?["△",lim,"mid"]:v==="no"?["×",no,"ng"]:UNK; }
+function aitem(ic,label,x){ return '<li class="ai s-'+x[2]+'"><span class="ic">'+svg(ic)+'</span><div><small>'+label+'</small><b>'+x[0]+' '+esc(x[1])+'</b></div></li>'; }
+function placeItems(c,t,d){
+  var nearEv=null, evd=1e9; area.pois.forEach(function(p){ if(p.k!=="elevator") return; var e=km(c.ll,[p.ll[1],p.ll[0]])*1000; if(e<evd){ evd=e; nearEv=p; } });
+  var wc=c.cat==="wc"&&c.poi?st3(c.poi.t.wheelchair,"あり","一部","使えない")
+    :/^(yes|designated)$/.test(t["toilets:wheelchair"]||"")?["◎","あり","ok"]:t["toilets:wheelchair"]==="no"?["×","なし","ng"]
+    :d.wc&&d.wcm<=150?["○","近く "+fmtLen(d.wcm),"ok"]:d.wc&&d.wcm<=500?["△",fmtLen(d.wcm)+"先","mid"]:UNK;
+  var cap=t["capacity:disabled"], pk=/^\d+$/.test(cap||"")?(+cap>0?["◎",cap+"台","ok"]:["×","なし","ng"]):cap==="yes"?["◎","あり","ok"]:cap==="no"?["×","なし","ng"]:UNK;
+  var ev=t.elevator==="yes"?["◎","あり","ok"]:t.elevator==="no"?["×","なし","ng"]:nearEv&&evd<=80?["○","近くにあり","ok"]:UNK;
+  var ind=indoorOf(t)?["◎","雨でもOK","ok"]:(t.location==="outdoor"||t.indoor==="no")?["×","屋外","ng"]:UNK;
+  return {wheel:st3(t.wheelchair,"入れる","一部","難しい"),wc:wc,park:pk,ev:ev,ind:ind,baby:st3(t.stroller,"OK","一部","難しい"),evd:evd};
+}
 function judge(c){
   routeTo=c; if(!area) return;
   var inArea=c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
-  var ct=CATS[c.cat||"dest"]; $("sheetCat").style.background=ct[0]; $("sheetCat").innerHTML=svg(ct[1]); $("sheetCat").hidden=$("closeCard").hidden=$("fav").hidden=false; showFav(c);
-  var dist=km(me||AKABANE,c.ll); $("sheetMeta").innerHTML=(c.addr?esc(c.addr)+"・":"")+(dist<1?Math.round(dist*1000)+"m":dist.toFixed(1)+"km");
-  if(!inArea){ $("sheetMeta").textContent=c.addr||"";
-    $("sheetText").innerHTML=vcard(1,"段差・道幅・坂の情報は、いまは赤羽駅周辺だけです"); out.innerHTML=""; dim(false); focus(c.ll); return; }
-  var useMe=me&&me[0]>=area.bbox[0]&&me[0]<=area.bbox[2]&&me[1]>=area.bbox[1]&&me[1]<=area.bbox[3];
-  var o=useMe?me:AKABANE, oName=useMe?"現在地":"赤羽駅（現在地が範囲外のため）";
-  var A=nearestNode(o), B=nearestNode(c.ll);
-  if(B.m>150){ $("sheetText").innerHTML=vcard(1,"目的地の近く（150m以内）に調査済みの歩道データがありません"); out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false); focus(c.ll); return; }
-  var path=dijkstra(A.id,B.id,false), status, strict=!!path;
-  if(!path) path=dijkstra(A.id,B.id,true);
-  if(!path){ $("sheetText").innerHTML=vcard(1,"出発地からつながる歩道データが見つかりませんでした"); out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false); focus(c.ll); return; }
-  var len=A.m+B.m, unkLen=0, oldest="9999", issues=[], feats=[];
-  path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L); len+=L.d; if(r.unk.length) unkLen+=L.d;
-    if(L.md&&L.md<oldest) oldest=L.md;
-    if(r.fail.length) issues.push(["bad","合わない",r.fail.join("、"),L]); else if(r.warn.length) issues.push(["warn","注意",r.warn.join("、"),L]);
-    feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:L.c}}); });
-  var unkRatio=len?unkLen/len:1, d=destInfo(c.ll,c.poi), fresh=oldest!=="9999"&&(Date.now()-new Date(oldest))<365*864e5;
-  var destOk=d.place&&(d.place.t.wheelchair==="yes"||d.place.t.wheelchair==="designated");
-  if(!strict) status=2; else if(unkRatio>0.5) status=1; else if(unkRatio>0) status=3; else if(fresh&&destOk) status=5; else status=4;
-  var b=new maplibregl.LngLatBounds(); feats.forEach(function(f){ f.geometry.coordinates.forEach(function(x){ b.extend(x); }); }); b.extend([c.ll[1],c.ll[0]]);
-  var mins=Math.max(1,Math.round(len/1000/P().kmh*60));
-  var lenTxt=fmtLen(len), lenNum=lenTxt.replace(/[a-z]+$/,""), lenUnit=lenTxt.slice(lenNum.length);
-  var cov=Math.round((1-unkRatio)*100), nBad=issues.filter(function(x){ return x[0]==="bad"; }).length, nWarn=issues.length-nBad;
-  var ev=null, evd=1e9; area.pois.forEach(function(p){ if(p.k!=="elevator") return; var e=km(c.ll,[p.ll[1],p.ll[0]])*1000; if(e<evd){ evd=e; ev=p; } });
-  var dw=d.place&&d.place.t.wheelchair;
-  function mk(cls,sym,t){ return '<span class="mk-'+cls+'">'+sym+'</span> '+t; }
-  var tiles=tile("blue","wheel","車椅子",dw==="yes"||dw==="designated"?mk("ok","◎","入れる"):dw==="limited"?mk("mid","△","一部"):dw==="no"?mk("ng","×","難しい"):mk("unk","？","未確認"))+
-    tile("pink","wc","トイレ",c.cat==="wc"&&destOk?mk("ok","◎","ここ"):d.wc&&d.wcm<500?mk("ok","◎",fmtLen(d.wcm)):d.wc?mk("mid","△",fmtLen(d.wcm)):mk("unk","？","不明"))+
-    tile("orange","step","段差・坂",nBad?mk("ng","×",nBad+"か所"):nWarn?mk("mid","△","注意"+nWarn):mk("ok","◎","問題なし"))+
-    tile("teal","ev","エレベーター",ev&&evd<300?mk("ok","◎",fmtLen(evd)):mk("unk","－","なし"))+
-    tile("green","check","調査済み",(cov===100?mk("ok","◎",""):cov>=50?mk("mid","△",""):mk("ng","×",""))+cov+"%")+
-    tile("violet","clock","所要時間","約"+mins+"分");
-  $("sheetMeta").innerHTML=(c.addr?esc(c.addr)+"・":"")+lenNum+lenUnit+"・約"+mins+"分（"+esc(oName.replace(/（.*/,""))+"から・"+esc(P().label.replace(/（.*$/,""))+"）";
-  $("sheetText").innerHTML=vcard(status)+'<div class="tiles">'+tiles+'</div>'+
-    '<div class="acts"><button type="button" class="ol" id="btnMore">詳しく見る</button><button type="button" class="fill" id="btnGo">'+svg("nav")+'ここへ行く</button></div>';
-  $("btnMore").onclick=function(){ var o=$("result"); o.hidden=!o.hidden; this.textContent=o.hidden?"詳しく見る":"閉じる"; if(!o.hidden) o.scrollIntoView({block:"nearest",behavior:"smooth"}); };
+  $("closeCard").hidden=$("fav").hidden=false; showFav(c);
+  var d=destInfo(c.ll,c.poi), t=(c.poi||d.place||{t:{}}).t, it=placeItems(c,t,d);
+  // ジャンル・距離・住所
+  var isAddr=c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr), genre=isAddr?"":(c.addr||"");
+  var dist=km(me||AKABANE,c.ll)*1000;
+  $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span><b aria-label="'+(me?"現在地":"赤羽駅")+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":"駅から ")+fmtLen(dist)+'</b>';
+  var ad=$("sheetAddr"); ad.hidden=true; ad.textContent="";
+  addrOf(c,t,function(a){ if(routeTo===c){ ad.textContent=a; ad.hidden=false; } });
+  // 経路（段差・坂）の判定
+  var R=null, why="";
+  if(!inArea) why="段差・道幅・坂の情報は、いまは赤羽駅周辺だけです";
+  else {
+    var useMe=me&&me[0]>=area.bbox[0]&&me[0]<=area.bbox[2]&&me[1]>=area.bbox[1]&&me[1]<=area.bbox[3];
+    var o=useMe?me:AKABANE, oName=useMe?"現在地":"赤羽駅（現在地が範囲外のため）";
+    var A=nearestNode(o), B=nearestNode(c.ll);
+    if(B.m>150) why="目的地の近く（150m以内）に調査済みの歩道データがありません";
+    else {
+      var path=dijkstra(A.id,B.id,false), strict=!!path;
+      if(!path) path=dijkstra(A.id,B.id,true);
+      if(!path) why="出発地からつながる歩道データが見つかりませんでした";
+      else R={path:path,strict:strict,o:o,oName:oName,A:A,B:B};
+    }
+  }
+  var status=1, issues=[], feats=[], len=0, unkLen=0, oldest="9999", unkRatio=1, b=null, mins=0;
+  if(R){
+    len=R.A.m+R.B.m;
+    R.path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L); len+=L.d; if(r.unk.length) unkLen+=L.d;
+      if(L.md&&L.md<oldest) oldest=L.md;
+      if(r.fail.length) issues.push(["bad","合わない",r.fail.join("、"),L]); else if(r.warn.length) issues.push(["warn","注意",r.warn.join("、"),L]);
+      feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:L.c}}); });
+    unkRatio=len?unkLen/len:1;
+    var fresh=oldest!=="9999"&&(Date.now()-new Date(oldest))<365*864e5, destOk=it.wheel[2]==="ok";
+    if(!R.strict) status=2; else if(unkRatio>0.5) status=1; else if(unkRatio>0) status=3; else if(fresh&&destOk) status=5; else status=4;
+    b=new maplibregl.LngLatBounds(); feats.forEach(function(f){ f.geometry.coordinates.forEach(function(x){ b.extend(x); }); }); b.extend([c.ll[1],c.ll[0]]);
+    mins=Math.max(1,Math.round(len/1000/P().kmh*60));
+  }
+  // あなたの条件：判定できるものだけを分母にし、情報がないものは件数を添える
+  function yn(x){ return x[2]==="unk"?null:x[2]==="ok"; }
+  var conds=[["入口に入れる",yn(it.wheel)],["道の段差・坂",R?(status===2?false:status===1?null:true):null],["近くに多目的トイレ",yn(it.wc)],["エレベーター",it.ev[2]==="unk"?null:yn(it.ev)]];
+  var known=conds.filter(function(x){ return x[1]!==null; }), met=known.filter(function(x){ return x[1]; }).length, nUnk=conds.length-known.length;
+  var cls=!known.length?"":met===known.length?"ok":"part";
+  var ck=SV+'<path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="3"/></svg>';
+  var band='<button type="button" class="cond '+cls+'" id="condBtn" aria-label="あなたの条件 '+(known.length?known.length+"件中"+met+"件を満たす":"判定できる情報がありません")+'・条件を変える">'+
+    '<span class="ck" aria-hidden="true">'+(cls==="part"?'<b style="font-size:15px">!</b>':ck)+'</span>'+
+    '<div><b>あなたの条件</b><small>'+esc(P().label)+(nUnk?"・"+nUnk+"件は情報なし":"")+'</small></div>'+
+    (known.length?'<span class="n" aria-hidden="true">'+met+'/'+known.length+(cls==="ok"?ck:"")+'</span>':'<span class="n" aria-hidden="true" style="font-size:15px">？</span>')+'</button>';
+  var grid='<p class="ahd">アクセシビリティ</p><ul class="agrid">'+aitem("wheel","車椅子",it.wheel)+aitem("wc","多目的トイレ",it.wc)+aitem("park","障害者用駐車場",it.park)+
+    aitem("ev","エレベーター",it.ev)+aitem("umb","屋内",it.ind)+aitem("baby","ベビーカー",it.baby)+'</ul>';
+  var notes=[]; // 利用者からの情報：確認済みの投稿が届くようになったらここに入れる（今は非表示）
+  var uinfo=notes.length?'<div class="uinfo"><p class="ahd" style="margin-top:0">利用者からの情報</p><ul>'+notes.slice(0,2).map(function(n){ return '<li>「'+esc(n.text)+'」<small>'+esc(n.when)+'</small></li>'; }).join("")+'</ul></div>':'';
+  $("sheetText").innerHTML=band+(why?'<p class="cnote">'+esc(why)+'</p>':'')+grid+uinfo;
+  $("condBtn").onclick=function(){ $("profBtn").click(); };
+  $("acts").hidden=false;
+  $("acts").innerHTML='<button type="button" class="ol" id="btnMore" aria-expanded="false" aria-controls="result">詳しく見る</button>'+(R?'<button type="button" class="fill" id="btnGo">'+svg("nav")+'ここへ行く</button>':'');
+  $("btnMore").onclick=function(){ var o=$("result"); o.hidden=!o.hidden; this.textContent=o.hidden?"詳しく見る":"閉じる"; this.setAttribute("aria-expanded",String(!o.hidden));
+    if(!o.hidden){ setSheet("full"); setTimeout(function(){ o.scrollIntoView({block:"start",behavior:"smooth"}); },300); } };
+  // 詳しく見る：経路の判定と、気をつける箇所・道順・出典
+  var h=R?vcard(status):vcard(1,why);
+  if(!R){ out.innerHTML='<div id="detail">'+h+'</div>'; focus(c.ll); return; }
   $("btnGo").onclick=function(){ map.getSource("route").setData({type:"FeatureCollection",features:feats}); dim(true);
-    $("sheet").classList.add("min"); $("grab").setAttribute("aria-expanded","false"); setTimeout(function(){ fitRoute(b); },50); };
-  var h='<ul class="facts">';
-  h+=fact("start","出発："+esc(oName));
-  h+=fact("dest","目的地の車椅子対応："+(d.place?esc(WC[d.place.t.wheelchair]||d.place.t.wheelchair):"未確認"),d.place?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
+    setSheet("min"); setTimeout(function(){ fitRoute(b); },50); };
+  h+='<ul class="facts">';
+  h+=fact("start","出発："+esc(R.oName),fmtLen(len)+"・約"+mins+"分（"+esc(P().label.replace(/（.*$/,""))+"）");
+  h+=fact("dest","目的地の車椅子対応："+(t.wheelchair?esc(WC[t.wheelchair]||t.wheelchair):"未確認"),t.wheelchair?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
   if(d.wc) h+=fact("wc","近くの車椅子トイレ："+fmtLen(d.wcm),d.wc.t.name?esc(d.wc.t.name):"");
-  if(oldest!=="9999") h+=fact("cal","最も古い調査："+esc(oldest),"国土交通省 歩行空間ネットワークデータ");
-  var t=c.poi?c.poi.t:{};
+  if(oldest!=="9999") h+=fact("cal","最も古い調査："+esc(oldest),"国土交通省 歩行空間ネットワークデータ（調査済み "+Math.round((1-unkRatio)*100)+"%）");
   if(t.opening_hours) h+=fact("cal","営業・利用時間："+esc(t.opening_hours));
   if(t["wheelchair:description"]) h+=fact("dest","メモ："+esc(t["wheelchair:description"]));
   if(t.level) h+=fact("dest",esc(t.level)+"階");
   h+='</ul>';
-  var unkN=path.filter(function(i){ return evalLink(area.links[i]).unk.length; }).length;
+  var path=R.path, unkN=path.filter(function(i){ return evalLink(area.links[i]).unk.length; }).length;
   if(issues.length||unkN){
     h+='<p class="sec">気をつける箇所</p><ul class="issues" aria-label="気をつける箇所">';
     issues.slice(0,8).forEach(function(x,k){ h+='<li><button type="button" data-k="'+k+'"><span class="tag '+x[0]+'">'+x[1]+'</span><span>'+esc(x[2].replace(/（終点側が.+?）/g,""))+'<small>'+esc(CODE.rt[x[3].rt]||CODE.st[x[3].st]||"通路")+'</small></span>'+ICON.arr+'</button></li>'; });
@@ -740,7 +896,7 @@ $("repForm").onsubmit=function(e){
 
 // ---- 条件の設定画面 ----
 function profSub(p){ return STEP_TXT[p.step]+"・"+SLOPE_TXT[p.slope]+(p.stairs?"・階段可":""); }
-function showProf(){ var p=P(); $("profText").textContent=prof?p.label.replace(/（.*$/,""):"条件"; $("profBtn").setAttribute("aria-label","移動の条件："+(prof?p.label+"、"+profSub(p):"未設定")+"。変更する"); }
+function showProf(){ var p=P(); $("profText").textContent=prof?p.label+"・"+profSub(p):"未設定（タップして設定）"; $("profBtn").setAttribute("aria-label","移動の条件："+(prof?p.label+"、"+profSub(p):"未設定")+"。変更する"); }
 function fillForm(p){ $("pStep").value=p.step; $("pSlope").value=p.slope; $("pWidth").value=p.width; $("pStairs").checked=p.stairs; $("pEsc").checked=p.esc; }
 function openProf(){
   lastFocus=document.activeElement;
@@ -751,7 +907,7 @@ function openProf(){
   fillForm(P()); $("profPanel").hidden=false; fs.querySelector("input:checked").focus();
 }
 function closeProf(){ $("profPanel").hidden=true; if(lastFocus) lastFocus.focus(); }
-$("profBtn").onclick=openProf; $("profCancel").onclick=closeProf;
+$("profBtn").onclick=function(){ showLayers(false); openProf(); }; $("profCancel").onclick=closeProf;
 $("profPanel").addEventListener("keydown",function(e){ if(e.key==="Escape") closeProf(); });
 $("profForm").onsubmit=function(e){
   e.preventDefault();
@@ -765,15 +921,35 @@ showProf();
 if(!prof) setTimeout(openProf,600);
 
 // 右のボタンが下のシートに重ならないように
-$("grab").onclick=function(){ var s=$("sheet"), min=s.classList.toggle("min"); this.setAttribute("aria-expanded",String(!min)); };
+// 下のシート：指で引いて 3 段階（閉じる・画面の41%・88%）。つまみを押すと 41%⇔88%
+var sheetSt="mid", dragMoved=false;
+function sheetPx(st){ var H=window.innerHeight, mid=Math.max(300,Math.round(H*0.41));
+  // 広げたときは中身の高さまで（最大88%）。中身が少ないときに下が空かないように
+  return st==="full"?Math.max(mid,Math.min(Math.round(H*0.88),$("sheet").scrollHeight)):mid; }
+function setSheet(st){ var s=$("sheet"); sheetSt=st; s.classList.toggle("min",st==="min"); s.classList.toggle("full",st==="full");
+  s.style.height=st==="min"||window.innerWidth>=900?"":sheetPx(st)+"px"; $("grab").setAttribute("aria-expanded",String(st==="full")); if(st!=="full") s.scrollTop=0; }
+$("grab").onclick=function(){ if(dragMoved){ dragMoved=false; return; } setSheet(sheetSt==="mid"?"full":"mid"); };
+(function(){ var s=$("sheet"), y0=0, h0=0, on=false;
+  function down(e){ if(window.innerWidth>=900||e.target.closest("button:not(#grab)")) return; on=true; dragMoved=false; y0=e.clientY; h0=s.offsetHeight; s.classList.add("drag"); try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
+  function move(e){ if(!on) return; var dy=e.clientY-y0; if(Math.abs(dy)>6) dragMoved=true; if(!dragMoved) return;
+    s.classList.remove("min"); s.style.height=Math.max(120,Math.min(window.innerHeight*0.92,h0-dy))+"px"; }
+  function up(){ if(!on) return; on=false; s.classList.remove("drag"); if(!dragMoved) return;
+    var h=s.offsetHeight, mid=sheetPx("mid"), full=sheetPx("full");
+    if(h<mid*0.7) $("closeCard").click(); else setSheet(h>(mid+full)/2?"full":"mid"); }
+  ["grab","shead"].forEach(function(id){ var el=$(id); el.addEventListener("pointerdown",down); el.addEventListener("pointermove",move); el.addEventListener("pointerup",up); el.addEventListener("pointercancel",up); });
+})();
 function layout(){ var wide=window.innerWidth>=900;
   document.documentElement.style.setProperty("--sheet-h",wide?"12px":document.querySelector(".sheet").offsetHeight+"px");
   document.documentElement.style.setProperty("--top-h",document.querySelector(".chips").getBoundingClientRect().bottom+"px"); }
 if(window.ResizeObserver) new ResizeObserver(layout).observe(document.querySelector(".sheet"));
 window.addEventListener("resize",layout); layout();
 // カードを閉じてエリアの概要に戻る
-$("closeCard").onclick=function(){ routeTo=null; if(destMarker) destMarker.remove(); map.getSource("route").setData(EMPTY); overview();
-  $("sheet").classList.add("min"); $("grab").setAttribute("aria-expanded","false"); };
+$("closeCard").onclick=function(){ routeTo=null; if(destMarker) destMarker.remove(); map.getSource("route").setData(EMPTY); overview(); };
+// 「レイヤー」：歩道の色・あなたの条件・エリアの情報・出典をまとめたパネル
+function showLayers(on){ $("layerPanel").hidden=!on; $("btnLayers").setAttribute("aria-expanded",String(on)); }
+$("btnLayers").onclick=function(e){ e.stopPropagation(); showLayers($("layerPanel").hidden); };
+document.addEventListener("click",function(e){ if(!$("layerPanel").hidden&&!e.target.closest("#layerPanel")&&!e.target.closest("#btnLayers")) showLayers(false); });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("layerPanel").hidden){ showLayers(false); $("btnLayers").focus(); } });
 // お気に入り（この端末だけに保存）
 function favs(){ try{ return JSON.parse(ls("favs")||"[]"); }catch(e){ return []; } }
 function favKey(c){ return c.name+"@"+c.ll[0].toFixed(5)+","+c.ll[1].toFixed(5); }
@@ -783,7 +959,16 @@ $("fav").onclick=function(){ var c=routeTo; if(!c) return; var k=favKey(c), a=fa
 
 // ---- 現在地 ----
 var me=null, meMarker=null;
-function placeMe(){
+// 現在地：青い点と、位置の誤差を表す薄い青の円
+function accCircle(ll,m){ var pts=[], dLat=m/111320, dLng=m/(111320*Math.cos(ll[0]*Math.PI/180));
+  for(var i=0;i<=48;i++){ var a=i/48*Math.PI*2; pts.push([ll[1]+dLng*Math.cos(a),ll[0]+dLat*Math.sin(a)]); }
+  return {type:"Feature",properties:{},geometry:{type:"Polygon",coordinates:[pts]}}; }
+function placeMe(acc){
+  var data={type:"FeatureCollection",features:acc?[accCircle(me,Math.min(Math.max(acc,15),300))]:[]};
+  if(map.getSource("me-acc")) map.getSource("me-acc").setData(data);
+  else if(map.isStyleLoaded()){ map.addSource("me-acc",{type:"geojson",data:data});
+    map.addLayer({id:"me-acc",type:"fill",source:"me-acc",paint:{"fill-color":"#2f80ed","fill-opacity":0.14}});
+    map.addLayer({id:"me-acc-line",type:"line",source:"me-acc",paint:{"line-color":"#2f80ed","line-opacity":0.25,"line-width":1}}); }
   if(!meMarker){ var el=document.createElement("div"); el.className="me"; el.setAttribute("aria-label","現在地"); meMarker=new maplibregl.Marker({element:el}).setLngLat([me[1],me[0]]).addTo(map); }
   else meMarker.setLngLat([me[1],me[0]]);
 }
@@ -791,13 +976,13 @@ function locate(){
   if(!navigator.geolocation){ say("この端末では現在地を使えません"); return; }
   say("現在地を探しています…");
   navigator.geolocation.getCurrentPosition(function(p){
-    me=[p.coords.latitude,p.coords.longitude]; placeMe(); say("");
+    me=[p.coords.latitude,p.coords.longitude]; placeMe(p.coords.accuracy); say("");
     if(km(me,AKABANE)>3){ say("現在地は対象エリアの外なので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); return; }
-    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),16)});
+    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7)});
   }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
 $("btnLocate").onclick=locate;
-function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.6}); }
+function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.7,pitch:48}); }
 
 // ---- 場所の検索 ----
 // 1) 赤羽周辺の施設（OpenStreetMap を事前に取り込んだもの）を名前と種類で探す
@@ -910,7 +1095,7 @@ $("btnList").onclick=function(){
   if(!area) return;
   var base=me&&km(me,AKABANE)<3?me:[map.getCenter().lat,map.getCenter().lng], out=[];
   pinFeats.forEach(function(f){ var pr=f.properties;
-    var ok=filt==="all"?(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)):(FILT[filt].indexOf(pr.c)>=0&&(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)));
+    var ok=filt==="all"?(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)):(filtMatch(filt,pr)&&(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)));
     if(!ok||pr.k==="entrance") return; var c=pinCand(pr); c.d=km(base,c.ll); out.push(c); });
   favs().forEach(function(f){ out=out.filter(function(c){ return favKey(c)!==f.k; }); out.unshift({name:f.name,addr:f.addr,ll:f.ll,cat:f.cat,d:km(base,f.ll)}); });
   var nf=favs().length; out=out.slice(0,nf).concat(out.slice(nf).sort(function(a,b){ return a.d-b.d; })).slice(0,40);
@@ -918,7 +1103,7 @@ $("btnList").onclick=function(){
   showList(out,"件（近い順）");
 };
 function pick(c){
-  $("sugg").hidden=true; say(""); $("sheet").classList.remove("min"); $("grab").setAttribute("aria-expanded","true");
+  $("sugg").hidden=true; say(""); showLayers(false); $("sheet").hidden=false; $("sheet").scrollTop=0; setSheet("mid");
   if(!destMarker){ var el=document.createElement("div"); el.className="pin";
     el.innerHTML='<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true"><path d="M18 45s15-14.5 15-26.5A15 15 0 0 0 3 18.5C3 30.5 18 45 18 45z" fill="#17a058" stroke="#fff" stroke-width="3"/><circle cx="18" cy="18" r="5.5" fill="#fff"/></svg>';
     destMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
@@ -943,7 +1128,12 @@ go.addEventListener("click",function(){ if(go.type!=="button") return;
   try{ r.start(); }catch(e){ go.classList.remove("rec"); } });
 
 // ---- オフラインでも開けるように（PWA） ----
-if("serviceWorker" in navigator) window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); });
+// 新しい版が届いたら一度だけ読み直して、すぐ最新の画面にする
+if("serviceWorker" in navigator){
+  var hadSw=!!navigator.serviceWorker.controller, reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){ if(hadSw&&!reloaded){ reloaded=true; location.reload(); } });
+  window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(r){ r.update(); }).catch(function(){}); });
+}
 })();
 </script>
 </body>

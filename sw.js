@@ -1,6 +1,6 @@
 // 画面の部品だけを端末に保存して、電波が弱い場所でもアプリを開けるようにする。
 // 地図タイルと検索結果は毎回ネットから取る（国土地理院・OSMの利用条件に合わせ、まとめて保存しない）
-var CACHE = "asm-v6";
+var CACHE = "asm-v7";
 var SHELL = ["./", "index.html", "terms.html", "privacy.html", "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png"];  // data/ はアプリ本体と同じく「新しい版を優先」で保存される
 var LIBS = ["https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js",
   "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css",
@@ -21,7 +21,10 @@ self.addEventListener("fetch", function(e){
   if (req.method !== "GET") return;
   // アプリ本体：新しい版を優先し、つながらなければ保存した版
   if (req.mode === "navigate" || (url.origin === location.origin)) {
-    e.respondWith(fetch(req).then(function(r){
+    // 端末やブラウザに残った古い版を使わず、毎回サーバーに新しい版があるか確かめる
+    // （画面を開くリクエストはそのまま作り直せないので URL から作る）
+    var fresh = req.mode === "navigate" ? new Request(req.url, {cache: "no-cache"}) : new Request(req, {cache: "no-cache"});
+    e.respondWith(fetch(fresh).then(function(r){
       var copy = r.clone(); caches.open(CACHE).then(function(c){ c.put(req, copy); }); return r;
     }).catch(function(){ return caches.match(req).then(function(r){ return r || caches.match("index.html"); }); }));
     return;
