@@ -81,6 +81,7 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fabs{position:fixed;right:14px;bottom:calc(var(--sheet-h,150px) + 12px);z-index:10;display:flex;flex-direction:column;gap:10px;transition:bottom .2s}
 .fab{width:54px;height:54px;border-radius:16px;border:0;background:var(--card);box-shadow:var(--shadow);color:var(--ink2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:10px;font-weight:700}
 .fab svg{width:21px;height:21px}
+.fab.on{background:var(--brand);color:#fff}
 
 /* ---- 下：シート ---- */
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:9;max-width:560px;max-height:60vh;overflow:auto;overscroll-behavior:contain;background:var(--card);
@@ -248,7 +249,7 @@ details.adv summary::-webkit-details-marker{display:none}
 <div class="fabs">
   <button class="fab" id="btnLocate" type="button" aria-label="現在地を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>現在地</button>
   <button class="fab" id="btnHome" type="button" aria-label="赤羽駅周辺を表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M8 21l2-4M16 21l-2-4M5 11h14"/></svg>赤羽駅</button>
-  <button class="fab" id="btnLegend" type="button" aria-label="地図の見かたを表示"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>凡例</button>
+  <button class="fab" id="btnLegend" type="button" aria-label="歩道の通りやすさを表示" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>歩道</button>
 </div>
 
 <section class="sheet" id="sheet" aria-labelledby="sheetTitle">
@@ -333,14 +334,13 @@ function say(t){ $("msg").textContent=t||""; }
 function ls(k,v){ try{ if(v===undefined) return localStorage.getItem(k); if(v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); }catch(e){ return null; } }
 function fmtLen(m){ return m<1000 ? Math.max(10,Math.round(m/10)*10)+"m" : (m/1000).toFixed(1)+"km"; }
 
-// ---- 地図（国土地理院ベクトルタイル。歩く人向けに道・建物・鉄道・地名を描く） ----
+// ---- 地図 ----
+// 下地は OpenFreeMap（OpenStreetMap のベクトル地図）。読めないときは国土地理院ベクトルタイルに切り替える
+var BASE="https://tiles.openfreemap.org/styles/liberty";
 var pmProtocol = new pmtiles.Protocol();
 maplibregl.addProtocol("pmtiles", pmProtocol.tile);
 var ANNO_TEXT = ["to-string",["coalesce",["get","vt_text"],["get","knj"],""]];
-var map = new maplibregl.Map({
-  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:16, minZoom:5, maxZoom:18, attributionControl:{compact:true},
-  pitchWithRotate:false, dragRotate:false, localIdeographFontFamily:'"BIZ UDPGothic","Hiragino Sans","Yu Gothic",sans-serif',
-  style:{
+var GSI_STYLE={
     version:8,
     glyphs:"https://gsi-cyberjapan.github.io/optimal_bvmap/glyphs/{fontstack}/{range}.pbf",
     sources:{
@@ -359,8 +359,23 @@ var map = new maplibregl.Map({
         layout:{"text-field":ANNO_TEXT,"text-font":["NotoSansJP-Regular"],"text-size":["interpolate",["linear"],["zoom"],10,11,17,14]},
         paint:{"text-color":"#4b5563","text-halo-color":"#ffffff","text-halo-width":2}}
     ]
-  }
+};
+var map = new maplibregl.Map({
+  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:16, minZoom:5, maxZoom:18, attributionControl:{compact:true},
+  pitchWithRotate:false, dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
+  style:BASE
 });
+var usedGsi=false;
+map.on("error",function(){ if(!usedGsi&&!map.isStyleLoaded()){ usedGsi=true; map.setStyle(GSI_STYLE); } });
+// 地名は日本語で出し、地図のお店アイコンは間引いて、こちらのピンを見やすくする
+function tuneBase(){
+  if(usedGsi) return;
+  var JA=["coalesce",["get","name:ja"],["get","name"]];
+  map.getStyle().layers.forEach(function(l){
+    if(/^(poi_r20|poi_r7|building-3d|natural_earth)$/.test(l.id)) map.setLayoutProperty(l.id,"visibility","none");
+    else if(l.type==="symbol"&&l.layout&&l.layout["text-field"]&&!/shield/.test(l.id)) map.setLayoutProperty(l.id,"text-field",JA);
+  });
+}
 map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-left");
 
 // ---- 赤羽駅周辺の歩行空間データ（国交省）と施設（OpenStreetMap） ----
@@ -488,9 +503,9 @@ function loadArea(){
     map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:linkFeatures()},attribution:"歩行空間データ：国土交通省"});
     map.addSource("route",{type:"geojson",data:EMPTY});
     map.addSource("pois",{type:"geojson",data:{type:"FeatureCollection",features:pf},attribution:"施設 &copy; OpenStreetMap contributors"});
-    map.addLayer({id:"links-unknown",type:"line",source:"links",filter:["==",["get","lv"],"unknown"],layout:{"line-cap":"butt"},
+    map.addLayer({id:"links-unknown",type:"line",source:"links",filter:["==",["get","lv"],"unknown"],layout:{"line-cap":"butt",visibility:showNet?"visible":"none"},
       paint:{"line-color":"#94a3b8","line-opacity":0.75,"line-width":["interpolate",["linear"],["zoom"],14,1,18,3.5],"line-dasharray":[2,2]}});
-    map.addLayer({id:"links",type:"line",source:"links",filter:["!=",["get","lv"],"unknown"],layout:{"line-cap":"round","line-join":"round"},
+    map.addLayer({id:"links",type:"line",source:"links",filter:["!=",["get","lv"],"unknown"],layout:{"line-cap":"round","line-join":"round",visibility:showNet?"visible":"none"},
       paint:{"line-color":LEVEL_COLOR,"line-opacity":["match",["get","lv"],"ok",0.6,0.95],
         "line-width":["interpolate",["linear"],["zoom"],14,["match",["get","lv"],"ok",1.5,2.5],18,["match",["get","lv"],"ok",5,8]]}});
     // 判定したルート：太い縁取り＋状態の色。未調査は破線
@@ -521,7 +536,11 @@ function loadArea(){
   }).catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
 }
 var EMPTY={type:"FeatureCollection",features:[]};
-if(map.isStyleLoaded()) loadArea(); else map.once("style.load",loadArea);
+// 歩道の通りやすさ（線）はふだん隠し、「レイヤー」で出す
+var showNet=ls("net")==="1";
+function setNet(on){ showNet=on; ls("net",on?"1":null); ["links","links-unknown"].forEach(function(id){ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",on?"visible":"none"); });
+  var b=$("btnLegend"); b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on)); }
+map.once("style.load",function(){ tuneBase(); loadArea(); });
 // 検索欄と下のパネルに隠れないように経路を地図に収める
 function fitRoute(b){
   var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+56;  // 目的地のピンの高さぶん余白を足す
@@ -835,7 +854,8 @@ function pick(c){
 }
 document.querySelectorAll(".chip[data-q]").forEach(function(b){ b.onclick=function(){
   document.querySelectorAll(".chip[data-q]").forEach(function(x){ x.classList.toggle("on",x===b); }); $("q").value=b.dataset.q; search(b.dataset.q); }; });
-$("btnLegend").onclick=function(){ var s=$("sheet"); s.classList.remove("min"); $("grab").setAttribute("aria-expanded","true"); var m=s.querySelector(".more"); m.open=true; m.scrollIntoView({block:"nearest",behavior:"smooth"}); };
+$("btnLegend").onclick=function(){ setNet(!showNet); say(showNet?"歩道の通りやすさを色で表示しています（緑：通れる・赤：合わない・灰：未調査）":""); };
+setNet(showNet);
 $("searchForm").onsubmit=function(e){ e.preventDefault(); $("q").blur(); search($("q").value); };
 
 // ---- オフラインでも開けるように（PWA） ----
