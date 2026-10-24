@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""赤羽駅周辺の「通れるか」の材料を集めて data/akabane.json に書き出す。
+"""国交省の歩行空間ネットワークデータがある地区ごとに「通れるか」の材料を集めて書き出す。
+赤羽は data/akabane.json、ほかの地区は data/areas/<id>.json、一覧は data/areas.json。
 
 - 歩道の段差・幅・坂・階段など：国土交通省「歩行空間ネットワークデータ（赤羽駅周辺）」
   （ほこナビDP、公共データ利用規約 第1.0版）。コードの意味は歩行空間ネットワークデータ整備仕様（2024年7月）による
 - トイレ・エレベーター・入口・車椅子対応の施設：OpenStreetMap（ODbL）を Overpass API で取得
 
 使い方: python3 scripts/build_area.py [link.geojson node.geojson overpass.json]
-引数を省くとネットから取得する（GitHub Actions 用）。手元の試験ではファイルを渡す。
+引数を省くと、ほこナビDPの一覧（CKAN API）から全地区をネットで取得する（GitHub Actions 用）。
+手元の試験ではファイルを渡す（赤羽として書き出す）。
 """
-import json, sys, time, urllib.parse, urllib.request
+import json, os, re, sys, time, urllib.parse, urllib.request
 from datetime import datetime, timezone
 
 AREA = "akabane"
-NWD = "https://ckan.hokonavi.go.jp/dataset/2a0005b1-cdf2-43b7-81f8-2ce05a987da2/resource/"
-LINK_URL = NWD + "55b154d0-ced2-494e-94cb-ff02c623ee79/download/link.geojson"
-NODE_URL = NWD + "042e7998-34cc-48ed-b23d-b5953898bed2/download/node.geojson"
-NWD_PAGE = "https://ckan.hokonavi.go.jp/dataset/nwd_akabane_station"
+CKAN = "https://ckan.hokonavi.go.jp"
+NWD_PAGE = CKAN + "/dataset/nwd_akabane_station"
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 UA = {"User-Agent": "accessibility-support-map (https://github.com/akibakazuyuki/accessibility-support-map)"}
 
@@ -173,35 +173,93 @@ def build_places(osm):
     return out
 
 
-def main():
-    if len(sys.argv) == 4:
-        link_gj, node_gj, osm = (json.load(open(p, encoding="utf-8")) for p in sys.argv[1:4])
-    else:
-        link_gj = json.loads(get(LINK_URL))
-        node_gj = json.loads(get(NODE_URL))
-        osm = None
+def list_areas():
+    """ほこナビDPから歩行空間ネットワークデータの一覧（GeoJSON の link と node があるもの）"""
+    q = urllib.parse.urlencode({"q": "歩行空間ネットワークデータ", "rows": 200})
+    res = json.loads(get(CKAN + "/api/3/action/package_search?" + q))["result"]["results"]
+    out = []
+    for d in res:
+        link = node = None
+        for r in d.get("resources", []):
+            u = r.get("url") or ""
+            if u.endswith("link.geojson"):
+                link = u
+            elif u.endswith("node.geojson"):
+                node = u
+        if not (link and node):
+            print("skip (GeoJSON なし)", d["name"], file=sys.stderr)
+            continue
+        name = re.sub(r"^歩行空間ネットワークデータ\s*[（(]|[）)]\s*$", "", d["title"]).strip()
+        aid = AREA if d["name"] == "nwd_akabane_station" else re.sub(r"[^a-z0-9-]", "-", d["name"].lower())
+        out.append({"id": aid, "name": name, "link": link, "node": node, "page": CKAN + "/dataset/" + d["name"]})
+    return out
+
+
+def path_of(aid):
+    return f"data/{AREA}.json" if aid == AREA else f"data/areas/{aid}.json"
+
+
+def code_stats(links):
+    """仕様の版ちがい（コードが1つずれる）に気づけるよう、段差・坂・幅の値の分布を出す"""
+    st = {}
+    for k in ("lv", "sl", "w"):
+        c = {}
+        for L in links:
+            c[L[k]] = c.get(L[k], 0) + 1
+        st[k] = dict(sorted(c.items()))
+    return st
+
+
+def build_one(a, link_gj, node_gj, osm=None):
     links, nodes, dates = build_links(link_gj, node_gj)
     if not links:
-        raise SystemExit("歩行空間データが空です")
+        raise ValueError("歩行空間データが空です")
     bbox = bbox_of(links)
     if osm is None:
         osm = overpass(bbox)
     pois = build_pois(osm)
     places = build_places(osm)
     out = {
-        "area": AREA, "name": "赤羽駅周辺", "bbox": bbox,
+        "area": a["id"], "name": a["name"], "bbox": bbox,
         "built": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "sources": [
-            {"id": "nwd", "name": "国土交通省 歩行空間ネットワークデータ（赤羽駅周辺）", "url": NWD_PAGE,
+            {"id": "nwd", "name": "国土交通省 歩行空間ネットワークデータ（" + a["name"] + "）", "url": a["page"],
              "license": "公共データ利用規約（第1.0版）", "surveyed": [dates[0], dates[-1]] if dates else None},
             {"id": "osm", "name": "OpenStreetMap", "url": "https://www.openstreetmap.org/copyright",
              "license": "ODbL 1.0（© OpenStreetMap contributors）"},
         ],
         "nodes": nodes, "links": links, "pois": pois, "places": places,
     }
-    with open(f"data/{AREA}.json", "w", encoding="utf-8") as f:
+    with open(path_of(a["id"]), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    print(f"links={len(links)} nodes={len(nodes)} pois={len(pois)} places={len(places)} surveyed={dates[:1]}..{dates[-1:]}")
+    print(f"{a['id']}: links={len(links)} nodes={len(nodes)} pois={len(pois)} places={len(places)} "
+          f"surveyed={dates[:1]}..{dates[-1:]} codes={code_stats(links)}")
+    return {"id": a["id"], "name": a["name"], "file": path_of(a["id"]), "bbox": bbox}
+
+
+def main():
+    os.makedirs("data/areas", exist_ok=True)
+    if len(sys.argv) == 4:
+        link_gj, node_gj, osm = (json.load(open(p, encoding="utf-8")) for p in sys.argv[1:4])
+        build_one({"id": AREA, "name": "赤羽駅周辺", "page": NWD_PAGE}, link_gj, node_gj, osm)
+        return
+    index = []
+    for a in list_areas():
+        try:
+            index.append(build_one(a, json.loads(get(a["link"])), json.loads(get(a["node"]))))
+        except (Exception, SystemExit) as e:
+            # 1地区が失敗しても他は続ける。前回の分のファイルがあれば一覧に残す
+            print("失敗", a["id"], e, file=sys.stderr)
+            if os.path.exists(path_of(a["id"])):
+                with open(path_of(a["id"]), encoding="utf-8") as f:
+                    index.append({"id": a["id"], "name": a["name"], "file": path_of(a["id"]), "bbox": json.load(f)["bbox"]})
+        time.sleep(15)  # Overpass に負担をかけない
+    if not index:
+        raise SystemExit("1地区も作れませんでした")
+    index.sort(key=lambda x: (x["id"] != AREA, x["id"]))
+    with open("data/areas.json", "w", encoding="utf-8") as f:
+        json.dump(index, f, ensure_ascii=False, indent=1)
+    print(f"areas={len(index)}")
 
 
 if __name__ == "__main__":
