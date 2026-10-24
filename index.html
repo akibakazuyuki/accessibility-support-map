@@ -224,6 +224,39 @@ details.steps[open] summary::after,.more[open] summary::after,details.adv[open] 
 details.steps ol{margin:0 0 12px;padding-left:20px;color:var(--ink2)}
 .note{font-size:11px;color:var(--muted);margin:0 0 6px;line-height:1.6}
 
+/* ---- ここへ行く：道の要約と案内 ---- */
+.sheet.routing .meta,.sheet.routing .addr,.sheet.routing #sheetText,.sheet.routing #result,.sheet.routing .acts{display:none!important}
+#nav{margin:12px 0 0}
+.rsum{display:flex;align-items:center;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px 0 4px;border-radius:15px;font-size:13px;font-weight:800;flex:none}
+.pill i{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-style:normal;font-size:12px}
+.pill.v5,.pill.v4{background:#e9f7ef;color:#0f8a4a}.pill.v5 i,.pill.v4 i{background:#17a058}
+.pill.v3{background:#fff4e5;color:#b45309}.pill.v3 i{background:#e08a00}
+.pill.v2{background:#fdecec;color:#dc2626}.pill.v2 i{background:#ef4444}
+.pill.v1{background:#f1f3f2;color:#6b7570}.pill.v1 i{background:#8a948f}
+.rsum b{font-size:24px;font-weight:800;line-height:1;margin-left:2px}
+.rsum .len{font-size:14px;font-weight:700;color:#6b7570}
+.rwhy{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:13px;font-weight:700;line-height:1.5;color:#3a4540}
+.rwhy .ax{width:20px;height:20px;border-radius:50%;background:#ef4444;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;flex:none;box-shadow:0 0 0 2px #fff,0 1px 3px rgba(0,0,0,.2)}
+.rnote{margin:8px 0 0;font-size:12px;color:#8a948f}
+.rchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.rchips button{height:32px;border:0;border-radius:16px;padding:0 12px;font-size:12px;font-weight:800}
+.k-bad{background:#fdecec;color:#dc2626}.k-warn{background:#fff4e5;color:#b45309}.k-unk{background:#f1f3f2;color:#6b7570}.k-ok{background:#e9f7ef;color:#0f8a4a}
+.nnext{display:flex;align-items:center;gap:12px;padding:14px;border-radius:18px}
+.nnext .ic{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:none;color:#fff;font-size:20px;font-weight:800}
+.nnext.k-bad .ic{background:#ef4444}.nnext.k-warn .ic{background:#e08a00}.nnext.k-unk .ic{background:#8a948f}.nnext.k-ok .ic{background:#17a058}
+.nnext div{min-width:0}
+.nnext small{display:block;font-size:13px;font-weight:800;line-height:18px}
+.nnext b{display:block;font-size:18px;font-weight:800;line-height:1.35;color:#1c2420}
+.rest{margin:10px 2px 0;font-size:13px;color:#6b7570}
+.rest b{font-size:16px;color:#1c2420}
+.rest span{display:block;color:#b45309;font-weight:700}
+.racts{display:flex;gap:10px;margin:14px 0 0}
+.racts button{flex:1;min-height:52px;border:0;border-radius:26px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;background:#e9f7ef;color:#0f8a4a}
+.racts .fill{flex:1.6;background:#17a058;color:#fff;box-shadow:0 4px 12px rgba(23,160,88,.25)}
+.racts svg{width:20px;height:20px}
+.pop .avn{margin:0 0 8px;padding:6px 10px;border-radius:10px;background:#e9f7ef;color:#0f8a4a;font-size:12px;font-weight:800}
+
 /* 凡例・出典・リンク */
 .more{margin-top:8px;box-shadow:inset 0 1px 0 var(--line)}
 .more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);list-style:none}
@@ -359,6 +392,8 @@ details.adv summary::-webkit-details-marker{display:none}
     <p class="meta" id="sheetMeta"></p>
     <p class="addr" id="sheetAddr" hidden></p>
   </div>
+  <div id="nav" hidden></div>
+  <p class="sr" id="navSay" role="status" aria-live="assertive"></p>
   <div id="sheetText"><p class="lead">段差・道幅・坂・トイレ・エレベーターの情報を読み込んでいます…</p></div>
   <div id="result" aria-live="polite" hidden></div>
   <div class="acts" id="acts" hidden></div>
@@ -531,6 +566,7 @@ var prof=null; try{ prof=JSON.parse(ls("profile")||"null"); }catch(e){}
 function P(){ return prof||PRESETS.manual; }
 function slopeClass(sl){ return sl===99?99:sl<=1?1:sl===2?2:sl<=4?3:sl<=6?4:5; }
 // 1区間をいまの条件で評価する。fail＝条件に合わない、warn＝注意、unk＝未調査の項目
+// 横断歩道の手前の切り下げのような 5m 以内の 5〜8% の坂は、5%までの人でも「注意」にとどめる（道路の移動等円滑化ガイドラインでもやむを得ない場合 8% まで）
 function evalLink(L){
   var p=P(), r={fail:[],warn:[],unk:[]};
   if(L.rt===6){ if(!p.stairs) r.fail.push("階段"); return r; }
@@ -539,7 +575,7 @@ function evalLink(L){
   if(L.rt===3) r.warn.push("踏切");
   if(L.lv===99) r.unk.push("段差"); else if(L.lv>p.step) r.fail.push("段差 "+CODE.lv[L.lv]); else if(L.lv>=3&&L.lv===p.step) r.warn.push("段差 "+CODE.lv[L.lv]);
   var sc=slopeClass(L.sl);
-  if(L.rt!==7||sc!==99){ if(sc===99) r.unk.push("坂"); else if(sc>p.slope) r.fail.push("坂 "+CODE.sl[L.sl]); else if(sc>=3&&sc===p.slope) r.warn.push("坂 "+CODE.sl[L.sl]); }
+  if(L.rt!==7||sc!==99){ if(sc===99) r.unk.push("坂"); else if(sc>p.slope){ if(sc===3&&p.slope===2&&L.d<=5) r.warn.push("短い坂 "+CODE.sl[L.sl]); else r.fail.push("坂 "+CODE.sl[L.sl]); } else if(sc>=3&&sc===p.slope) r.warn.push("坂 "+CODE.sl[L.sl]); }
   if(L.w===99) r.unk.push("幅"); else if(L.w<p.width) r.fail.push("幅 "+CODE.w[L.w]);
   if(L.cd===2) (p.wheel?r.fail:r.warn).push("路面に支障あり");
   if(L.rs===2) r.warn.push("私有地の通り抜け"); if(L.rs===3) r.warn.push("有料の通路");
@@ -631,15 +667,50 @@ function pinOf(p,c){
   if(p.k==="entrance") return "pin-in";
   return "pin-wheel"+(/^(yes|designated)$/.test(p.t["toilets:wheelchair"]||"")?"-wc":indoorOf(p.t)?"-home":"");
 }
+// ---- 対応エリア ----
+// data/areas.json に並ぶエリアのうち、場所を含むものの歩道データを読む。エリアの形はどこでも同じ
+// （nodes・links は歩行空間ネットワークデータ整備仕様のコード、99 は不明）なので、経路の探し方は地域に左右されない
+var AREAS=null, GRAPHS={};
+function inBox(b,ll){ return !!b&&ll[0]>=b[0]&&ll[0]<=b[2]&&ll[1]>=b[1]&&ll[1]<=b[3]; }
+function areaList(){
+  if(!AREAS) AREAS=fetch("data/areas.json").then(function(r){ return r.ok?r.json():[]; }).catch(function(){ return []; }).then(function(a){
+    return a.length?a:[{id:"akabane",name:"赤羽駅周辺",file:"data/akabane.json",bbox:[35.76841,139.70169,35.79114,139.72995],origin:{name:"赤羽駅",ll:AKABANE}}]; });
+  return AREAS;
+}
+// 範囲 bb＝[南,西,北,東] の中心を含むエリアの道のデータ。ないときは null（ほかの地域のデータはここで足す）
+function getGraph(bb){
+  var c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
+  return areaList().then(function(list){
+    var e=list.filter(function(x){ return inBox(x.bbox,c); })[0]; if(!e) return null;
+    if(!GRAPHS[e.id]) GRAPHS[e.id]=fetch(e.file).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(A){ A.name=A.name||e.name; A.bbox=A.bbox||e.bbox; A.origin=e.origin||A.origin||null; return A; })
+      .catch(function(err){ delete GRAPHS[e.id]; throw err; });
+    return GRAPHS[e.id];
+  });
+}
+// 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
+function originOf(){
+  if(me&&inBox(area.bbox,me)) return {ll:me,name:"現在地",me:true};
+  if(area.origin) return {ll:area.origin.ll,name:area.origin.name};
+  var b=area.bbox; return {ll:[(b[0]+b[2])/2,(b[1]+b[3])/2],name:area.name+"の中心"};
+}
 function loadArea(){
-  fetch("data/akabane.json").then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(A){
-    area=A;
+  getGraph([AKABANE[0],AKABANE[1],AKABANE[0],AKABANE[1]]).then(function(A){ if(!A) throw new Error("no area"); setArea(A); })
+    .catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
+}
+function setArea(A){
+    var first=!area; area=A;
     adj={}; A.links.forEach(function(L,i){ (adj[L.a]=adj[L.a]||[]).push([i,L.b]); (adj[L.b]=adj[L.b]||[]).push([i,L.a]); });
     var pf=A.pois.map(function(p,i){ return {type:"Feature",properties:{src:"poi",i:i,k:p.k,c:({toilet:"wc",elevator:"ev",entrance:"in"})[p.k]||catOf(tagStr(p.t)),wc:p.t.wheelchair||"",ind:indoorOf(p.t)?1:0,pin:pinOf(p)},geometry:{type:"Point",coordinates:p.ll}}; });
     (A.places||[]).forEach(function(pl,i){ if(/amenity=parking/.test(pl[1])) pf.push({type:"Feature",properties:{src:"pl",i:i,k:"parking",c:"park",wc:pl[4]||""},geometry:{type:"Point",coordinates:[pl[2],pl[3]]}}); });
+    pinFeats=pf;
+    var s=A.sources[0];
+    $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+'・施設は OpenStreetMap';
+    if(!first){ map.getSource("links").setData({type:"FeatureCollection",features:linkFeatures()}); map.getSource("pois").setData({type:"FeatureCollection",features:pf});
+      if(routeTo) judge(routeTo); else overview(); return; }
     map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:linkFeatures()},attribution:"歩行空間データ：国土交通省"});
     map.addSource("route",{type:"geojson",data:EMPTY});
-    pinFeats=pf;
+    map.addSource("avoid",{type:"geojson",data:EMPTY});
     map.addSource("pois",{type:"geojson",data:{type:"FeatureCollection",features:pf},attribution:"施設 &copy; OpenStreetMap contributors"});
     map.addLayer({id:"links-unknown",type:"line",source:"links",filter:["==",["get","lv"],"unknown"],layout:{"line-cap":"butt",visibility:showNet?"visible":"none"},
       paint:{"line-color":"#94a3b8","line-opacity":0.75,"line-width":["interpolate",["linear"],["zoom"],14,1,18,3.5],"line-dasharray":[2,2]}});
@@ -661,6 +732,15 @@ function loadArea(){
       if(!map.hasImage("route-arrow")) map.addImage("route-arrow",g.getImageData(0,0,16*r,16*r),{pixelRatio:r}); })();
     map.addLayer({id:"route-arrows",type:"symbol",source:"route",layout:{"symbol-placement":"line","symbol-spacing":46,"icon-image":"route-arrow",
       "icon-size":["interpolate",["linear"],["zoom"],14,0.6,18,1.1],"icon-rotation-alignment":"map","icon-allow-overlap":true,"icon-ignore-placement":true}});
+    // 避けた箇所（いちばん近い道にある、条件に合わない段差・階段など）：赤い丸に白い×
+    (function(){ var r=2, n=22*r, c=document.createElement("canvas"); c.width=c.height=n; var g=c.getContext("2d");
+      g.shadowColor="rgba(20,40,30,.3)"; g.shadowBlur=3*r; g.beginPath(); g.arc(n/2,n/2,9*r,0,Math.PI*2); g.fillStyle="#ef4444"; g.fill();
+      g.shadowColor="transparent"; g.lineWidth=2*r; g.strokeStyle="#fff"; g.stroke();
+      g.lineWidth=2.4*r; g.lineCap="round"; g.beginPath(); g.moveTo(7.5*r,7.5*r); g.lineTo(14.5*r,14.5*r); g.moveTo(14.5*r,7.5*r); g.lineTo(7.5*r,14.5*r); g.stroke();
+      if(!map.hasImage("avoid-x")) map.addImage("avoid-x",g.getImageData(0,0,n,n),{pixelRatio:r}); })();
+    map.addLayer({id:"avoid",type:"symbol",source:"avoid",layout:{"icon-image":"avoid-x","icon-size":["interpolate",["linear"],["zoom"],14,0.7,18,1.1],"icon-allow-overlap":true}});
+    map.on("click","avoid",function(e){ var L=area.links[e.features[0].properties.i];
+      showPop(e.lngLat,linkHtml(L).replace("<dl>",'<p class="avn">この箇所を避けた道を案内しています</p><dl>')); });
     addPins();
     // 車椅子OKのお店・駐車場は重なったら間引き、トイレ・エレベーター・入口は必ず出す
     // 大きさは参考画像に合わせる（ズーム16前後で直径およそ30px、車椅子OKは少し大きく）
@@ -675,17 +755,14 @@ function loadArea(){
       layout:{"icon-image":["get","pin"],"icon-anchor":"bottom","icon-size":["interpolate",["linear"],["zoom"],14.5,0.74,16,0.98,18,1.15],"icon-padding":3,"symbol-sort-key":1}});
     applyFilter(filt);
     ["links","links-unknown","route","route-unknown"].forEach(function(id){
-      map.on("click",id,function(e){ showPop(e.lngLat,linkHtml(A.links[e.features[0].properties.i])); });
+      map.on("click",id,function(e){ showPop(e.lngLat,linkHtml(area.links[e.features[0].properties.i])); });
       map.on("mouseenter",id,function(){ map.getCanvas().style.cursor="pointer"; }); map.on("mouseleave",id,function(){ map.getCanvas().style.cursor=""; });
     });
     Object.keys(PINF).forEach(function(id){
       map.on("click",id,function(e){ pick(pinCand(e.features[0].properties)); });
       map.on("mouseenter",id,function(){ map.getCanvas().style.cursor="pointer"; }); map.on("mouseleave",id,function(){ map.getCanvas().style.cursor=""; }); });
     $("legend").hidden=false;
-    var s=A.sources[0];
-    $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+'・施設は OpenStreetMap';
     if(routeTo) judge(routeTo); else overview();
-  }).catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
 }
 var EMPTY={type:"FeatureCollection",features:[]};
 // 上のチップで地図に出すピンを絞る
@@ -734,23 +811,25 @@ function refreshColors(){ if(area&&map.getSource("links")) map.getSource("links"
 
 // ---- 経路の判定 ----
 // 条件に合わない区間は通らない。注意・未調査の区間は遠回りしてでも避けるよう重みを付ける
+// mode 0：条件どおり、1：合わない区間も（大きな重みで）通る、2：条件を気にしないいちばん近い道（避けた箇所を数えるため）
 function nearestNode(ll){
   var best=null, bd=1e9;
   Object.keys(area.nodes).forEach(function(id){ var n=area.nodes[id]; if(!adj[id]) return; var d=km(ll,[n[1],n[0]]); if(d<bd){ bd=d; best=id; } });
   return {id:best,m:bd*1000};
 }
-function dijkstra(from,to,allowFail){
+function dijkstra(from,to,mode){
   var dist={}, prev={}, done={}, heap=[[0,from]]; dist[from]=0;
   function push(x){ heap.push(x); var i=heap.length-1; while(i>0){ var j=(i-1)>>1; if(heap[j][0]<=heap[i][0]) break; var t=heap[i]; heap[i]=heap[j]; heap[j]=t; i=j; } }
   function pop(){ var top=heap[0], last=heap.pop(); if(heap.length){ heap[0]=last; var i=0; for(;;){ var l=2*i+1,r=l+1,m=i;
     if(l<heap.length&&heap[l][0]<heap[m][0]) m=l; if(r<heap.length&&heap[r][0]<heap[m][0]) m=r; if(m===i) break; var t=heap[i]; heap[i]=heap[m]; heap[m]=t; i=m; } } return top; }
-  var ev=area.links.map(evalLink);
+  var ev=mode===2?null:area.links.map(evalLink);
   while(heap.length){
     var cur=pop(), u=cur[1]; if(done[u]) continue; done[u]=1; if(u===to) break;
     (adj[u]||[]).forEach(function(e){
-      var L=area.links[e[0]], r=ev[e[0]], d=L.d||1, c;
+      var L=area.links[e[0]], r=ev&&ev[e[0]], d=L.d||1, c;
       if(L.dir===2&&L.a!==u||L.dir===3&&L.b!==u) return;   // 一方通行の通路
-      if(r.fail.length){ if(!allowFail) return; c=d*3+60; }
+      if(!r) c=d;
+      else if(r.fail.length){ if(!mode) return; c=d*3+60; }
       else c=d*(1+0.6*r.warn.length)+(r.unk.length?d*0.8+15:0);
       var nd=cur[0]+c; if(dist[e[1]]===undefined||nd<dist[e[1]]){ dist[e[1]]=nd; prev[e[1]]=[u,e[0]]; push([nd,e[1]]); }
     });
@@ -758,6 +837,48 @@ function dijkstra(from,to,allowFail){
   if(dist[to]===undefined) return null;
   var path=[], n=to; while(n!==from){ path.unshift(prev[n][1]); n=prev[n][0]; }
   return path;
+}
+// 出発地 o から目的地 c までの道を、いまの条件で探す。見つからないときは {why}
+// line・cum は道の形と出発地からの距離（案内中に現在地を道に重ねるため）、marks は道の上で気をつける箇所
+function planRoute(c,o){
+  var A=nearestNode(o.ll), B=nearestNode(c.ll);
+  if(B.m>150) return {why:"目的地の近く（150m以内）に調査済みの歩道データがありません"};
+  var path=dijkstra(A.id,B.id,0), strict=!!path;
+  if(!path) path=dijkstra(A.id,B.id,1);
+  if(!path) return {why:"出発地からつながる歩道データが見つかりませんでした"};
+  var R={path:path,strict:strict,o:o.ll,oName:o.name,isMe:!!o.me,A:A,B:B,feats:[],issues:[],marks:[],line:[],cum:[],unkLen:0,oldest:"9999"};
+  function pt(p){ var n=R.line.length;
+    if(n){ var q=R.line[n-1], d=km([q[1],q[0]],[p[1],p[0]])*1000; if(d<0.05) return; R.cum.push(R.cum[n-1]+d); } else R.cum.push(0);
+    R.line.push(p); }
+  // 坂の向き：データは「終点側が高い／低い」なので、進む向きに合わせて上り・下りに言い換える
+  function dirText(t,fwd){ return t.replace(/（終点側が(高い|低い)）/g,function(_,hl){ return (hl==="高い")===fwd?"（上り）":"（下り）"; }); }
+  var cur=A.id, on={}, routeD=0;
+  pt([o.ll[1],o.ll[0]]);
+  path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L), fwd=String(L.a)===String(cur), cs=fwd?L.c:L.c.slice().reverse();
+    cur=fwd?L.b:L.a; on[i]=1; routeD+=L.d;
+    var at=R.cum[R.cum.length-1]; cs.forEach(pt); var end=R.cum[R.cum.length-1];
+    if(r.unk.length) R.unkLen+=L.d; if(L.md&&L.md<R.oldest) R.oldest=L.md;
+    if(r.fail.length) R.issues.push(["bad","合わない",dirText(r.fail.join("、"),fwd),L]); else if(r.warn.length) R.issues.push(["warn","注意",dirText(r.warn.join("、"),fwd),L]);
+    var kind=r.fail.length?"bad":r.warn.length?"warn":r.unk.length?"unk":"";
+    if(kind){ var text=kind==="unk"?"未調査の区間（"+r.unk.join("・")+"）":dirText((r.fail.length?r.fail:r.warn).join("、"),fwd), last=R.marks[R.marks.length-1];
+      if(last&&last.kind===kind&&last.text===text&&last.end>=at-1) last.end=end; else R.marks.push({at:at,end:end,kind:kind,text:text,i:i}); }
+    R.feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:cs}}); });
+  pt([c.ll[1],c.ll[0]]);
+  R.len=R.cum[R.cum.length-1];
+  // 条件を気にしないいちばん近い道と比べて、避けた箇所（続く区間はまとめて1か所）と遠回りの長さを出す
+  var plain=dijkstra(A.id,B.id,2), plainD=0, run=false; R.avoid=[];
+  if(plain&&strict) plain.forEach(function(i){ var L=area.links[i]; plainD+=L.d; var bad=!on[i]&&evalLink(L).fail.length>0; if(bad&&!run) R.avoid.push(i); run=bad; });
+  R.detour=plain?Math.max(0,routeD-plainD):0;
+  return R;
+}
+// 経路全体の判定（◎○△×？）と、地図に収める範囲・所要時間
+function routeStatus(R,destOk){
+  R.unkRatio=R.len?R.unkLen/R.len:1;
+  var fresh=R.oldest!=="9999"&&(Date.now()-new Date(R.oldest))<365*864e5;
+  R.status=!R.strict?2:R.unkRatio>0.5?1:R.unkRatio>0?3:fresh&&destOk?5:4;
+  R.b=new maplibregl.LngLatBounds(); R.line.forEach(function(x){ R.b.extend(x); });
+  R.mins=Math.max(1,Math.round(R.len/1000/P().kmh*60));
+  return R;
 }
 var STATUS={5:["◎","確認済み","必要な情報がそろっていて、直近の調査で条件に合っています"],4:["○","条件内","調査済みの情報では、あなたの条件で通れます"],
   3:["△","要確認","未調査の区間があります。現地や施設への確認をおすすめします"],2:["×","条件不一致","あなたの条件に合わない箇所を避けられませんでした"],1:["？","判定不能","判断に必要な情報が足りません"]};
@@ -782,12 +903,12 @@ function destInfo(ll,poi){
     if(p.k==="toilet"&&(p.t.wheelchair==="yes"||p.t.wheelchair==="designated")&&d<wd){ wc=p; wd=d; } });
   return {place:place,wc:wc,wcm:wd};
 }
-// 経路の出発地点：現在地なら青い点に「現在地」の札、範囲外なら赤羽駅に「出発」の目印
+// 経路の出発地点：現在地なら青い点に「現在地」の札、範囲外ならエリアの代表地点（駅など）に「出発」の目印
 var startMarker=null;
-function showStart(ll,isMe){
+function showStart(ll,isMe,name){
   if(!startMarker){ var el=document.createElement("div"); el.className="start"; el.innerHTML='<span class="lbl"></span><i class="dot" aria-hidden="true"></i>';
     startMarker=new maplibregl.Marker({element:el,anchor:"bottom"}); }
-  var el=startMarker.getElement(); el.classList.toggle("is-me",isMe); el.querySelector(".lbl").textContent=isMe?"現在地":"出発：赤羽駅";
+  var el=startMarker.getElement(); el.classList.toggle("is-me",isMe); el.querySelector(".lbl").textContent=isMe?"現在地":"出発："+name.replace(/（.*$/,"");
   startMarker.setLngLat([ll[1],ll[0]]).addTo(map);
 }
 function hideStart(){ if(startMarker) startMarker.remove(); }
@@ -817,46 +938,25 @@ function placeItems(c,t,d){
   return {wheel:st3(t.wheelchair,"入れる","一部","難しい"),wc:wc,park:pk,ev:ev,ind:ind,baby:st3(t.stroller,"OK","一部","難しい"),evd:evd};
 }
 function judge(c){
-  routeTo=c; hideStart(); if(!area) return;
-  var inArea=c.ll[0]>=area.bbox[0]&&c.ll[0]<=area.bbox[2]&&c.ll[1]>=area.bbox[1]&&c.ll[1]<=area.bbox[3];
+  if(nav) endRoute(); routeTo=c; hideStart(); if(!area) return;
+  var inArea=inBox(area.bbox,c.ll);
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
   $("closeCard").hidden=$("fav").hidden=false; showFav(c);
   var d=destInfo(c.ll,c.poi), t=(c.poi||d.place||{t:{}}).t, it=placeItems(c,t,d);
   // ジャンル・距離・住所
   var isAddr=c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr), genre=isAddr?"":(c.addr||"");
-  var dist=km(me||AKABANE,c.ll)*1000;
-  $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span><b aria-label="'+(me?"現在地":"赤羽駅")+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":"駅から ")+fmtLen(dist)+'</b>';
+  var from=me?{ll:me,name:"現在地"}:area.origin||{ll:AKABANE,name:"赤羽駅"}, dist=km(from.ll,c.ll)*1000;
+  $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span><b aria-label="'+esc(from.name)+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":/駅$/.test(from.name)?"駅から ":"")+fmtLen(dist)+'</b>';
   var ad=$("sheetAddr"); ad.hidden=true; ad.textContent="";
   addrOf(c,t,function(a){ if(routeTo===c){ ad.textContent=a; ad.hidden=false; } });
-  // 経路（段差・坂）の判定
+  // 経路（段差・坂）の判定。目的地が別のエリアなら、そのエリアのデータを読んでから判定し直す
   var R=null, why="";
-  if(!inArea) why="段差・道幅・坂の情報は、いまは赤羽駅周辺だけです";
-  else {
-    var useMe=me&&me[0]>=area.bbox[0]&&me[0]<=area.bbox[2]&&me[1]>=area.bbox[1]&&me[1]<=area.bbox[3];
-    var o=useMe?me:AKABANE, oName=useMe?"現在地":"赤羽駅（現在地が範囲外のため）";
-    var A=nearestNode(o), B=nearestNode(c.ll);
-    if(B.m>150) why="目的地の近く（150m以内）に調査済みの歩道データがありません";
-    else {
-      var path=dijkstra(A.id,B.id,false), strict=!!path;
-      if(!path) path=dijkstra(A.id,B.id,true);
-      if(!path) why="出発地からつながる歩道データが見つかりませんでした";
-      else R={path:path,strict:strict,o:o,oName:oName,A:A,B:B};
-    }
-  }
-  var status=1, issues=[], feats=[], len=0, unkLen=0, oldest="9999", unkRatio=1, b=null, mins=0;
-  if(R){
-    len=R.A.m+R.B.m;
-    var cur=R.A.id;  // 矢印を進む向きに出すため、区間ごとに座標を出発→目的地の順にそろえる
-    R.path.forEach(function(i){ var L=area.links[i], r=evalLink(L), lv=linkLevel(L), fwd=String(L.a)===String(cur); cur=fwd?L.b:L.a; len+=L.d; if(r.unk.length) unkLen+=L.d;
-      if(L.md&&L.md<oldest) oldest=L.md;
-      if(r.fail.length) issues.push(["bad","合わない",r.fail.join("、"),L]); else if(r.warn.length) issues.push(["warn","注意",r.warn.join("、"),L]);
-      feats.push({type:"Feature",properties:{i:i,lv:lv},geometry:{type:"LineString",coordinates:fwd?L.c:L.c.slice().reverse()}}); });
-    unkRatio=len?unkLen/len:1;
-    var fresh=oldest!=="9999"&&(Date.now()-new Date(oldest))<365*864e5, destOk=it.wheel[2]==="ok";
-    if(!R.strict) status=2; else if(unkRatio>0.5) status=1; else if(unkRatio>0) status=3; else if(fresh&&destOk) status=5; else status=4;
-    b=new maplibregl.LngLatBounds(); feats.forEach(function(f){ f.geometry.coordinates.forEach(function(x){ b.extend(x); }); }); b.extend([c.ll[1],c.ll[0]]);
-    mins=Math.max(1,Math.round(len/1000/P().kmh*60));
-  }
+  if(!inArea){
+    why="この場所の段差・道幅・坂の情報は、まだありません";
+    getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){ if(g&&g!==area&&routeTo===c) setArea(g); }).catch(function(){});
+  } else { var pr=planRoute(c,originOf()); if(pr.why) why=pr.why; else R=routeStatus(pr,it.wheel[2]==="ok"); }
+  var status=1, issues=[], len=0, unkLen=0, oldest="9999", unkRatio=1, mins=0;
+  if(R){ status=R.status; issues=R.issues; len=R.len; unkLen=R.unkLen; oldest=R.oldest; unkRatio=R.unkRatio; mins=R.mins; }
   // あなたの条件：判定できるものだけを分母にし、情報がないものは件数を添える
   function yn(x){ return x[2]==="unk"?null:x[2]==="ok"; }
   var conds=[["入口に入れる",yn(it.wheel)],["道の段差・坂",R?(status===2?false:status===1?null:true):null],["近くに多目的トイレ",yn(it.wc)],["エレベーター",it.ev[2]==="unk"?null:yn(it.ev)]];
@@ -880,8 +980,7 @@ function judge(c){
   // 詳しく見る：経路の判定と、気をつける箇所・道順・出典
   var h=R?vcard(status):vcard(1,why);
   if(!R){ out.innerHTML='<div id="detail">'+h+'</div>'; focus(c.ll); return; }
-  $("btnGo").onclick=function(){ map.getSource("route").setData({type:"FeatureCollection",features:feats}); dim(true); showStart(R.o,R.oName.indexOf("現在地")===0);
-    setSheet("min"); setTimeout(function(){ fitRoute(b); },320); };
+  $("btnGo").onclick=function(){ startRoute(R,c,it.wheel[2]==="ok",d); };
   h+='<ul class="facts">';
   h+=fact("start","出発："+esc(R.oName),fmtLen(len)+"・約"+mins+"分（"+esc(P().label.replace(/（.*$/,""))+"）");
   h+=fact("dest","目的地の車椅子対応："+(t.wheelchair?esc(WC[t.wheelchair]||t.wheelchair):"未確認"),t.wheelchair?"OpenStreetMap の登録情報":"入口の段差は施設に確認してください");
@@ -911,6 +1010,107 @@ function judge(c){
   focus(c.ll);
   out.querySelectorAll("[data-k]").forEach(function(btn){ btn.onclick=function(){ var L=issues[+btn.dataset.k][3], m=L.c[Math.floor(L.c.length/2)]; map.flyTo({center:m,zoom:18}); showPop(m,linkHtml(L)); }; });
   var ub=out.querySelector("[data-unk]"); if(ub) ub.onclick=function(){ var i=path.filter(function(i){ return evalLink(area.links[i]).unk.length; })[0], L=area.links[i]; map.flyTo({center:L.c[0],zoom:18}); showPop(L.c[0],linkHtml(L)); };
+}
+
+// ---- ここへ行く：道の要約 → 案内 ----
+// 要約：判定・時間・避けた箇所。案内：現在地を道に重ね、次に気をつける箇所と残りの距離を出し、近づいたら振動と読み上げで知らせる
+var nav=null;
+function drawRoute(R){
+  map.getSource("route").setData({type:"FeatureCollection",features:R.feats});
+  map.getSource("avoid").setData({type:"FeatureCollection",features:R.avoid.map(function(i){ var L=area.links[i]; return {type:"Feature",properties:{i:i},geometry:{type:"Point",coordinates:L.c[Math.floor(L.c.length/2)]}}; })});
+  dim(true); showStart(R.o,R.isMe,R.oName);
+}
+function startRoute(R,c,destOk,d){
+  nav={R:R,c:c,destOk:destOk,d:d,on:false,follow:true,off:0,said:-1,s:null};
+  drawRoute(R); $("sheet").classList.add("routing"); $("sheetTitle").textContent=c.name+"まで"; renderNav();
+  setSheet("min"); setTimeout(function(){ fitRoute(R.b); },320);
+}
+function stopWatch(){ if(!nav) return; if(nav.watch!=null) navigator.geolocation.clearWatch(nav.watch); nav.watch=null;
+  if(nav.lock){ nav.lock.then(function(l){ if(l) l.release(); }); nav.lock=null; } }
+function endRoute(){
+  stopWatch(); var c=nav&&nav.c; nav=null;
+  $("sheet").classList.remove("routing"); $("nav").hidden=true; $("nav").innerHTML=""; say(""); $("navSay").textContent="";
+  map.getSource("route").setData(EMPTY); map.getSource("avoid").setData(EMPTY); dim(false); hideStart();
+  if(c) $("sheetTitle").textContent=c.name;
+}
+function vib(){ try{ if(navigator.vibrate) navigator.vibrate([160,90,160]); }catch(e){} }
+function announce(t){ $("navSay").textContent=""; setTimeout(function(){ $("navSay").textContent=t; },50); }
+// 避けた箇所の言い方：「階段・段差など3か所を避けた道です」
+function avoidText(R){
+  var kinds=[]; R.avoid.forEach(function(i){ var k=evalLink(area.links[i]).fail[0].split(" ")[0]; if(kinds.indexOf(k)<0) kinds.push(k); });
+  return kinds.slice(0,2).join("・")+(kinds.length>2?"など":"")+" "+R.avoid.length+"か所を避けた道です"+(R.detour>=10?"（遠回り +"+fmtLen(R.detour)+"）":"");
+}
+// 現在地を道の上に重ねる：いちばん近い線分への距離と、出発地からの道のりの位置
+function snap(R,ll){
+  var kx=Math.cos(ll[0]*Math.PI/180)*111320, ky=111320, best={dist:1e9,along:0};
+  for(var i=0;i<R.line.length-1;i++){ var a=R.line[i], b=R.line[i+1];
+    var ax=(a[0]-ll[1])*kx, ay=(a[1]-ll[0])*ky, dx=(b[0]-a[0])*kx, dy=(b[1]-a[1])*ky, L2=dx*dx+dy*dy;
+    var t=L2?Math.max(0,Math.min(1,-(ax*dx+ay*dy)/L2)):0, px=ax+t*dx, py=ay+t*dy, dd=Math.sqrt(px*px+py*py);
+    if(dd<best.dist) best={dist:dd,along:R.cum[i]+t*(R.cum[i+1]-R.cum[i])}; }
+  return best;
+}
+function nextMark(R,along){ for(var k=0;k<R.marks.length;k++) if(R.marks[k].end>along+3) return k; return -1; }
+var MK={bad:"×",warn:"!",unk:"?",ok:"✓"};
+function navCard(kind,small,big){ return '<div class="nnext k-'+kind+'"><span class="ic" aria-hidden="true">'+MK[kind]+'</span><div><small>'+esc(small)+'</small><b>'+esc(big)+'</b></div></div>'; }
+function renderNav(){
+  var R=nav.R, h="", el=$("nav"); el.hidden=false;
+  if(!nav.on){
+    var t=STATUS[R.status], n={bad:0,warn:0,unk:0};
+    R.marks.forEach(function(m){ n[m.kind]++; });
+    h+='<div class="rsum"><span class="pill v'+R.status+'"><i aria-hidden="true">'+t[0]+'</i>'+t[1]+'</span><b class="num">約'+R.mins+'分</b><span class="len num">'+fmtLen(R.len)+'</span></div>';
+    var why=!R.strict?"あなたの条件に合わない箇所を通ります。ほかに道が見つかりませんでした":R.avoid.length?avoidText(R):n.unk?"未調査の区間は、近くまで行って様子を確かめてください":"いちばん近い道で、あなたの条件に合っています";
+    h+='<p class="rwhy">'+(R.avoid.length&&R.strict?'<span class="ax" aria-hidden="true">×</span>':'')+esc(why)+'</p>';
+    var chips=[["bad","合わない"],["warn","注意"],["unk","未調査"]].filter(function(k){ return n[k[0]]; });
+    if(chips.length) h+='<div class="rchips">'+chips.map(function(k){ return '<button type="button" class="k-'+k[0]+'" data-mk="'+k[0]+'">'+k[1]+' '+n[k[0]]+'か所</button>'; }).join("")+'</div>';
+    if(!R.isMe) h+='<p class="rnote">'+esc(R.oName.replace(/（.*$/,""))+'から出発する道です。現地で「案内をはじめる」と現在地から引き直します</p>';
+    h+='<div class="racts"><button type="button" class="ol" id="navEnd">戻る</button><button type="button" class="fill" id="navGo">'+svg("nav")+'案内をはじめる</button></div>';
+  } else {
+    var s=nav.s;
+    if(nav.err) h+=navCard("unk","現在地",nav.err);
+    else if(!s) h+=navCard("unk","現在地","探しています…");
+    else if(nav.arrived){ var wc=nav.d&&nav.d.wc&&nav.d.wcm<=300?"近くの車椅子トイレ "+fmtLen(nav.d.wcm):"おつかれさまでした"; h+=navCard("ok",wc,"到着しました"); }
+    else { var k=nextMark(R,s.along);
+      if(k<0) h+=navCard("ok","この先","気をつける箇所はありません");
+      else { var m=R.marks[k], dd=m.at-s.along; h+=navCard(m.kind,dd<=8?"いま":fmtLen(dd)+"先",m.text); } }
+    if(s&&!nav.arrived){ var rem=Math.max(0,R.len-s.along);
+      h+='<p class="rest">のこり <b class="num">'+fmtLen(rem)+'</b>・約'+Math.max(1,Math.round(rem/1000/P().kmh*60))+'分'+(s.dist>40?'<span>道から '+fmtLen(s.dist)+' 離れています</span>':'')+'</p>'; }
+    h+='<div class="racts">'+(nav.follow||!s?'':'<button type="button" class="ol" id="navMe">'+svg("loc")+'現在地に戻る</button>')+'<button type="button" class="ol" id="navEnd">案内を終わる</button></div>';
+  }
+  el.innerHTML=h;
+  $("navEnd").onclick=function(){ endRoute(); setSheet("mid"); if(routeTo) focus(routeTo.ll); };
+  if($("navGo")) $("navGo").onclick=navBegin;
+  if($("navMe")) $("navMe").onclick=function(){ nav.follow=true; follow(); renderNav(); };
+  el.querySelectorAll("[data-mk]").forEach(function(b){ b.onclick=function(){ var m=R.marks.filter(function(x){ return x.kind===b.dataset.mk; })[0], L=area.links[m.i], p=L.c[Math.floor(L.c.length/2)];
+    map.flyTo({center:p,zoom:18}); showPop(p,linkHtml(L)); }; });
+}
+// 案内中の地図：現在地を、下の案内カードより少し上に置いて追いかける
+function follow(){ if(!nav||!nav.follow||!me) return;
+  var H=window.innerHeight, top=document.querySelector(".chips").getBoundingClientRect().bottom, bottom=window.innerWidth>=900?0:$("sheet").offsetHeight;
+  map.easeTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),17.6),offset:[window.innerWidth>=900?200:0,(top+H-bottom)/2-H/2+40],duration:700}); }
+function navBegin(){
+  if(!navigator.geolocation){ nav.on=true; nav.err="この端末では現在地を使えません"; renderNav(); return; }
+  nav.on=true; nav.follow=true; nav.s=null; nav.err=""; hideStart(); renderNav();
+  try{ if(navigator.wakeLock) nav.lock=navigator.wakeLock.request("screen").catch(function(){ return null; }); }catch(e){}
+  nav.watch=navigator.geolocation.watchPosition(onFix,function(e){ if(!nav) return; nav.err=e.code===1?"位置情報の利用を許可してください":"現在地が取れません。空の見える所で少し待ってください"; renderNav(); },
+    {enableHighAccuracy:true,maximumAge:3000,timeout:20000});
+}
+function onFix(p){
+  if(!nav||!nav.on) return;
+  me=[p.coords.latitude,p.coords.longitude]; var acc=p.coords.accuracy||30; placeMe(acc); nav.err="";
+  var s=snap(nav.R,me);
+  // 道を外れたら（3回続けて誤差より遠い）、エリアの中なら現在地から引き直す。出発地が現在地でないときは最初の位置で引き直す
+  var away=s.dist>Math.max(35,acc), pre="";
+  if(away) nav.off++; else nav.off=0;
+  if((nav.off>=3||(!nav.R.isMe&&!nav.s&&away))&&inBox(area.bbox,me)){
+    var R2=planRoute(nav.c,{ll:me,name:"現在地",me:true});
+    if(!R2.why){ nav.R=routeStatus(R2,nav.destOk); drawRoute(nav.R); nav.off=0; nav.said=-1; s=snap(nav.R,me); if(nav.s) pre="道を外れたので、引き直しました。"; }
+  }
+  nav.s=s; var R=nav.R;
+  if(R.len-s.along<15||km(me,nav.c.ll)*1000<15){ nav.arrived=true; announce(nav.c.name+"に着きました"); vib(); stopWatch(); }
+  else { var k=nextMark(R,s.along); if(k>=0&&k!==nav.said&&!away&&R.marks[k].at-s.along<=30){ nav.said=k; var m=R.marks[k];
+    announce(pre+(m.at-s.along<=8?"この先":Math.round((m.at-s.along)/5)*5+"メートル先")+"、"+m.text);
+    if(m.kind==="bad"||m.kind==="warn"&&!/^短い坂/.test(m.text)) vib(); } else if(pre) announce(pre); }
+  follow(); renderNav();
 }
 
 // ---- 誤り報告 ----
@@ -971,9 +1171,9 @@ function sheetPx(st){ var H=window.innerHeight, mid=Math.max(300,Math.round(H*0.
   return st==="full"?Math.max(mid,Math.min(Math.round(H*0.88),$("sheet").scrollHeight)):mid; }
 function setSheet(st){ var s=$("sheet"); sheetSt=st; s.classList.toggle("min",st==="min"); s.classList.toggle("full",st==="full");
   s.style.height=st==="min"||window.innerWidth>=900?"":sheetPx(st)+"px"; $("grab").setAttribute("aria-expanded",String(st==="full")); if(st!=="full") s.scrollTop=0; }
-$("grab").onclick=function(){ if(dragMoved){ dragMoved=false; return; } setSheet(sheetSt==="mid"?"full":"mid"); };
+$("grab").onclick=function(){ if(nav) return; if(dragMoved){ dragMoved=false; return; } setSheet(sheetSt==="mid"?"full":"mid"); };
 (function(){ var s=$("sheet"), y0=0, h0=0, on=false;
-  function down(e){ if(window.innerWidth>=900||e.target.closest("button:not(#grab)")) return; on=true; dragMoved=false; y0=e.clientY; h0=s.offsetHeight; s.classList.add("drag"); try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
+  function down(e){ if(nav||window.innerWidth>=900||e.target.closest("button:not(#grab)")) return; on=true; dragMoved=false; y0=e.clientY; h0=s.offsetHeight; s.classList.add("drag"); try{ e.currentTarget.setPointerCapture(e.pointerId); }catch(_){} }
   function move(e){ if(!on) return; var dy=e.clientY-y0; if(Math.abs(dy)>6) dragMoved=true; if(!dragMoved) return;
     s.classList.remove("min"); s.style.height=Math.max(120,Math.min(window.innerHeight*0.92,h0-dy))+"px"; }
   function up(){ if(!on) return; on=false; s.classList.remove("drag"); if(!dragMoved) return;
@@ -987,7 +1187,7 @@ function layout(){ var wide=window.innerWidth>=900;
 if(window.ResizeObserver) new ResizeObserver(layout).observe(document.querySelector(".sheet"));
 window.addEventListener("resize",layout); layout();
 // カードを閉じてエリアの概要に戻る
-$("closeCard").onclick=function(){ routeTo=null; if(destMarker) destMarker.remove(); hideStart(); map.getSource("route").setData(EMPTY); overview(); };
+$("closeCard").onclick=function(){ if(nav) endRoute(); routeTo=null; if(destMarker) destMarker.remove(); hideStart(); map.getSource("route").setData(EMPTY); overview(); };
 // 「レイヤー」：歩道の色・あなたの条件・エリアの情報・出典をまとめたパネル
 function showLayers(on){ $("layerPanel").hidden=!on; $("btnLayers").setAttribute("aria-expanded",String(on)); }
 $("btnLayers").onclick=function(e){ e.stopPropagation(); showLayers($("layerPanel").hidden); };
@@ -1024,7 +1224,9 @@ function locate(){
     map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7)});
   }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
-$("btnLocate").onclick=locate;
+$("btnLocate").onclick=function(){ if(nav&&nav.on){ nav.follow=true; follow(); renderNav(); } else locate(); };
+// 案内中に地図を指で動かしたら、追いかけるのをやめる（「現在地に戻る」で再開）
+map.on("dragstart",function(){ if(nav&&nav.on&&nav.follow){ nav.follow=false; renderNav(); } });
 function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.7,pitch:48}); }
 
 // ---- 場所の検索 ----

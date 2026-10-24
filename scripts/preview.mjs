@@ -1,4 +1,4 @@
-// スマホ幅（390×844）で、はじめの画面・車いすで絞り込み・レイヤー・お店カードを撮る
+// スマホ幅（390×844）で、はじめの画面・車いすで絞り込み・レイヤー・お店カード・経路・案内中を撮る
 import { chromium } from "playwright";
 import { mkdirSync } from "fs";
 mkdirSync("preview", { recursive: true });
@@ -25,4 +25,6 @@ await p.screenshot({ path: "preview/5_full.png" });
 await p.click("#grab"); await p.waitForTimeout(800);
 if (await p.$("#btnGo")) { await p.click("#btnGo"); await p.waitForTimeout(4000); }
 await p.screenshot({ path: "preview/7_go.png" });
+if (await p.$("#navGo")) { await p.click("#navGo"); await p.waitForTimeout(3500); }
+await p.screenshot({ path: "preview/8_nav.png" });
 await b.close();

@@ -8,6 +8,7 @@
 ## 構成
 
 - `index.html`：画面と処理のすべて（MapLibre GL JS ＋ OpenFreeMap。予備に国土地理院ベクトルタイル）
+- `data/areas.json`：対応エリアの一覧（範囲・データのファイル・現在地が範囲外のときの出発地）。経路はここに載ったどのエリアでも同じ仕組みで動く
 - `data/akabane.json`：赤羽駅周辺の歩道（段差・幅・坂など）と施設のデータ。`scripts/build_area.py` が GitHub Actions で毎週作り直す
 - `manifest.webmanifest`・`sw.js`・`icons/`：ホーム画面への追加とオフライン起動
 
