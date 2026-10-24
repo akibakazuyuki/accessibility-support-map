@@ -1,0 +1,310 @@
+[
+ {
+  "id": "akabane",
+  "name": "赤羽駅周辺",
+  "file": "data/akabane.json",
+  "bbox": [
+   35.76841,
+   139.70169,
+   35.79114,
+   139.72995
+  ]
+ },
+ {
+  "id": "nwd-aizuwakamatsu",
+  "name": "会津若松市",
+  "file": "data/areas/nwd-aizuwakamatsu.json",
+  "bbox": [
+   37.48106,
+   139.91146,
+   37.51422,
+   139.9393
+  ]
+ },
+ {
+  "id": "nwd-ariake-tennis",
+  "name": "東京都江東区・有明テニスの森公園周辺",
+  "file": "data/areas/nwd-ariake-tennis.json",
+  "bbox": [
+   35.63199,
+   139.78482,
+   35.65785,
+   139.80697
+  ]
+ },
+ {
+  "id": "nwd-chiyoda-chuo",
+  "name": "皇居外苑、日本武道館を含む千代田区、中央区周辺",
+  "file": "data/areas/nwd-chiyoda-chuo.json",
+  "bbox": [
+   35.6718,
+   139.74065,
+   35.69917,
+   139.77782
+  ]
+ },
+ {
+  "id": "nwd-daimon-station",
+  "name": "港区大門駅周辺",
+  "file": "data/areas/nwd-daimon-station.json",
+  "bbox": [
+   35.64763,
+   139.7419,
+   35.66687,
+   139.76568
+  ]
+ },
+ {
+  "id": "nwd-fuchu",
+  "name": "東京都府中市",
+  "file": "data/areas/nwd-fuchu.json",
+  "bbox": [
+   35.66293,
+   139.46955,
+   35.68143,
+   139.48868
+  ]
+ },
+ {
+  "id": "nwd-himeji",
+  "name": "姫路市",
+  "file": "data/areas/nwd-himeji.json",
+  "bbox": [
+   34.81119,
+   134.6781,
+   34.84052,
+   134.70368
+  ]
+ },
+ {
+  "id": "nwd-ikebukuro",
+  "name": "池袋駅周辺",
+  "file": "data/areas/nwd-ikebukuro.json",
+  "bbox": [
+   35.72114,
+   139.69234,
+   35.73673,
+   139.72592
+  ]
+ },
+ {
+  "id": "nwd-kawasaki-station",
+  "name": "神奈川県川崎市川崎駅周辺地区",
+  "file": "data/areas/nwd-kawasaki-station.json",
+  "bbox": [
+   35.52056,
+   139.68897,
+   35.53908,
+   139.71287
+  ]
+ },
+ {
+  "id": "nwd-kokusai-tenjijo-station",
+  "name": "東京都江東区・国際展示場周辺",
+  "file": "data/areas/nwd-kokusai-tenjijo-station.json",
+  "bbox": [
+   35.62577,
+   139.78124,
+   35.64105,
+   139.79877
+  ]
+ },
+ {
+  "id": "nwd-mizonokuchi-station",
+  "name": "神奈川県川崎市溝口駅周辺地区",
+  "file": "data/areas/nwd-mizonokuchi-station.json",
+  "bbox": [
+   35.58968,
+   139.60263,
+   35.60773,
+   139.62223
+  ]
+ },
+ {
+  "id": "nwd-musashikosugi-station",
+  "name": "神奈川県川崎市武蔵小杉駅周辺地区",
+  "file": "data/areas/nwd-musashikosugi-station.json",
+  "bbox": [
+   35.57005,
+   139.64934,
+   35.58568,
+   139.67023
+  ]
+ },
+ {
+  "id": "nwd-national-stadium",
+  "name": "東京都新宿区・新国立競技場周辺",
+  "file": "data/areas/nwd-national-stadium.json",
+  "bbox": [
+   35.6673,
+   139.70986,
+   35.68289,
+   139.72419
+  ]
+ },
+ {
+  "id": "nwd-odaiba-kaihin-koen-station",
+  "name": "東京都港区・お台場海浜公園周辺",
+  "file": "data/areas/nwd-odaiba-kaihin-koen-station.json",
+  "bbox": [
+   35.62104,
+   139.766,
+   35.63836,
+   139.78284
+  ]
+ },
+ {
+  "id": "nwd-sabae",
+  "name": "福井県鯖江市",
+  "file": "data/areas/nwd-sabae.json",
+  "bbox": [
+   35.93994,
+   136.17255,
+   35.9822,
+   136.19291
+  ]
+ },
+ {
+  "id": "nwd-sendagaya-station",
+  "name": "渋谷区千駄ヶ谷駅周辺",
+  "file": "data/areas/nwd-sendagaya-station.json",
+  "bbox": [
+   35.6565,
+   139.69796,
+   35.69298,
+   139.72856
+  ]
+ },
+ {
+  "id": "nwd-shibuya-sendagaya-shinjuku",
+  "name": "東京都渋谷区・渋谷駅、千駄ヶ谷駅周辺／東京都新宿区・新宿駅周辺",
+  "file": "data/areas/nwd-shibuya-sendagaya-shinjuku.json",
+  "bbox": [
+   35.65074,
+   139.68388,
+   35.70262,
+   139.72856
+  ]
+ },
+ {
+  "id": "nwd-shibuya-south",
+  "name": "渋谷区南部",
+  "file": "data/areas/nwd-shibuya-south.json",
+  "bbox": [
+   35.65074,
+   139.68618,
+   35.67468,
+   139.70983
+  ]
+ },
+ {
+  "id": "nwd-shin-kawasaki-kashimada-station",
+  "name": "神奈川県川崎市新川崎・鹿島田駅周辺地区",
+  "file": "data/areas/nwd-shin-kawasaki-kashimada-station.json",
+  "bbox": [
+   35.54253,
+   139.66557,
+   35.55697,
+   139.68354
+  ]
+ },
+ {
+  "id": "nwd-shin-kiba-station",
+  "name": "東京都江東区・新木場駅周辺",
+  "file": "data/areas/nwd-shin-kiba-station.json",
+  "bbox": [
+   35.64165,
+   139.80631,
+   35.66206,
+   139.83145
+  ]
+ },
+ {
+  "id": "nwd-shin-yokohama",
+  "name": "新横浜地区",
+  "file": "data/areas/nwd-shin-yokohama.json",
+  "bbox": [
+   35.50318,
+   139.59466,
+   35.52192,
+   139.62443
+  ]
+ },
+ {
+  "id": "nwd-shin-yurigaoka-station",
+  "name": "神奈川県川崎市新百合ヶ丘駅周辺地区",
+  "file": "data/areas/nwd-shin-yurigaoka-station.json",
+  "bbox": [
+   35.59757,
+   139.49734,
+   35.60902,
+   139.51348
+  ]
+ },
+ {
+  "id": "nwd-shinjuku",
+  "name": "新宿駅周辺",
+  "file": "data/areas/nwd-shinjuku.json",
+  "bbox": [
+   35.68267,
+   139.68419,
+   35.70089,
+   139.70997
+  ]
+ },
+ {
+  "id": "nwd-suminodo-station",
+  "name": "大阪府大東市・住道駅周辺",
+  "file": "data/areas/nwd-suminodo-station.json",
+  "bbox": [
+   34.69899,
+   135.60851,
+   34.72179,
+   135.63156
+  ]
+ },
+ {
+  "id": "nwd-takamatsu",
+  "name": "香川県高松市",
+  "file": "data/areas/nwd-takamatsu.json",
+  "bbox": [
+   34.32587,
+   134.0412,
+   34.36032,
+   134.06477
+  ]
+ },
+ {
+  "id": "nwd-tokyo",
+  "name": "東京駅周辺",
+  "file": "data/areas/nwd-tokyo.json",
+  "bbox": [
+   35.66467,
+   139.74065,
+   35.69917,
+   139.77782
+  ]
+ },
+ {
+  "id": "nwd-tokyo-teleport-staion",
+  "name": "東京都江東区・東京テレポート駅周辺",
+  "file": "data/areas/nwd-tokyo-teleport-staion.json",
+  "bbox": [
+   35.61743,
+   139.76784,
+   35.63223,
+   139.78693
+  ]
+ },
+ {
+  "id": "nwd-ueno-station",
+  "name": "台東区上野駅周辺",
+  "file": "data/areas/nwd-ueno-station.json",
+  "bbox": [
+   35.70177,
+   139.76467,
+   35.7266,
+   139.78231
+  ]
+ }
+]

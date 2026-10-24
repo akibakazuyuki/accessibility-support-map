@@ -12,13 +12,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - run: mkdir -p data && python3 scripts/build_area.py
-      - run: ls -la data && gzip -c data/akabane.json | wc -c
+      - run: ls -la data data/areas && du -sh data
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
-          git add data/akabane.json
-          git diff --cached --quiet || (git commit -m "Update Akabane accessibility data" && git push)
+          git add data/akabane.json data/areas.json data/areas
+          git diff --cached --quiet || (git commit -m "Update area accessibility data" && git push)
