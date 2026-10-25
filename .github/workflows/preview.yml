@@ -1,6 +1,7 @@
-# 作業ブランチに push したとき、スマホ幅の画面を本物の地図つきで撮って、確認用に残す
+# 作業ブランチに push したとき（またはデータ更新のあと手で動かしたとき）、スマホ幅の画面を本物の地図つきで撮って、確認用に残す
 name: Preview screenshots
 on:
+  workflow_dispatch:
   push:
     branches: ["claude/**"]
     paths: ["index.html", "scripts/preview.mjs", ".github/workflows/preview.yml"]

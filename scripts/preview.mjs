@@ -7,6 +7,8 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceSc
 await ctx.addInitScript(() => localStorage.setItem("profile", JSON.stringify({ key: "assisted", label: "手動車いす（介助あり）", step: 3, slope: 3, width: 2, stairs: false, esc: false, kmh: 3, wheel: true })));
 const p = await ctx.newPage();
 p.on("pageerror", e => console.log("pageerror", String(e)));
+p.on("requestfailed", r => console.log("requestfailed", r.url().slice(0, 80), r.failure()?.errorText));
+p.on("response", r => { if (/overpass/.test(r.url())) console.log("overpass", r.status(), r.url().slice(0, 60)); });
 await p.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" });
 await p.waitForTimeout(5000);
 await p.click("#btnLocate"); await p.waitForTimeout(3500);
@@ -27,4 +29,28 @@ if (await p.$("#btnGo")) { await p.click("#btnGo"); await p.waitForTimeout(4000)
 await p.screenshot({ path: "preview/7_go.png" });
 if (await p.$("#navGo")) { await p.click("#navGo"); await p.waitForTimeout(3500); }
 await p.screenshot({ path: "preview/8_nav.png" });
+// 全国：国交省データのない金沢で駅のカード（OpenStreetMap をその場で読む）とカフェの検索、新宿（国交省データの地区）のカード
+await p.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" }); await p.waitForTimeout(5000);
+async function find(q, shot, wait) {
+  await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(500);
+  await p.fill("#q", q); await p.press("#q", "Enter"); await p.waitForTimeout(wait);
+  await p.screenshot({ path: `preview/${shot}_list.png` });
+  const first = p.locator("#sugg li:nth-child(1) button");
+  if (await first.isVisible()) { await first.click(); await p.waitForTimeout(9000); await p.screenshot({ path: `preview/${shot}_card.png` }); }
+  else console.log("no results for", q, await p.textContent("#msg"));
+}
+await find("金沢駅", "9_kanazawa", 8000);
+await find("カフェ", "10_kanazawa_cafe", 28000);
+await find("新宿駅", "11_shinjuku", 14000);
+// 金沢に戻って、全国のピン（トイレ・車椅子OK）が出るか
+await find("兼六園", "12_kenrokuen", 8000);
+await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(6000);
+await p.screenshot({ path: "preview/12_kenrokuen_pins.png" });
+// 金沢駅にいるとして、兼六園までの階段を避けた道（国交省データのない地域の経路）
+await ctx.setGeolocation({ latitude: 36.5781, longitude: 136.6480, accuracy: 30 });
+await p.click("#btnLocate"); await p.waitForTimeout(4000);
+await find("兼六園", "13_route", 8000);
+await p.waitForTimeout(6000); await p.screenshot({ path: "preview/13_route_card2.png" });
+if (await p.locator("#btnGo").isVisible()) { await p.click("#btnGo"); await p.waitForTimeout(4000); await p.screenshot({ path: "preview/13_route_go.png" }); }
+else console.log("no route button");
 await b.close();

@@ -1,0 +1,28 @@
+name: Build nationwide pins
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * 0"   # 毎週月曜 4:00（日本時間）。Geofabrik の日本の抽出は毎日更新
+  push:
+    paths: [scripts/build_pins.py, .github/workflows/pins.yml]
+permissions:
+  contents: write
+concurrency:
+  group: pins-${{ github.ref }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -q && sudo apt-get install -yq osmium-tool
+      - run: curl -fsSL --retry 3 -o /tmp/japan.osm.pbf https://download.geofabrik.de/asia/japan-latest.osm.pbf && ls -la /tmp/japan.osm.pbf
+      - run: |
+          osmium tags-filter /tmp/japan.osm.pbf nwr/amenity=toilets nwr/highway=elevator nwr/wheelchair nwr/toilets:wheelchair nwr/capacity:disabled -o /tmp/pins.osm.pbf
+          osmium export /tmp/pins.osm.pbf -f geojsonseq -a type,id -o /tmp/pins.geojsonseq
+      - run: python3 scripts/build_pins.py /tmp/pins.geojsonseq && du -sh data/pins && ls data/pins | wc -l
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add -A data/pins
+          git diff --cached --quiet || (git commit -m "Update nationwide pins" && git pull --rebase && git push)
