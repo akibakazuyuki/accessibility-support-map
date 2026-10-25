@@ -27,14 +27,15 @@ if (await p.$("#btnGo")) { await p.click("#btnGo"); await p.waitForTimeout(4000)
 await p.screenshot({ path: "preview/7_go.png" });
 if (await p.$("#navGo")) { await p.click("#navGo"); await p.waitForTimeout(3500); }
 await p.screenshot({ path: "preview/8_nav.png" });
-// 全国：国交省データのない高松で駅を探してお店カード（OpenStreetMap をその場で読む）、カフェの検索、新宿（国交省データの地区）への切り替え
-if (await p.$("#closeCard:not([hidden])")) { await p.click("#closeCard"); await p.waitForTimeout(500); }
-await p.evaluate(() => map.jumpTo({ center: [134.0465, 34.3505], zoom: 16 })); await p.waitForTimeout(3000);
-await p.fill("#q", "カフェ"); await p.press("#q", "Enter"); await p.waitForTimeout(12000);
-await p.screenshot({ path: "preview/9_takamatsu_search.png" });
-if (await p.$("#sugg li:nth-child(1) button")) { await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(8000); }
-await p.screenshot({ path: "preview/10_takamatsu_card.png" });
-if (await p.$("#closeCard:not([hidden])")) { await p.click("#closeCard"); await p.waitForTimeout(500); }
-await p.evaluate(() => map.jumpTo({ center: [139.7005, 35.6905], zoom: 16 })); await p.waitForTimeout(8000);
-await p.screenshot({ path: "preview/11_shinjuku.png" });
+// 全国：国交省データのない金沢で駅のカード（OpenStreetMap をその場で読む）とカフェの検索、新宿（国交省データの地区）のカード
+async function find(q, shot, wait) {
+  if (await p.$("#closeCard:not([hidden])")) { await p.click("#closeCard"); await p.waitForTimeout(500); }
+  await p.fill("#q", q); await p.press("#q", "Enter"); await p.waitForTimeout(wait);
+  await p.screenshot({ path: `preview/${shot}_list.png` });
+  if (await p.$("#sugg li:nth-child(1) button")) { await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(9000); }
+  await p.screenshot({ path: `preview/${shot}_card.png` });
+}
+await find("金沢駅", "9_kanazawa", 8000);
+await find("カフェ", "10_kanazawa_cafe", 15000);
+await find("新宿駅", "11_shinjuku", 8000);
 await b.close();
