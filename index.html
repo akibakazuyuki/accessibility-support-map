@@ -1367,7 +1367,7 @@ function photon(q,bb){
     .then(function(j){ return (j.features||[]).map(function(f){ var p=f.properties||{};
       var cat=p.osm_key&&p.osm_value?p.osm_key+"="+p.osm_value:"";
       return {name:p.name||p.street||"", addr:(genreOf(cat)?genreOf(cat)+"・":"")+[p.state,p.county,p.city,p.district,p.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]],
-        cat:cat?catOf(cat):undefined, osmId:p.osm_type&&p.osm_id?p.osm_type+p.osm_id:null}; })
+        cat:cat?catOf(cat):undefined, osmId:p.osm_type&&p.osm_id?p.osm_type+p.osm_id:null, kind:cat, isPlace:PLACE_RE.test(cat)}; })
       .filter(function(c){ return c.name; }); });
 }
 function nominatim(q,bb,n){
@@ -1377,44 +1377,60 @@ function nominatim(q,bb,n){
     .then(function(a){ return a.map(function(x){ var parts=(x.display_name||"").split(",").map(function(t){return t.trim();});
       var t=osmTagsOf(x), cat=x.category+"="+x.type, g=genreOf(cat);
       return {name:x.name||parts[0], addr:(g?g+"・":"")+parts.slice(1).reverse().filter(function(t){return !/^\d{3}-?\d{4}$/.test(t)&&t!=="日本";}).join(""), ll:[+x.lat,+x.lon],
-        cat:g?catOf(cat):undefined, tags:t, osmId:x.osm_type?x.osm_type[0].toUpperCase()+x.osm_id:null}; }); });
+        cat:g?catOf(cat):undefined, tags:t, osmId:x.osm_type?x.osm_type[0].toUpperCase()+x.osm_id:null, kind:cat, isPlace:PLACE_RE.test(cat)}; }); });
 }
 function gsi(q){
   return fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q))
     .then(function(r){ return r.json(); })
-    .then(function(a){ return (a||[]).slice(0,5).map(function(x){ return {name:x.properties.title, addr:"住所・地名", ll:[x.geometry.coordinates[1],x.geometry.coordinates[0]]}; }); });
+    .then(function(a){ return (a||[]).slice(0,5).map(function(x){ return {name:x.properties.title, addr:"住所・地名", ll:[x.geometry.coordinates[1],x.geometry.coordinates[0]], isPlace:true}; }); });
 }
 function settle(ps){ return Promise.all(ps.map(function(p){ return p.catch(function(){ return []; }); })).then(function(rs){ return [].concat.apply([],rs); }); }
 var seq=0, destMarker=null;
+// 地名・駅（市や町、駅など）。地名の候補は店より先に並べ、「金沢 カフェ」の「金沢」の場所を決めるのに使う
+var PLACE_RE=/^(place|boundary)=|^(railway|public_transport)=station/;
+var PLACE_ORDER=["place=city","place=town","place=village","railway=station","public_transport=station","place=suburb","place=quarter","place=neighbourhood"];
+function geocode(t){
+  return settle([photon(t),gsi(t)]).then(function(a){
+    var ps=a.filter(function(c){ return c.kind&&c.isPlace; }).sort(function(x,y){
+      var i=PLACE_ORDER.indexOf(x.kind), j=PLACE_ORDER.indexOf(y.kind); return (i<0?99:i)-(j<0?99:j); });
+    return ps[0]||a.filter(function(c){ return c.isPlace; })[0]||null; });
+}
 function search(q){
   var my=++seq; q=q.trim(); if(!q) return;
   say("探しています…"); $("sugg").hidden=true; $("listHead").hidden=true;
-  var bb=near(), vc=[map.getCenter().lat,map.getCenter().lng], base=me&&inBox(bb,me)?me:vc, mine=[];
   var bare=q.replace(NEAR_WORDS," ").trim()||q;
-  // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの。ほかの地域で「カフェ」などの種類なら、Nominatim で見ている範囲のその種類を探す
-  var g=GENRES.filter(function(x){ return x[3]&&x[0].test(bare); })[0];
-  // 「この辺り」（全国のピン）にあるトイレ・車椅子OKの施設も候補にする
-  var here=area&&inBox(area.bbox,vc)?local(q,area):[];
-  var mineP=area&&!area.osm&&inBox(area.bbox,vc)?Promise.resolve(mine=here)
-    :g?nominatim(g[3],bb,40).then(function(a){ return mine=here.concat(a.filter(function(c){ return inBox(bb,c.ll); })); }).catch(function(){ return mine=here; }):Promise.resolve(mine=here);
-  settle([mineP.then(function(){ return []; }),photon(bare,bb),g?Promise.resolve([]):nominatim(bare,bb),gsi(q)]).then(function(nearRs){
-    nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
-    if(mine.length+nearRs.length>=3) return nearRs;
-    return settle([photon(q),nominatim(q)]).then(function(far){ far.forEach(function(c){ c.far=true; }); return nearRs.concat(far); });
-  }).then(function(remote){
+  var g0=GENRES.filter(function(x){ return x[3]&&x[0].test(bare); })[0];
+  // 「金沢 カフェ」「新宿のトイレ」のような地名＋種類は、先に地名の場所を調べて、その周りでその種類を探す
+  // 地名として見つからなければ（「ドトールコーヒー」など）、ふつうの名前の検索にする
+  var rest0=g0?bare.replace(g0[0]," ").replace(/[のでにへ]\s*$/,"").replace(/^\s*の/,"").trim():"";
+  (rest0?geocode(rest0):Promise.resolve(null)).then(function(pl){
     if(my!==seq) return;
-    var out=[];
-    mine.concat(remote).forEach(function(c){
-      if(!c.ll||isNaN(c.ll[0])) return;
-      if(out.some(function(d){ return d.name===c.name && km(d.ll,c.ll)<0.2; })) return;
-      c.d=km(base,c.ll); out.push(c);
+    var g=rest0&&!pl?null:g0, rest=pl?rest0:"";
+    var c0=pl?pl.ll:[map.getCenter().lat,map.getCenter().lng];
+    var bb=pl?[c0[0]-0.012,c0[1]-0.015,c0[0]+0.012,c0[1]+0.015]:near(), base=!pl&&me&&inBox(bb,me)?me:c0;
+    // その辺りの施設：国交省データの地区なら取り込み済みのもの。ほかの地域で種類を探すときは Nominatim で範囲内のその種類
+    var A=area&&inBox(area.bbox,c0)?area:null, here=A?local(rest?bare.replace(rest," "):q,A):[];
+    var tasks=[A&&!A.osm?Promise.resolve(here):g?nominatim(g[3],bb,40).then(function(a){ return here.concat(a.filter(function(c){ return inBox(bb,c.ll); })); }).catch(function(){ return here; }):Promise.resolve(here)];
+    // 名前で探すときは、見ている辺りと全国を同時に探す（「大阪」で赤羽の「大阪王将」だけが出ないように）
+    if(!g) tasks.push(photon(bare,bb).then(function(a){ return a.filter(function(c){ return inBox(bb,c.ll); }); }),
+      settle([photon(q),nominatim(q),gsi(q)]).then(function(a){ a.forEach(function(c){ c.far=true; }); return a; }));
+    settle(tasks).then(function(all){
+      if(my!==seq) return;
+      var out=[];
+      all.forEach(function(c){
+        if(!c.ll||isNaN(c.ll[0])) return;
+        if(out.some(function(d){ return d.name===c.name && km(d.ll,c.ll)<0.2; })) return;
+        c.d=km(base,c.ll); out.push(c);
+      });
+      // 名前がぴったり合うもの、地名・駅を先頭に。あとはその辺りの候補を近い順、全国の候補を検索サービスの順で
+      var nq=norm(bare);
+      out.forEach(function(c,i){ c.o=i; var nm=norm(c.name);
+        c.rank=nm===nq?0:c.isPlace&&nm.indexOf(nq)===0?1:!c.far||inBox(bb,c.ll)?2:3; });
+      out.sort(function(a,b){ return a.rank-b.rank||(a.rank===3?a.o-b.o:a.d-b.d); });
+      if(!out.length){ $("sugg").innerHTML=""; say(pl?pl.name+"の周りでは見つかりませんでした":"見つかりませんでした。店の名前や「カフェ」「トイレ」などで試してください"); return; }
+      if(pl) map.flyTo({center:[c0[1],c0[0]],zoom:Math.max(map.getZoom(),14.5)});
+      showList(out.slice(0,15),pl?"件（"+pl.name+"の周り・近い順）":out.some(function(c){ return c.rank===3; })?"件見つかりました":"件見つかりました（近い順）");
     });
-    // 名前がぴったり合うものを先頭に。あとは見ている辺りの候補を近い順、全国から探した候補を検索サービスの順で
-    var nq=norm(bare);
-    out.forEach(function(c,i){ c.o=i; c.rank=norm(c.name)===nq?0:c.far?2:1; });
-    out.sort(function(a,b){ return a.rank-b.rank||(a.rank===2?a.o-b.o:a.d-b.d); });
-    if(!out.length){ $("sugg").innerHTML=""; say("見つかりませんでした。店の名前や「カフェ」「トイレ」などで試してください"); return; }
-    showList(out.slice(0,15),out.some(function(c){ return c.far; })?"件見つかりました":"件見つかりました（近い順）");
   });
 }
 // 一覧・検索結果を閉じる（×・地図をタップ・Esc）

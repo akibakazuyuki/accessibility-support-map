@@ -39,6 +39,8 @@ async function find(q, shot, wait) {
   if (await first.isVisible()) { await first.click(); await p.waitForTimeout(9000); await p.screenshot({ path: `preview/${shot}_card.png` }); }
   else console.log("no results for", q, await p.textContent("#msg"));
 }
+await find("大阪", "8b_osaka", 9000);
+await find("金沢 カフェ", "8c_kanazawa_cafe", 12000);
 await find("金沢駅", "9_kanazawa", 8000);
 await find("カフェ", "10_kanazawa_cafe", 28000);
 await find("新宿駅", "11_shinjuku", 14000);
