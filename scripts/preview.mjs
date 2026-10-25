@@ -7,6 +7,8 @@ const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceSc
 await ctx.addInitScript(() => localStorage.setItem("profile", JSON.stringify({ key: "assisted", label: "手動車いす（介助あり）", step: 3, slope: 3, width: 2, stairs: false, esc: false, kmh: 3, wheel: true })));
 const p = await ctx.newPage();
 p.on("pageerror", e => console.log("pageerror", String(e)));
+p.on("requestfailed", r => console.log("requestfailed", r.url().slice(0, 80), r.failure()?.errorText));
+p.on("response", r => { if (/overpass/.test(r.url())) console.log("overpass", r.status(), r.url().slice(0, 60)); });
 await p.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" });
 await p.waitForTimeout(5000);
 await p.click("#btnLocate"); await p.waitForTimeout(3500);
