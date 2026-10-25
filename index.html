@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
-<meta name="description" content="車椅子・ベビーカー・杖などで外出する人のための、段差・幅・坂・エレベーター・トイレがわかる地図（赤羽駅周辺で試験提供）">
+<meta name="description" content="車椅子・ベビーカー・杖などで外出する人のための、段差・幅・坂・エレベーター・トイレがわかる地図（全国の施設に対応、歩道の段差データは国土交通省の公開地区）">
 <title>アクセシビリティ・サポートマップ</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -688,6 +688,39 @@ function getGraph(bb){
     return GRAPHS[e.id];
   });
 }
+// ---- 国交省データのない地域：OpenStreetMap をその場で読む ----
+// 約2km四方の区画ごとに、施設・トイレ・エレベーターを Overpass API から取り、事前データと同じ形（pois・places）にする
+var OSM_TILE=0.02, OSM_CACHE={}, OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];
+var OSM_KEYS=["name","wheelchair","toilets:wheelchair","wheelchair:description","door","automatic_door","width","step_count","ramp","level","opening_hours",
+  "changing_table","access","fee","entrance","amenity","shop","tourism","healthcare","operator","description","capacity:disabled","elevator","indoor","location",
+  "stroller","cuisine","addr:full","addr:province","addr:city","addr:quarter","addr:neighbourhood","addr:block_number","addr:housenumber"];
+function osmQuery(q,i){ i=i||0;
+  return fetch(OVERPASS[i],{method:"POST",body:"data="+encodeURIComponent(q)}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(function(e){ if(i+1<OVERPASS.length) return osmQuery(q,i+1); throw e; }); }
+function osmTile(x,y){
+  var k=x+","+y; if(OSM_CACHE[k]) return OSM_CACHE[k];
+  var b=[y*OSM_TILE,x*OSM_TILE,(y+1)*OSM_TILE,(x+1)*OSM_TILE].map(function(v){ return v.toFixed(4); }).join(",");
+  var q='[out:json][timeout:25];(nwr["amenity"="toilets"]('+b+');nwr["highway"="elevator"]('+b+');nwr["wheelchair"]('+b+');'+
+    ["amenity","shop","tourism","leisure","healthcare"].map(function(t){ return 'nwr["name"]["'+t+'"]('+b+');'; }).join("")+');out center tags;';
+  return OSM_CACHE[k]=osmQuery(q).then(function(j){
+    var pois=[], places=[], seen={};
+    (j.elements||[]).forEach(function(e){ var t=e.tags||{}, lat=e.lat!=null?e.lat:(e.center||{}).lat, lon=e.lon!=null?e.lon:(e.center||{}).lon; if(lat==null) return;
+      var k=t.amenity==="toilets"?"toilet":t.highway==="elevator"?"elevator":"place", tt={};
+      OSM_KEYS.forEach(function(n){ if(n in t) tt[n]=t[n]; });
+      if(k!=="place"||(t.name&&t.wheelchair)) pois.push({k:k,osm:e.type[0]+e.id,ll:[lon,lat],t:tt});
+      var cat=["amenity","shop","tourism","leisure","healthcare","cuisine"].filter(function(n){ return n in t; }).map(function(n){ return n+"="+t[n]; }).join("|");
+      var sk=t.name+"|"+lat.toFixed(4)+"|"+lon.toFixed(4);
+      if(t.name&&cat&&!seen[sk]){ seen[sk]=1; places.push([t.name,cat,lon,lat,t.wheelchair||""]); } });
+    return {pois:pois,places:places};
+  }).catch(function(e){ delete OSM_CACHE[k]; throw e; });
+}
+// 範囲 bb＝[南,西,北,東] にかかる区画をまとめて読む（広すぎるときは中心の周り約4km四方だけ）
+function osmAround(bb){
+  var c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
+  if(bb[2]-bb[0]>OSM_TILE*2||bb[3]-bb[1]>OSM_TILE*2) bb=[c[0]-OSM_TILE,c[1]-OSM_TILE,c[0]+OSM_TILE,c[1]+OSM_TILE];
+  var ts=[]; for(var x=Math.floor(bb[1]/OSM_TILE);x<=Math.floor(bb[3]/OSM_TILE);x++) for(var y=Math.floor(bb[0]/OSM_TILE);y<=Math.floor(bb[2]/OSM_TILE);y++) ts.push(osmTile(x,y));
+  return Promise.all(ts).then(function(rs){ return {pois:[].concat.apply([],rs.map(function(r){ return r.pois; })),places:[].concat.apply([],rs.map(function(r){ return r.places; }))}; });
+}
 // 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
 function originOf(){
   if(me&&inBox(area.bbox,me)) return {ll:me,name:"現在地",me:true};
@@ -698,6 +731,11 @@ function loadArea(){
   getGraph([AKABANE[0],AKABANE[1],AKABANE[0],AKABANE[1]]).then(function(A){ if(!A) throw new Error("no area"); setArea(A); })
     .catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
 }
+// 地図を別の国交省データの地区へ動かしたら、その地区の歩道とピンに切り替える（場所を開いている間・案内中はそのまま）
+map.on("moveend",function(){
+  if(!area||routeTo||nav) return; var c=map.getCenter();
+  getGraph([c.lat,c.lng,c.lat,c.lng]).then(function(g){ if(g&&g!==area&&!routeTo&&!nav) setArea(g); }).catch(function(){});
+});
 function setArea(A){
     var first=!area; area=A;
     adj={}; A.links.forEach(function(L,i){ (adj[L.a]=adj[L.a]||[]).push([i,L.b]); (adj[L.b]=adj[L.b]||[]).push([i,L.a]); });
@@ -896,9 +934,9 @@ var ICON={
   arr:'<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
 };
 function fact(ic,main,sub){ return '<li><span class="fi">'+ICON[ic]+'</span><div>'+main+(sub?'<small>'+sub+'</small>':'')+'</div></li>'; }
-function destInfo(ll,poi){
+function destInfo(ll,poi,pois){
   var place=poi||null, pd=poi?0:1e9, wc=null, wd=1e9;
-  area.pois.forEach(function(p){ var d=km(ll,[p.ll[1],p.ll[0]])*1000;
+  pois.forEach(function(p){ var d=km(ll,[p.ll[1],p.ll[0]])*1000;
     if(!poi&&p.k==="place"&&p.t.wheelchair&&d<40&&d<pd){ place=p; pd=d; }
     if(p.k==="toilet"&&(p.t.wheelchair==="yes"||p.t.wheelchair==="designated")&&d<wd){ wc=p; wd=d; } });
   return {place:place,wc:wc,wcm:wd};
@@ -927,8 +965,8 @@ function addrOf(c,t,cb){
 var UNK=["？","情報なし","unk"];
 function st3(v,yes,lim,no){ return /^(yes|designated)$/.test(v||"")?["◎",yes,"ok"]:v==="limited"?["△",lim,"mid"]:v==="no"?["×",no,"ng"]:UNK; }
 function aitem(ic,label,x){ return '<li class="ai s-'+x[2]+'"><span class="ic">'+svg(ic)+'</span><div><small>'+label+'</small><b>'+x[0]+' '+esc(x[1])+'</b></div></li>'; }
-function placeItems(c,t,d){
-  var nearEv=null, evd=1e9; area.pois.forEach(function(p){ if(p.k!=="elevator") return; var e=km(c.ll,[p.ll[1],p.ll[0]])*1000; if(e<evd){ evd=e; nearEv=p; } });
+function placeItems(c,t,d,pois){
+  var nearEv=null, evd=1e9; pois.forEach(function(p){ if(p.k!=="elevator") return; var e=km(c.ll,[p.ll[1],p.ll[0]])*1000; if(e<evd){ evd=e; nearEv=p; } });
   var wc=c.cat==="wc"&&c.poi?st3(c.poi.t.wheelchair,"あり","一部","使えない")
     :/^(yes|designated)$/.test(t["toilets:wheelchair"]||"")?["◎","あり","ok"]:t["toilets:wheelchair"]==="no"?["×","なし","ng"]
     :d.wc&&d.wcm<=150?["○","近く "+fmtLen(d.wcm),"ok"]:d.wc&&d.wcm<=500?["△",fmtLen(d.wcm)+"先","mid"]:UNK;
@@ -942,18 +980,28 @@ function judge(c){
   var inArea=inBox(area.bbox,c.ll);
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
   $("closeCard").hidden=$("fav").hidden=false; showFav(c);
-  var d=destInfo(c.ll,c.poi), t=(c.poi||d.place||{t:{}}).t, it=placeItems(c,t,d);
+  // 国交省データの地区の外は、OpenStreetMap をその場で読んだ施設・トイレで判定する
+  var pois=inArea?area.pois:(c.osm||[]);
+  var d=destInfo(c.ll,c.poi,pois), t=(c.poi||d.place||{t:{}}).t, it=placeItems(c,t,d,pois);
   // ジャンル・距離・住所
   var isAddr=c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr), genre=isAddr?"":(c.addr||"");
-  var from=me?{ll:me,name:"現在地"}:area.origin||{ll:AKABANE,name:"赤羽駅"}, dist=km(from.ll,c.ll)*1000;
-  $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span><b aria-label="'+esc(from.name)+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":/駅$/.test(from.name)?"駅から ":"")+fmtLen(dist)+'</b>';
+  var from=me?{ll:me,name:"現在地"}:inArea?originOf():null, dist=from?km(from.ll,c.ll)*1000:0;
+  $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span>'+(from?'<b aria-label="'+esc(from.name)+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":/駅$/.test(from.name)?"駅から ":"")+fmtLen(dist)+'</b>':'');
   var ad=$("sheetAddr"); ad.hidden=true; ad.textContent="";
   addrOf(c,t,function(a){ if(routeTo===c){ ad.textContent=a; ad.hidden=false; } });
   // 経路（段差・坂）の判定。目的地が別のエリアなら、そのエリアのデータを読んでから判定し直す
   var R=null, why="";
   if(!inArea){
-    why="この場所の段差・道幅・坂の情報は、まだありません";
-    getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){ if(g&&g!==area&&routeTo===c) setArea(g); }).catch(function(){});
+    why="この場所の段差・道幅・坂の調査データは、まだありません。入口・トイレは OpenStreetMap の情報です";
+    // 別の国交省データの地区ならそれを読んで判定し直す。どの地区でもなければ周りの施設を OpenStreetMap から読む
+    if(!c.osm) getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){
+      if(routeTo!==c) return;
+      if(g&&g!==area) return setArea(g);
+      if(g) return;
+      return osmAround([c.ll[0]-0.006,c.ll[1]-0.006,c.ll[0]+0.006,c.ll[1]+0.006]).then(function(o){
+        if(routeTo!==c) return;
+        c.osm=o.pois; if(!c.poi) c.poi=o.pois.filter(function(p){ return p.k!=="place"||p.t.name!==c.name?false:km(c.ll,[p.ll[1],p.ll[0]])<0.08; })[0]; judge(c); });
+    }).catch(function(){ if(routeTo===c&&!c.osm){ c.osm=[]; } });
   } else { var pr=planRoute(c,originOf()); if(pr.why) why=pr.why; else R=routeStatus(pr,it.wheel[2]==="ok"); }
   var status=1, issues=[], len=0, unkLen=0, oldest="9999", unkRatio=1, mins=0;
   if(R){ status=R.status; issues=R.issues; len=R.len; unkLen=R.unkLen; oldest=R.oldest; unkRatio=R.unkRatio; mins=R.mins; }
@@ -1220,7 +1268,6 @@ function locate(){
   say("現在地を探しています…");
   navigator.geolocation.getCurrentPosition(function(p){
     me=[p.coords.latitude,p.coords.longitude]; placeMe(p.coords.accuracy); say("");
-    if(km(me,AKABANE)>3){ say("現在地は対象エリアの外なので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); return; }
     map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7)});
   }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
@@ -1230,8 +1277,8 @@ map.on("dragstart",function(){ if(nav&&nav.on&&nav.follow){ nav.follow=false; re
 function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.7,pitch:48}); }
 
 // ---- 場所の検索 ----
-// 1) 赤羽周辺の施設（OpenStreetMap を事前に取り込んだもの）を名前と種類で探す
-// 2) 周辺に絞って地名・施設を探す（Photon・Nominatim・国土地理院）
+// 1) いま見ている辺りの施設を名前と種類で探す（国交省データの地区は取り込み済みのもの、ほかは OpenStreetMap をその場で読む）
+// 2) 見ている辺りに絞って地名・施設を探す（Photon・Nominatim・国土地理院）
 // 3) それでも少なければ全国から探す
 var GENRES=[
   [/居酒屋|飲み屋|酒場/,/cuisine=[^|]*izakaya|amenity=(pub|bar)/,"居酒屋・バー"],
@@ -1261,27 +1308,31 @@ var GENRES=[
 ];
 function genreOf(cat){ for(var i=0;i<GENRES.length;i++) if(GENRES[i][1].test(cat)) return GENRES[i][2]; return ""; }
 function norm(t){ return String(t).toLowerCase().replace(/[\s　・･]/g,"").replace(/[ァ-ン]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0x60); }); }
-function local(q){
-  if(!area||!area.places) return [];
-  var words=q.replace(/赤羽(駅|周辺|付近|近く)?|北区|の近く|近く|周辺/g," ").split(/[\s　]+/).filter(Boolean);
+var NEAR_WORDS=/の近く|近く|周辺|付近/g;
+function local(q,A){
+  if(!A||!A.places) return [];
+  var words=q.replace(NEAR_WORDS," ").split(/[\s　]+/).filter(Boolean);
   if(!words.length) return [];
   var tests=words.map(function(w){ var g=GENRES.filter(function(x){ return x[0].test(w); }); var nw=norm(w);
     return function(pl){ return norm(pl[0]).indexOf(nw)>=0 || g.some(function(x){ return x[1].test(pl[1]); }); }; });
-  var out=area.places.filter(function(pl){ return tests.every(function(t){ return t(pl); }); }).map(function(pl){
-    return {name:pl[0], addr:genreOf(pl[1])||"赤羽周辺", ll:[pl[3],pl[2]], cat:catOf(pl[1]), local:true}; });
+  var out=A.places.filter(function(pl){ return tests.every(function(t){ return t(pl); }); }).map(function(pl){
+    return {name:pl[0], addr:genreOf(pl[1])||"施設", ll:[pl[3],pl[2]], cat:catOf(pl[1]), local:true}; });
   // 名前のないトイレも候補に入れる（車椅子で使えるかを添える）
-  if(words.length===1&&/車椅子|車いす|バリアフリー/.test(words[0])) return area.places.filter(function(pl){ return pl[4]==="yes"||pl[4]==="designated"||pl[4]==="limited"; }).map(function(pl){
+  if(words.length===1&&/車椅子|車いす|バリアフリー/.test(words[0])) return A.places.filter(function(pl){ return pl[4]==="yes"||pl[4]==="designated"||pl[4]==="limited"; }).map(function(pl){
     return {name:pl[0], addr:(genreOf(pl[1])||"施設")+"・"+(pl[4]==="limited"?"車椅子一部OK":"車椅子OK"), ll:[pl[3],pl[2]], cat:catOf(pl[1]), local:true}; });
-  if(words.length===1&&/エレベーター|EV/i.test(words[0])) return area.pois.filter(function(p){ return p.k==="elevator"; }).map(function(p){
+  if(words.length===1&&/エレベーター|EV/i.test(words[0])) return A.pois.filter(function(p){ return p.k==="elevator"; }).map(function(p){
     return {name:p.t.name||"エレベーター", addr:"エレベーター"+(p.t.level?"・"+p.t.level+"階":""), ll:[p.ll[1],p.ll[0]], cat:"ev", poi:p, local:true}; });
-  if(words.length===1&&/トイレ|お手洗い/.test(words[0])) area.pois.forEach(function(p){ if(p.k!=="toilet") return;
+  if(words.length===1&&/トイレ|お手洗い/.test(words[0])) A.pois.forEach(function(p){ if(p.k!=="toilet") return;
     out.push({name:p.t.name||"トイレ", addr:"トイレ・"+(p.t.wheelchair?(WC[p.t.wheelchair]||p.t.wheelchair):"車椅子対応は未確認"), ll:[p.ll[1],p.ll[0]], cat:"wc", poi:p, local:true}); });
   return out;
 }
-function near(){ var b=area?area.bbox:[AKABANE[0]-0.01,AKABANE[1]-0.01,AKABANE[0]+0.01,AKABANE[1]+0.01], m=0.02; return [b[0]-m,b[1]-m,b[2]+m,b[3]+m]; }
+// 見ている範囲（[南,西,北,東]）。地図を引いて広く見ているときは、中心の周り約4km四方
+function viewBox(){ var b=map.getBounds(), c=map.getCenter(), v=[b.getSouth(),b.getWest(),b.getNorth(),b.getEast()], m=0.02;
+  return v[2]-v[0]>2*m||v[3]-v[1]>2*m?[c.lat-m,c.lng-m,c.lat+m,c.lng+m]:v; }
+function near(){ var b=viewBox(), m=0.01; return [b[0]-m,b[1]-m,b[2]+m,b[3]+m]; }
 function photon(q,bb){
   var box=bb?[bb[1],bb[0],bb[3],bb[2]].join(","):"122,20,154,46";
-  return fetch("https://photon.komoot.io/api/?lang=default&limit=10&q="+encodeURIComponent(q)+"&lat="+AKABANE[0]+"&lon="+AKABANE[1]+"&bbox="+box)
+  return fetch("https://photon.komoot.io/api/?lang=default&limit=10&q="+encodeURIComponent(q)+"&lat="+map.getCenter().lat+"&lon="+map.getCenter().lng+"&bbox="+box)
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(j){ return (j.features||[]).map(function(f){ var p=f.properties||{};
       return {name:p.name||p.street||"", addr:[p.state,p.county,p.city,p.district,p.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}; })
@@ -1304,11 +1355,13 @@ var seq=0, destMarker=null;
 function search(q){
   var my=++seq; q=q.trim(); if(!q) return;
   say("探しています…"); $("sugg").hidden=true; $("listHead").hidden=true;
-  var bb=near(), base=me||AKABANE, mine=local(q);
-  function inBox(c){ return c.ll[0]>=bb[0]&&c.ll[0]<=bb[2]&&c.ll[1]>=bb[1]&&c.ll[1]<=bb[3]; }
-  var bare=q.replace(/赤羽(駅|周辺|付近|近く)?|北区|の近く|近く|周辺/g," ").trim()||q;
-  settle([photon(bare,bb),nominatim(bare,bb),gsi(q)]).then(function(nearRs){
-    nearRs=nearRs.filter(inBox);
+  var bb=near(), vc=[map.getCenter().lat,map.getCenter().lng], base=me&&inBox(bb,me)?me:vc, mine=[];
+  var bare=q.replace(NEAR_WORDS," ").trim()||q;
+  // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの、そうでなければ OpenStreetMap をその場で読む
+  var here=area&&inBox(area.bbox,vc)?Promise.resolve(area):osmAround(viewBox()).catch(function(){ return null; });
+  var mineP=here.then(function(A){ mine=local(q,A); if(A&&A!==area) mine.forEach(function(c){ c.osm=A.pois; }); return mine; });
+  settle([mineP.then(function(){ return []; }),photon(bare,bb),nominatim(bare,bb),gsi(q)]).then(function(nearRs){
+    nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
     if(mine.length+nearRs.length>=3) return nearRs;
     return settle([photon(q),nominatim(q)]).then(function(far){ return nearRs.concat(far); });
   }).then(function(remote){
@@ -1343,7 +1396,7 @@ function showList(out,note,title,tabs){
 var listTab="near";
 function openList(tab){
   if(!area) return; listTab=tab;
-  var base=me&&km(me,AKABANE)<3?me:[map.getCenter().lat,map.getCenter().lng], out=[];
+  var base=me&&inBox(area.bbox,me)?me:[map.getCenter().lat,map.getCenter().lng], out=[];
   if(tab==="fav") out=favs().map(function(f){ return {name:f.name,addr:f.addr,ll:f.ll,cat:f.cat,d:km(base,f.ll)}; });
   else pinFeats.forEach(function(f){ var pr=f.properties;
     var ok=filt==="all"?(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)):(filtMatch(filt,pr)&&(pr.k!=="place"||/^(yes|designated|limited)$/.test(pr.wc)));
