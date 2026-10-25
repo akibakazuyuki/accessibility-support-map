@@ -712,13 +712,31 @@ function osmPins(bb){
     var G=ix.grid, f=Math.floor, y0=f(bb[0]*G), x0=f(bb[1]*G), y1=f(bb[2]*G), x1=f(bb[3]*G), ks=[];
     for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) if(ix.tiles.indexOf(y+"_"+x)>=0) ks.push(y+"_"+x);
     var id="osm:"+[y0,x0,y1,x1].join(",");
-    if(area&&area.area===id) return area;
+    if(area&&area.area===id) return area.links.length?Object.assign({},area,{links:[],nodes:{},routeTo:null}):area;
     return Promise.all(ks.map(pinTile)).then(function(ts){
       return {area:id,osm:true,name:"この辺り",bbox:[y0/G,x0/G,(y1+1)/G,(x1+1)/G],nodes:{},links:[],
         pois:[].concat.apply([],ts.map(function(t){ return t.pois; })),places:[].concat.apply([],ts.map(function(t){ return t.places; })),
         sources:[{id:"osm",name:"OpenStreetMap（車椅子・トイレ・エレベーターの登録）",url:"https://www.openstreetmap.org/copyright"}]};
     });
   });
+}
+// ---- 国交省データのない地域の経路：Valhalla（FOSSGIS の公開サーバー、OpenStreetMap）で、階段を避ける車椅子向けの道を出す ----
+// 案内の区切り（曲がる所など）ごとに区間にする。段差・幅・坂は調べられないので 99（未調査）のまま
+function decode6(s){ var i=0, lat=0, lng=0, out=[];
+  while(i<s.length){ var v=[0,0]; for(var k=0;k<2;k++){ var sh=0, r=0, b; do{ b=s.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5; }while(b>=32); v[k]=r&1?~(r>>1):r>>1; }
+    lat+=v[0]; lng+=v[1]; out.push([lng/1e6,lat/1e6]); }
+  return out; }
+function valhalla(o,d){
+  var j={locations:[{lat:o[0],lon:o[1]},{lat:d[0],lon:d[1]}],costing:"pedestrian",costing_options:{pedestrian:{type:"wheelchair"}},language:"ja-JP",units:"km"};
+  return fetch("https://valhalla1.openstreetmap.de/route?json="+encodeURIComponent(JSON.stringify(j))).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(x){ var leg=x.trip.legs[0], pts=decode6(leg.shape), nodes={}, links=[];
+      leg.maneuvers.forEach(function(m,i){ if(m.end_shape_index<=m.begin_shape_index) return;
+        var c=pts.slice(m.begin_shape_index,m.end_shape_index+1), a="v"+m.begin_shape_index, b="v"+m.end_shape_index;
+        nodes[a]=[c[0][0],c[0][1],0,1]; nodes[b]=[c[c.length-1][0],c[c.length-1][1],0,1];
+        var L={id:"osm"+i,a:a,b:b,d:Math.round(m.length*10000)/10,c:c,src:"osm"};
+        ["st","rt","dir","w","sl","lv","sg","bt","ev","rf","cd","hr","fc","dr","rs"].forEach(function(k){ L[k]=99; });
+        links.push(L); });
+      return {nodes:nodes,links:links}; });
 }
 // 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
 function originOf(){
@@ -998,7 +1016,10 @@ function judge(c){
   // 経路（段差・坂）の判定。目的地が別のエリアなら、そのエリアのデータを読んでから判定し直す
   var R=null, why="";
   if(!mlit){
-    why="この場所の段差・道幅・坂の調査データは、まだありません。お店の情報は OpenStreetMap の登録内容です";
+    why="この場所の段差・道幅・坂の調査データは、まだありません。お店の情報は OpenStreetMap の登録内容です"+(me?"":"。現在地をオンにすると、階段を避けた道を調べます");
+    // 調べておいた階段を避ける道（Valhalla）があれば、それを判定する。段差などは未調査なので「？」になる
+    if(area.osm&&inArea&&area.routeTo===c&&area.links.length){ var pv=planRoute(c,{ll:area.routeFrom,name:"現在地",me:true});
+      if(!pv.why){ R=routeStatus(pv,it.wheel[2]==="ok"); why="階段を避けた道です（OpenStreetMap）。段差・道幅・坂の調査データはまだないので、現地で確かめてください"; } }
     // 別の国交省データの地区ならそれを読んで判定し直す。どの地区でもなければ、周りのピンと、この場所の OSM の登録内容を読む
     if(!c.looked){ c.looked=true; getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){
       if(routeTo!==c) return;
@@ -1006,7 +1027,9 @@ function judge(c){
       if(g) return;
       return Promise.all([inArea?null:osmPins([c.ll[0]-0.01,c.ll[1]-0.01,c.ll[0]+0.01,c.ll[1]+0.01]),c.tags||!c.osmId?null:osmTags(c.osmId)]).then(function(r){
         if(routeTo!==c) return; if(r[1]) c.tags=r[1];
-        if(r[0]&&r[0]!==area) setArea(r[0]); else judge(c); });
+        if(r[0]&&r[0]!==area) setArea(r[0]); else judge(c);
+        if(area.osm&&me&&km(me,c.ll)<10) return valhalla(me,c.ll).then(function(g){
+          if(routeTo===c&&area.osm&&inBox(area.bbox,c.ll)) setArea(Object.assign({},area,g,{routeTo:c,routeFrom:me})); }); });
     }).catch(function(){}); }
   } else { var pr=planRoute(c,originOf()); if(pr.why) why=pr.why; else R=routeStatus(pr,it.wheel[2]==="ok"); }
   var status=1, issues=[], len=0, unkLen=0, oldest="9999", unkRatio=1, mins=0;

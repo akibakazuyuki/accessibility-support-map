@@ -46,4 +46,11 @@ await find("新宿駅", "11_shinjuku", 14000);
 await find("兼六園", "12_kenrokuen", 8000);
 await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(6000);
 await p.screenshot({ path: "preview/12_kenrokuen_pins.png" });
+// 金沢駅にいるとして、兼六園までの階段を避けた道（国交省データのない地域の経路）
+await ctx.setGeolocation({ latitude: 36.5781, longitude: 136.6480, accuracy: 30 });
+await p.click("#btnLocate"); await p.waitForTimeout(4000);
+await find("兼六園", "13_route", 8000);
+await p.waitForTimeout(6000); await p.screenshot({ path: "preview/13_route_card2.png" });
+if (await p.locator("#btnGo").isVisible()) { await p.click("#btnGo"); await p.waitForTimeout(4000); await p.screenshot({ path: "preview/13_route_go.png" }); }
+else console.log("no route button");
 await b.close();
