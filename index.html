@@ -688,40 +688,19 @@ function getGraph(bb){
     return GRAPHS[e.id];
   });
 }
-// ---- 国交省データのない地域：OpenStreetMap をその場で読む ----
-// 約2km四方の区画ごとに、施設・トイレ・エレベーターを Overpass API から取り、事前データと同じ形（pois・places）にする
-var OSM_TILE=0.02, OSM_CACHE={}, OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.private.coffee/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
+// ---- 国交省データのない地域：OpenStreetMap の登録内容を Nominatim から読む ----
+// 車椅子対応・トイレ・営業時間などのタグを、選んだ場所の OSM の番号（N123・W456 など）で引く
 var OSM_KEYS=["name","wheelchair","toilets:wheelchair","wheelchair:description","door","automatic_door","width","step_count","ramp","level","opening_hours",
   "changing_table","access","fee","entrance","amenity","shop","tourism","healthcare","operator","description","capacity:disabled","elevator","indoor","location",
   "stroller","cuisine","addr:full","addr:province","addr:city","addr:quarter","addr:neighbourhood","addr:block_number","addr:housenumber"];
-function osmQuery(q,i){ i=i||0;
-  // 混んでいて返事が遅いときは12秒であきらめる（検索や場所のカードを待たせない）
-  var ac=window.AbortController?new AbortController():null, tm=ac&&setTimeout(function(){ ac.abort(); },12000);
-  return fetch(OVERPASS[i],{method:"POST",body:"data="+encodeURIComponent(q),signal:ac&&ac.signal}).then(function(r){ clearTimeout(tm); if(!r.ok) throw new Error(r.status); return r.json(); })
-    .catch(function(e){ if(i+1<OVERPASS.length) return osmQuery(q,i+1); throw e; }); }
-// 区画 x0..x1, y0..y1 をまとめて1回で読む（Overpass は同時に何本も投げると断られるため）
-function osmTiles(x0,y0,x1,y1){
-  var k=[x0,y0,x1,y1].join(","); if(OSM_CACHE[k]) return OSM_CACHE[k];
-  var b=[y0*OSM_TILE,x0*OSM_TILE,(y1+1)*OSM_TILE,(x1+1)*OSM_TILE].map(function(v){ return v.toFixed(4); }).join(",");
-  var q='[out:json][timeout:25];(nwr["amenity"="toilets"]('+b+');nwr["highway"="elevator"]('+b+');nwr["wheelchair"]('+b+');'+
-    ["amenity","shop","tourism","leisure","healthcare"].map(function(t){ return 'nwr["name"]["'+t+'"]('+b+');'; }).join("")+');out center tags;';
-  return OSM_CACHE[k]=osmQuery(q).then(function(j){
-    var pois=[], places=[], seen={};
-    (j.elements||[]).forEach(function(e){ var t=e.tags||{}, lat=e.lat!=null?e.lat:(e.center||{}).lat, lon=e.lon!=null?e.lon:(e.center||{}).lon; if(lat==null) return;
-      var k=t.amenity==="toilets"?"toilet":t.highway==="elevator"?"elevator":"place", tt={};
-      OSM_KEYS.forEach(function(n){ if(n in t) tt[n]=t[n]; });
-      if(k!=="place"||(t.name&&t.wheelchair)) pois.push({k:k,osm:e.type[0]+e.id,ll:[lon,lat],t:tt});
-      var cat=["amenity","shop","tourism","leisure","healthcare","cuisine"].filter(function(n){ return n in t; }).map(function(n){ return n+"="+t[n]; }).join("|");
-      var sk=t.name+"|"+lat.toFixed(4)+"|"+lon.toFixed(4);
-      if(t.name&&cat&&!seen[sk]){ seen[sk]=1; places.push([t.name,cat,lon,lat,t.wheelchair||""]); } });
-    return {pois:pois,places:places};
-  }).catch(function(e){ delete OSM_CACHE[k]; throw e; });
-}
-// 範囲 bb＝[南,西,北,東] にかかる区画を読む（広すぎるときは中心の周り約4km四方だけ）
-function osmAround(bb){
-  var c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2], f=Math.floor;
-  if(bb[2]-bb[0]>OSM_TILE*2||bb[3]-bb[1]>OSM_TILE*2) bb=[c[0]-OSM_TILE,c[1]-OSM_TILE,c[0]+OSM_TILE,c[1]+OSM_TILE];
-  return osmTiles(f(bb[1]/OSM_TILE),f(bb[0]/OSM_TILE),f(bb[3]/OSM_TILE),f(bb[2]/OSM_TILE));
+function osmTagsOf(x){ var e=x.extratags||{}, t={}; OSM_KEYS.forEach(function(k){ if(k in e) t[k]=e[k]; });
+  if(x.category&&x.type) t[x.category]=x.type; if(x.name) t.name=x.name; return t; }
+var TAG_CACHE={};
+function osmTags(id){
+  if(!id) return Promise.resolve(null);
+  return TAG_CACHE[id]=TAG_CACHE[id]||fetch("https://nominatim.openstreetmap.org/lookup?format=jsonv2&extratags=1&accept-language=ja&osm_ids="+id)
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(a){ return a&&a[0]?osmTagsOf(a[0]):null; })
+    .catch(function(){ delete TAG_CACHE[id]; return null; });
 }
 // 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
 function originOf(){
@@ -983,8 +962,8 @@ function judge(c){
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
   $("closeCard").hidden=$("fav").hidden=false; showFav(c);
   // 国交省データの地区の外は、OpenStreetMap をその場で読んだ施設・トイレで判定する
-  var pois=inArea?area.pois:(c.osm||[]);
-  var d=destInfo(c.ll,c.poi,pois), t=(c.poi||d.place||{t:{}}).t, it=placeItems(c,t,d,pois);
+  var pois=inArea?area.pois:[];
+  var d=destInfo(c.ll,c.poi,pois), t=(c.poi||d.place||{t:c.tags||{}}).t, it=placeItems(c,t,d,pois);
   // ジャンル・距離・住所
   var isAddr=c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr), genre=isAddr?"":(c.addr||"");
   var from=me?{ll:me,name:"現在地"}:inArea?originOf():null, dist=from?km(from.ll,c.ll)*1000:0;
@@ -994,16 +973,14 @@ function judge(c){
   // 経路（段差・坂）の判定。目的地が別のエリアなら、そのエリアのデータを読んでから判定し直す
   var R=null, why="";
   if(!inArea){
-    why="この場所の段差・道幅・坂の調査データは、まだありません。入口・トイレは OpenStreetMap の情報です";
+    why="この場所の段差・道幅・坂の調査データは、まだありません。お店の情報は OpenStreetMap の登録内容です";
     // 別の国交省データの地区ならそれを読んで判定し直す。どの地区でもなければ周りの施設を OpenStreetMap から読む
-    if(!c.osm) getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){
+    if(!c.looked){ c.looked=true; getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){
       if(routeTo!==c) return;
       if(g&&g!==area) return setArea(g);
-      if(g) return;
-      return osmAround([c.ll[0]-0.006,c.ll[1]-0.006,c.ll[0]+0.006,c.ll[1]+0.006]).then(function(o){
-        if(routeTo!==c) return;
-        c.osm=o.pois; if(!c.poi) c.poi=o.pois.filter(function(p){ return p.k!=="place"||p.t.name!==c.name?false:km(c.ll,[p.ll[1],p.ll[0]])<0.08; })[0]; judge(c); });
-    }).catch(function(){ if(routeTo===c&&!c.osm){ c.osm=[]; } });
+      if(g||c.tags||!c.osmId) return;
+      return osmTags(c.osmId).then(function(tg){ if(tg&&routeTo===c){ c.tags=tg; judge(c); } });
+    }).catch(function(){}); }
   } else { var pr=planRoute(c,originOf()); if(pr.why) why=pr.why; else R=routeStatus(pr,it.wheel[2]==="ok"); }
   var status=1, issues=[], len=0, unkLen=0, oldest="9999", unkRatio=1, mins=0;
   if(R){ status=R.status; issues=R.issues; len=R.len; unkLen=R.unkLen; oldest=R.oldest; unkRatio=R.unkRatio; mins=R.mins; }
@@ -1283,31 +1260,32 @@ function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.7,pitch:48}
 // 2) 見ている辺りに絞って地名・施設を探す（Photon・Nominatim・国土地理院）
 // 3) それでも少なければ全国から探す
 var GENRES=[
-  [/居酒屋|飲み屋|酒場/,/cuisine=[^|]*izakaya|amenity=(pub|bar)/,"居酒屋・バー"],
-  [/バー|bar/i,/amenity=(pub|bar)/,"居酒屋・バー"],
-  [/カフェ|喫茶|コーヒー/,/amenity=cafe/,"カフェ"],
-  [/ラーメン|らーめん/,/cuisine=[^|]*ramen/,"ラーメン"],
-  [/寿司|すし|鮨/,/cuisine=[^|]*sushi/,"寿司"],
-  [/焼肉/,/cuisine=[^|]*(yakiniku|barbecue)/,"焼肉"],
-  [/焼き?鳥/,/cuisine=[^|]*yakitori/,"焼き鳥"],
-  [/そば|蕎麦|うどん/,/cuisine=[^|]*(soba|udon|noodle)/,"そば・うどん"],
-  [/ファミレス|ファストフード|ハンバーガー/,/amenity=fast_food|cuisine=[^|]*burger/,"ファストフード"],
-  [/レストラン|食事|ごはん|ご飯|ランチ|飲食|食堂|グルメ/,/amenity=(restaurant|fast_food|cafe|food_court|pub|bar)/,"飲食店"],
-  [/コンビニ/,/shop=convenience/,"コンビニ"],
-  [/スーパー/,/shop=supermarket/,"スーパー"],
-  [/薬局|ドラッグ|くすり|薬/,/amenity=pharmacy|shop=chemist|healthcare=pharmacy/,"薬局"],
-  [/病院|クリニック|医院|診療所/,/amenity=(hospital|clinic|doctors)|healthcare=(hospital|clinic|doctor)/,"病院・医院"],
-  [/歯医者|歯科/,/amenity=dentist|healthcare=dentist/,"歯科"],
-  [/銀行/,/amenity=bank/,"銀行"],[/ATM/i,/amenity=atm/,"ATM"],
-  [/郵便|ポスト/,/amenity=post_office/,"郵便局"],
-  [/トイレ|お手洗い/,/amenity=toilets/,"トイレ"],
-  [/駐車場/,/amenity=parking/,"駐車場"],[/駐輪/,/amenity=bicycle_parking/,"駐輪場"],
-  [/公園/,/leisure=park/,"公園"],[/ホテル|宿/,/tourism=(hotel|guest_house|hostel)/,"宿泊"],
-  [/図書館/,/amenity=library/,"図書館"],[/役所|区役所/,/amenity=townhall/,"役所"],
-  [/交番|警察/,/amenity=police/,"交番・警察"],[/美容|床屋|理容/,/shop=(hairdresser|beauty)/,"美容・理容"],
-  [/本屋|書店/,/shop=books/,"書店"],[/100円|百均/,/shop=variety_store/,"100円ショップ"],
-  [/パン/,/shop=bakery/,"パン屋"],[/神社|寺/,/amenity=place_of_worship/,"神社・寺"]
+  [/居酒屋|飲み屋|酒場/,/cuisine=[^|]*izakaya|amenity=(pub|bar)/,"居酒屋・バー","pub"],
+  [/バー|bar/i,/amenity=(pub|bar)/,"居酒屋・バー","pub"],
+  [/カフェ|喫茶|コーヒー/,/amenity=cafe/,"カフェ","cafe"],
+  [/ラーメン|らーめん/,/cuisine=[^|]*ramen/,"ラーメン","ramen"],
+  [/寿司|すし|鮨/,/cuisine=[^|]*sushi/,"寿司","sushi"],
+  [/焼肉/,/cuisine=[^|]*(yakiniku|barbecue)/,"焼肉","restaurant"],
+  [/焼き?鳥/,/cuisine=[^|]*yakitori/,"焼き鳥","restaurant"],
+  [/そば|蕎麦|うどん/,/cuisine=[^|]*(soba|udon|noodle)/,"そば・うどん","restaurant"],
+  [/ファミレス|ファストフード|ハンバーガー/,/amenity=fast_food|cuisine=[^|]*burger/,"ファストフード","fast food"],
+  [/レストラン|食事|ごはん|ご飯|ランチ|飲食|食堂|グルメ/,/amenity=(restaurant|fast_food|cafe|food_court|pub|bar)/,"飲食店","restaurant"],
+  [/コンビニ/,/shop=convenience/,"コンビニ","convenience store"],
+  [/スーパー/,/shop=supermarket/,"スーパー","supermarket"],
+  [/薬局|ドラッグ|くすり|薬/,/amenity=pharmacy|shop=chemist|healthcare=pharmacy/,"薬局","pharmacy"],
+  [/病院|クリニック|医院|診療所/,/amenity=(hospital|clinic|doctors)|healthcare=(hospital|clinic|doctor)/,"病院・医院","hospital"],
+  [/歯医者|歯科/,/amenity=dentist|healthcare=dentist/,"歯科","dentist"],
+  [/銀行/,/amenity=bank/,"銀行","bank"],[/ATM/i,/amenity=atm/,"ATM","atm"],
+  [/郵便|ポスト/,/amenity=post_office/,"郵便局","post office"],
+  [/トイレ|お手洗い/,/amenity=toilets/,"トイレ","toilets"],
+  [/駐車場/,/amenity=parking/,"駐車場","parking"],[/駐輪/,/amenity=bicycle_parking/,"駐輪場","bicycle parking"],
+  [/公園/,/leisure=park/,"公園","park"],[/ホテル|宿/,/tourism=(hotel|guest_house|hostel)/,"宿泊","hotel"],
+  [/図書館/,/amenity=library/,"図書館","library"],[/役所|区役所/,/amenity=townhall/,"役所","town hall"],
+  [/交番|警察/,/amenity=police/,"交番・警察","police"],[/美容|床屋|理容/,/shop=(hairdresser|beauty)/,"美容・理容","hairdresser"],
+  [/本屋|書店/,/shop=books/,"書店","bookshop"],[/100円|百均/,/shop=variety_store/,"100円ショップ","variety store"],
+  [/パン/,/shop=bakery/,"パン屋","bakery"],[/神社|寺/,/amenity=place_of_worship/,"神社・寺","place of worship"]
 ];
+// 4つめは Nominatim の種類の言葉（国交省データの地区の外で「カフェ」などを探すとき）
 function genreOf(cat){ for(var i=0;i<GENRES.length;i++) if(GENRES[i][1].test(cat)) return GENRES[i][2]; return ""; }
 function norm(t){ return String(t).toLowerCase().replace(/[\s　・･]/g,"").replace(/[ァ-ン]/g,function(c){ return String.fromCharCode(c.charCodeAt(0)-0x60); }); }
 var NEAR_WORDS=/の近く|近く|周辺|付近/g;
@@ -1337,15 +1315,19 @@ function photon(q,bb){
   return fetch("https://photon.komoot.io/api/?lang=default&limit=10&q="+encodeURIComponent(q)+"&lat="+map.getCenter().lat+"&lon="+map.getCenter().lng+"&bbox="+box)
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(j){ return (j.features||[]).map(function(f){ var p=f.properties||{};
-      return {name:p.name||p.street||"", addr:[p.state,p.county,p.city,p.district,p.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]]}; })
+      var cat=p.osm_key&&p.osm_value?p.osm_key+"="+p.osm_value:"";
+      return {name:p.name||p.street||"", addr:(genreOf(cat)?genreOf(cat)+"・":"")+[p.state,p.county,p.city,p.district,p.street].filter(Boolean).join(""), ll:[f.geometry.coordinates[1],f.geometry.coordinates[0]],
+        cat:cat?catOf(cat):undefined, osmId:p.osm_type&&p.osm_id?p.osm_type+p.osm_id:null}; })
       .filter(function(c){ return c.name; }); });
 }
-function nominatim(q,bb){
-  return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=jp&accept-language=ja&limit=10&q="+encodeURIComponent(q)+
+function nominatim(q,bb,n){
+  return fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&extratags=1&countrycodes=jp&accept-language=ja&limit="+(n||10)+"&q="+encodeURIComponent(q)+
       (bb?"&bounded=1&viewbox="+[bb[1],bb[2],bb[3],bb[0]].join(","):""))
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(a){ return a.map(function(x){ var parts=(x.display_name||"").split(",").map(function(t){return t.trim();});
-      return {name:x.name||parts[0], addr:parts.slice(1).reverse().filter(function(t){return !/^\d{3}-?\d{4}$/.test(t)&&t!=="日本";}).join(""), ll:[+x.lat,+x.lon]}; }); });
+      var t=osmTagsOf(x), cat=x.category+"="+x.type, g=genreOf(cat);
+      return {name:x.name||parts[0], addr:(g?g+"・":"")+parts.slice(1).reverse().filter(function(t){return !/^\d{3}-?\d{4}$/.test(t)&&t!=="日本";}).join(""), ll:[+x.lat,+x.lon],
+        cat:g?catOf(cat):undefined, tags:t, osmId:x.osm_type?x.osm_type[0].toUpperCase()+x.osm_id:null}; }); });
 }
 function gsi(q){
   return fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q))
@@ -1359,12 +1341,11 @@ function search(q){
   say("探しています…"); $("sugg").hidden=true; $("listHead").hidden=true;
   var bb=near(), vc=[map.getCenter().lat,map.getCenter().lng], base=me&&inBox(bb,me)?me:vc, mine=[];
   var bare=q.replace(NEAR_WORDS," ").trim()||q;
-  // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの、そうでなければ OpenStreetMap をその場で読む
-  // OpenStreetMap の返事は最長6秒だけ待つ（遅れて届いた分は次の検索で使う）
-  var here=area&&inBox(area.bbox,vc)?Promise.resolve(area):Promise.race([osmAround(viewBox()).catch(function(){ return null; }),
-    new Promise(function(ok){ setTimeout(function(){ ok(null); },6000); })]);
-  var mineP=here.then(function(A){ mine=local(q,A); if(A&&A!==area) mine.forEach(function(c){ c.osm=A.pois; }); return mine; });
-  settle([mineP.then(function(){ return []; }),photon(bare,bb),nominatim(bare,bb),gsi(q)]).then(function(nearRs){
+  // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの。ほかの地域で「カフェ」などの種類なら、Nominatim で見ている範囲のその種類を探す
+  var g=GENRES.filter(function(x){ return x[3]&&x[0].test(bare); })[0];
+  var mineP=area&&inBox(area.bbox,vc)?Promise.resolve(mine=local(q,area))
+    :g?nominatim(g[3],bb,40).then(function(a){ return mine=a.filter(function(c){ return inBox(bb,c.ll); }); }).catch(function(){ return []; }):Promise.resolve([]);
+  settle([mineP.then(function(){ return []; }),photon(bare,bb),g?Promise.resolve([]):nominatim(bare,bb),gsi(q)]).then(function(nearRs){
     nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
     if(mine.length+nearRs.length>=3) return nearRs;
     return settle([photon(q),nominatim(q)]).then(function(far){ far.forEach(function(c){ c.far=true; }); return nearRs.concat(far); });
