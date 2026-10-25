@@ -695,7 +695,9 @@ var OSM_KEYS=["name","wheelchair","toilets:wheelchair","wheelchair:description",
   "changing_table","access","fee","entrance","amenity","shop","tourism","healthcare","operator","description","capacity:disabled","elevator","indoor","location",
   "stroller","cuisine","addr:full","addr:province","addr:city","addr:quarter","addr:neighbourhood","addr:block_number","addr:housenumber"];
 function osmQuery(q,i){ i=i||0;
-  return fetch(OVERPASS[i],{method:"POST",body:"data="+encodeURIComponent(q)}).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+  // 混んでいて返事が遅いときは12秒であきらめる（検索や場所のカードを待たせない）
+  var ac=window.AbortController?new AbortController():null, tm=ac&&setTimeout(function(){ ac.abort(); },12000);
+  return fetch(OVERPASS[i],{method:"POST",body:"data="+encodeURIComponent(q),signal:ac&&ac.signal}).then(function(r){ clearTimeout(tm); if(!r.ok) throw new Error(r.status); return r.json(); })
     .catch(function(e){ if(i+1<OVERPASS.length) return osmQuery(q,i+1); throw e; }); }
 function osmTile(x,y){
   var k=x+","+y; if(OSM_CACHE[k]) return OSM_CACHE[k];
@@ -1363,7 +1365,7 @@ function search(q){
   settle([mineP.then(function(){ return []; }),photon(bare,bb),nominatim(bare,bb),gsi(q)]).then(function(nearRs){
     nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
     if(mine.length+nearRs.length>=3) return nearRs;
-    return settle([photon(q),nominatim(q)]).then(function(far){ return nearRs.concat(far); });
+    return settle([photon(q),nominatim(q)]).then(function(far){ far.forEach(function(c){ c.far=true; }); return nearRs.concat(far); });
   }).then(function(remote){
     if(my!==seq) return;
     var out=[];
@@ -1372,9 +1374,12 @@ function search(q){
       if(out.some(function(d){ return d.name===c.name && km(d.ll,c.ll)<0.2; })) return;
       c.d=km(base,c.ll); out.push(c);
     });
-    out.sort(function(a,b){ return a.d-b.d; });
+    // 見ている辺りの候補は近い順。全国から探した候補はその後ろに、名前がぴったり合うもの・検索サービスの順で並べる
+    var nq=norm(bare);
+    out.forEach(function(c,i){ c.o=i; c.rank=!c.far?0:norm(c.name)===nq?1:2; });
+    out.sort(function(a,b){ return a.rank-b.rank||(a.rank?a.o-b.o:a.d-b.d); });
     if(!out.length){ $("sugg").innerHTML=""; say("見つかりませんでした。店の名前や「カフェ」「トイレ」などで試してください"); return; }
-    showList(out.slice(0,15),"件見つかりました（近い順）");
+    showList(out.slice(0,15),out.some(function(c){ return c.far; })?"件見つかりました":"件見つかりました（近い順）");
   });
 }
 // 一覧・検索結果を閉じる（×・地図をタップ・Esc）
