@@ -39,5 +39,5 @@ async function find(q, shot, wait) {
 }
 await find("金沢駅", "9_kanazawa", 8000);
 await find("カフェ", "10_kanazawa_cafe", 28000);
-await find("新宿駅", "11_shinjuku", 8000);
+await find("新宿駅", "11_shinjuku", 14000);
 await b.close();

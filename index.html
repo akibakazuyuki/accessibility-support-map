@@ -699,9 +699,10 @@ function osmQuery(q,i){ i=i||0;
   var ac=window.AbortController?new AbortController():null, tm=ac&&setTimeout(function(){ ac.abort(); },12000);
   return fetch(OVERPASS[i],{method:"POST",body:"data="+encodeURIComponent(q),signal:ac&&ac.signal}).then(function(r){ clearTimeout(tm); if(!r.ok) throw new Error(r.status); return r.json(); })
     .catch(function(e){ if(i+1<OVERPASS.length) return osmQuery(q,i+1); throw e; }); }
-function osmTile(x,y){
-  var k=x+","+y; if(OSM_CACHE[k]) return OSM_CACHE[k];
-  var b=[y*OSM_TILE,x*OSM_TILE,(y+1)*OSM_TILE,(x+1)*OSM_TILE].map(function(v){ return v.toFixed(4); }).join(",");
+// 区画 x0..x1, y0..y1 をまとめて1回で読む（Overpass は同時に何本も投げると断られるため）
+function osmTiles(x0,y0,x1,y1){
+  var k=[x0,y0,x1,y1].join(","); if(OSM_CACHE[k]) return OSM_CACHE[k];
+  var b=[y0*OSM_TILE,x0*OSM_TILE,(y1+1)*OSM_TILE,(x1+1)*OSM_TILE].map(function(v){ return v.toFixed(4); }).join(",");
   var q='[out:json][timeout:25];(nwr["amenity"="toilets"]('+b+');nwr["highway"="elevator"]('+b+');nwr["wheelchair"]('+b+');'+
     ["amenity","shop","tourism","leisure","healthcare"].map(function(t){ return 'nwr["name"]["'+t+'"]('+b+');'; }).join("")+');out center tags;';
   return OSM_CACHE[k]=osmQuery(q).then(function(j){
@@ -716,12 +717,11 @@ function osmTile(x,y){
     return {pois:pois,places:places};
   }).catch(function(e){ delete OSM_CACHE[k]; throw e; });
 }
-// 範囲 bb＝[南,西,北,東] にかかる区画をまとめて読む（広すぎるときは中心の周り約4km四方だけ）
+// 範囲 bb＝[南,西,北,東] にかかる区画を読む（広すぎるときは中心の周り約4km四方だけ）
 function osmAround(bb){
-  var c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2];
+  var c=[(bb[0]+bb[2])/2,(bb[1]+bb[3])/2], f=Math.floor;
   if(bb[2]-bb[0]>OSM_TILE*2||bb[3]-bb[1]>OSM_TILE*2) bb=[c[0]-OSM_TILE,c[1]-OSM_TILE,c[0]+OSM_TILE,c[1]+OSM_TILE];
-  var ts=[]; for(var x=Math.floor(bb[1]/OSM_TILE);x<=Math.floor(bb[3]/OSM_TILE);x++) for(var y=Math.floor(bb[0]/OSM_TILE);y<=Math.floor(bb[2]/OSM_TILE);y++) ts.push(osmTile(x,y));
-  return Promise.all(ts).then(function(rs){ return {pois:[].concat.apply([],rs.map(function(r){ return r.pois; })),places:[].concat.apply([],rs.map(function(r){ return r.places; }))}; });
+  return osmTiles(f(bb[1]/OSM_TILE),f(bb[0]/OSM_TILE),f(bb[3]/OSM_TILE),f(bb[2]/OSM_TILE));
 }
 // 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
 function originOf(){
@@ -1360,7 +1360,9 @@ function search(q){
   var bb=near(), vc=[map.getCenter().lat,map.getCenter().lng], base=me&&inBox(bb,me)?me:vc, mine=[];
   var bare=q.replace(NEAR_WORDS," ").trim()||q;
   // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの、そうでなければ OpenStreetMap をその場で読む
-  var here=area&&inBox(area.bbox,vc)?Promise.resolve(area):osmAround(viewBox()).catch(function(){ return null; });
+  // OpenStreetMap の返事は最長6秒だけ待つ（遅れて届いた分は次の検索で使う）
+  var here=area&&inBox(area.bbox,vc)?Promise.resolve(area):Promise.race([osmAround(viewBox()).catch(function(){ return null; }),
+    new Promise(function(ok){ setTimeout(function(){ ok(null); },6000); })]);
   var mineP=here.then(function(A){ mine=local(q,A); if(A&&A!==area) mine.forEach(function(c){ c.osm=A.pois; }); return mine; });
   settle([mineP.then(function(){ return []; }),photon(bare,bb),nominatim(bare,bb),gsi(q)]).then(function(nearRs){
     nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
