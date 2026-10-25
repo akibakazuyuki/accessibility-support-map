@@ -33,8 +33,9 @@ async function find(q, shot, wait) {
   await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(500);
   await p.fill("#q", q); await p.press("#q", "Enter"); await p.waitForTimeout(wait);
   await p.screenshot({ path: `preview/${shot}_list.png` });
-  if (await p.$("#sugg li:nth-child(1) button")) { await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(9000); }
-  await p.screenshot({ path: `preview/${shot}_card.png` });
+  const first = p.locator("#sugg li:nth-child(1) button");
+  if (await first.isVisible()) { await first.click(); await p.waitForTimeout(9000); await p.screenshot({ path: `preview/${shot}_card.png` }); }
+  else console.log("no results for", q, await p.textContent("#msg"));
 }
 await find("金沢駅", "9_kanazawa", 8000);
 await find("カフェ", "10_kanazawa_cafe", 15000);
