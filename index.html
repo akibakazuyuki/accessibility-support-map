@@ -1386,10 +1386,10 @@ function search(q){
       if(out.some(function(d){ return d.name===c.name && km(d.ll,c.ll)<0.2; })) return;
       c.d=km(base,c.ll); out.push(c);
     });
-    // 見ている辺りの候補は近い順。全国から探した候補はその後ろに、名前がぴったり合うもの・検索サービスの順で並べる
+    // 名前がぴったり合うものを先頭に。あとは見ている辺りの候補を近い順、全国から探した候補を検索サービスの順で
     var nq=norm(bare);
-    out.forEach(function(c,i){ c.o=i; c.rank=!c.far?0:norm(c.name)===nq?1:2; });
-    out.sort(function(a,b){ return a.rank-b.rank||(a.rank?a.o-b.o:a.d-b.d); });
+    out.forEach(function(c,i){ c.o=i; c.rank=norm(c.name)===nq?0:c.far?2:1; });
+    out.sort(function(a,b){ return a.rank-b.rank||(a.rank===2?a.o-b.o:a.d-b.d); });
     if(!out.length){ $("sugg").innerHTML=""; say("見つかりませんでした。店の名前や「カフェ」「トイレ」などで試してください"); return; }
     showList(out.slice(0,15),out.some(function(c){ return c.far; })?"件見つかりました":"件見つかりました（近い順）");
   });
