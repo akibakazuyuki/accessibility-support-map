@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 
 AREA = "akabane"
 CKAN = "https://ckan.hokonavi.go.jp"
+# 現在地が地区の外のときの出発地点（無い地区は地区の真ん中から）
+ORIGINS = {"akabane": {"name": "赤羽駅", "ll": [35.778, 139.7208]}}
 NWD_PAGE = CKAN + "/dataset/nwd_akabane_station"
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
 UA = {"User-Agent": "accessibility-support-map (https://github.com/akibakazuyuki/accessibility-support-map)"}
@@ -234,7 +236,14 @@ def build_one(a, link_gj, node_gj, osm=None):
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"{a['id']}: links={len(links)} nodes={len(nodes)} pois={len(pois)} places={len(places)} "
           f"surveyed={dates[:1]}..{dates[-1:]} codes={code_stats(links)}")
-    return {"id": a["id"], "name": a["name"], "file": path_of(a["id"]), "bbox": bbox}
+    return entry(a["id"], a["name"], bbox)
+
+
+def entry(aid, name, bbox):
+    e = {"id": aid, "name": name, "file": path_of(aid), "bbox": bbox}
+    if aid in ORIGINS:
+        e["origin"] = ORIGINS[aid]
+    return e
 
 
 def main():
@@ -252,7 +261,7 @@ def main():
             print("失敗", a["id"], e, file=sys.stderr)
             if os.path.exists(path_of(a["id"])):
                 with open(path_of(a["id"]), encoding="utf-8") as f:
-                    index.append({"id": a["id"], "name": a["name"], "file": path_of(a["id"]), "bbox": json.load(f)["bbox"]})
+                    index.append(entry(a["id"], a["name"], json.load(f)["bbox"]))
         time.sleep(15)  # Overpass に負担をかけない
     if not index:
         raise SystemExit("1地区も作れませんでした")
