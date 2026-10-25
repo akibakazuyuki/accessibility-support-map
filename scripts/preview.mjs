@@ -28,8 +28,9 @@ await p.screenshot({ path: "preview/7_go.png" });
 if (await p.$("#navGo")) { await p.click("#navGo"); await p.waitForTimeout(3500); }
 await p.screenshot({ path: "preview/8_nav.png" });
 // 全国：国交省データのない金沢で駅のカード（OpenStreetMap をその場で読む）とカフェの検索、新宿（国交省データの地区）のカード
+await p.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" }); await p.waitForTimeout(5000);
 async function find(q, shot, wait) {
-  if (await p.$("#closeCard:not([hidden])")) { await p.click("#closeCard"); await p.waitForTimeout(500); }
+  await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(500);
   await p.fill("#q", q); await p.press("#q", "Enter"); await p.waitForTimeout(wait);
   await p.screenshot({ path: `preview/${shot}_list.png` });
   if (await p.$("#sugg li:nth-child(1) button")) { await p.click("#sugg li:nth-child(1) button"); await p.waitForTimeout(9000); }
