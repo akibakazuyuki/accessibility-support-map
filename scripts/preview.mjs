@@ -42,4 +42,8 @@ async function find(q, shot, wait) {
 await find("金沢駅", "9_kanazawa", 8000);
 await find("カフェ", "10_kanazawa_cafe", 28000);
 await find("新宿駅", "11_shinjuku", 14000);
+// 金沢に戻って、全国のピン（トイレ・車椅子OK）が出るか
+await find("兼六園", "12_kenrokuen", 8000);
+await p.evaluate(() => { const c = document.getElementById("closeCard"); if (c && !c.hidden) c.click(); }); await p.waitForTimeout(6000);
+await p.screenshot({ path: "preview/12_kenrokuen_pins.png" });
 await b.close();

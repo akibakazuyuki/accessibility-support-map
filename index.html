@@ -626,9 +626,9 @@ function overview(){
   function key(c,t,v){ return '<li><i style="background:'+c+'"></i>'+t+' <b class="num">'+v+'%</b></li>'; }
   var pks=(area.places||[]).filter(function(x){ return /amenity=parking/.test(x[1]); }).length;
   // エリアの情報は「レイヤー」の中に出し、下のシートは場所を選んだときだけ出す
-  $("areaStats").innerHTML='<h3>'+esc(area.name)+'：あなたの条件で通れる歩道 <span class="num">'+(pc("ok")+pc("warn"))+'%</span></h3>'+
+  $("areaStats").innerHTML=(area.osm?'<h3>この辺りには、段差・道幅・坂の調査データがまだありません</h3>':'<h3>'+esc(area.name)+'：あなたの条件で通れる歩道 <span class="num">'+(pc("ok")+pc("warn"))+'%</span></h3>'+
     '<div class="bar" aria-hidden="true">'+seg("ok","#17a058")+seg("warn","#f59e0b")+seg("bad","#ef4444")+seg("unknown","#d5dcd8")+'</div>'+
-    '<ul class="keys">'+key("#17a058","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#d5dcd8","未調査",pc("unknown"))+'</ul>'+
+    '<ul class="keys">'+key("#17a058","通れる",pc("ok")+pc("warn"))+key("#ef4444","合わない",pc("bad"))+key("#d5dcd8","未調査",pc("unknown"))+'</ul>')+
     '<div class="tiles">'+tile("blue","wheel","車椅子OK",oks)+tile("pink","wc","トイレ",wcs)+tile("green","park","駐車場",pks)+'</div>';
   $("sheet").hidden=true; dim(false); layout();
 }
@@ -702,6 +702,24 @@ function osmTags(id){
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); }).then(function(a){ return a&&a[0]?osmTagsOf(a[0]):null; })
     .catch(function(){ delete TAG_CACHE[id]; return null; });
 }
+// 国交省データの地区の外：全国のピン（data/pins、0.1度四方の区画）を読み、歩道のない「この辺り」のエリアとして出す
+var PIN_INDEX=null, PIN_TILES={};
+function pinTile(k){ return PIN_TILES[k]=PIN_TILES[k]||fetch("data/pins/"+k+".json").then(function(r){ return r.ok?r.json():{pois:[],places:[]}; })
+  .catch(function(){ delete PIN_TILES[k]; return {pois:[],places:[]}; }); }
+function osmPins(bb){
+  if(!PIN_INDEX) PIN_INDEX=fetch("data/pins/index.json").then(function(r){ return r.ok?r.json():{grid:10,tiles:[]}; }).catch(function(){ PIN_INDEX=null; return {grid:10,tiles:[]}; });
+  return Promise.resolve(PIN_INDEX).then(function(ix){
+    var G=ix.grid, f=Math.floor, y0=f(bb[0]*G), x0=f(bb[1]*G), y1=f(bb[2]*G), x1=f(bb[3]*G), ks=[];
+    for(var y=y0;y<=y1;y++) for(var x=x0;x<=x1;x++) if(ix.tiles.indexOf(y+"_"+x)>=0) ks.push(y+"_"+x);
+    var id="osm:"+[y0,x0,y1,x1].join(",");
+    if(area&&area.area===id) return area;
+    return Promise.all(ks.map(pinTile)).then(function(ts){
+      return {area:id,osm:true,name:"この辺り",bbox:[y0/G,x0/G,(y1+1)/G,(x1+1)/G],nodes:{},links:[],
+        pois:[].concat.apply([],ts.map(function(t){ return t.pois; })),places:[].concat.apply([],ts.map(function(t){ return t.places; })),
+        sources:[{id:"osm",name:"OpenStreetMap（車椅子・トイレ・エレベーターの登録）",url:"https://www.openstreetmap.org/copyright"}]};
+    });
+  });
+}
 // 現在地がエリアの外のときの出発地：エリアの代表地点（駅など）、なければエリアの中心
 function originOf(){
   if(me&&inBox(area.bbox,me)) return {ll:me,name:"現在地",me:true};
@@ -712,10 +730,16 @@ function loadArea(){
   getGraph([AKABANE[0],AKABANE[1],AKABANE[0],AKABANE[1]]).then(function(A){ if(!A) throw new Error("no area"); setArea(A); })
     .catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
 }
-// 地図を別の国交省データの地区へ動かしたら、その地区の歩道とピンに切り替える（場所を開いている間・案内中はそのまま）
+// 地図を別の国交省データの地区へ動かしたら、その地区の歩道とピンに切り替える。地区の外では全国のピンを出す
+// （場所を開いている間・案内中はそのまま。広く見ているときはピンを読まない）
 map.on("moveend",function(){
   if(!area||routeTo||nav) return; var c=map.getCenter();
-  getGraph([c.lat,c.lng,c.lat,c.lng]).then(function(g){ if(g&&g!==area&&!routeTo&&!nav) setArea(g); }).catch(function(){});
+  getGraph([c.lat,c.lng,c.lat,c.lng]).then(function(g){
+    if(routeTo||nav) return;
+    if(g){ if(g!==area) setArea(g); return; }
+    if(map.getZoom()<12) return;
+    return osmPins(viewBox()).then(function(P){ if(P!==area&&!routeTo&&!nav) setArea(P); });
+  }).catch(function(){});
 });
 function setArea(A){
     var first=!area; area=A;
@@ -724,7 +748,7 @@ function setArea(A){
     (A.places||[]).forEach(function(pl,i){ if(/amenity=parking/.test(pl[1])) pf.push({type:"Feature",properties:{src:"pl",i:i,k:"parking",c:"park",wc:pl[4]||""},geometry:{type:"Point",coordinates:[pl[2],pl[3]]}}); });
     pinFeats=pf;
     var s=A.sources[0];
-    $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+'・施設は OpenStreetMap';
+    $("src").innerHTML='出典：<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.name)+'</a>'+(s.surveyed?'（調査 '+esc(s.surveyed[0])+(s.surveyed[1]!==s.surveyed[0]?'〜'+esc(s.surveyed[1]):'')+'）':'')+(A.osm?'':'・施設は OpenStreetMap');
     if(!first){ map.getSource("links").setData({type:"FeatureCollection",features:linkFeatures()}); map.getSource("pois").setData({type:"FeatureCollection",features:pf});
       if(routeTo) judge(routeTo); else overview(); return; }
     map.addSource("links",{type:"geojson",data:{type:"FeatureCollection",features:linkFeatures()},attribution:"歩行空間データ：国土交通省"});
@@ -958,7 +982,8 @@ function placeItems(c,t,d,pois){
 }
 function judge(c){
   if(nav) endRoute(); routeTo=c; hideStart(); if(!area) return;
-  var inArea=inBox(area.bbox,c.ll);
+  // inArea：いまのエリア（国交省の地区か「この辺り」）の中。mlit：段差・坂の調査データがある
+  var inArea=inBox(area.bbox,c.ll), mlit=inArea&&!area.osm;
   var out=$("result"); $("sheetTitle").textContent=c.name; out.hidden=true; out.innerHTML=""; map.getSource("route").setData(EMPTY); dim(false);
   $("closeCard").hidden=$("fav").hidden=false; showFav(c);
   // 国交省データの地区の外は、OpenStreetMap をその場で読んだ施設・トイレで判定する
@@ -966,20 +991,22 @@ function judge(c){
   var d=destInfo(c.ll,c.poi,pois), t=(c.poi||d.place||{t:c.tags||{}}).t, it=placeItems(c,t,d,pois);
   // ジャンル・距離・住所
   var isAddr=c.addr&&/[都道府県区市町村]/.test(c.addr)&&!/・/.test(c.addr), genre=isAddr?"":(c.addr||"");
-  var from=me?{ll:me,name:"現在地"}:inArea?originOf():null, dist=from?km(from.ll,c.ll)*1000:0;
+  var from=me?{ll:me,name:"現在地"}:mlit?originOf():null, dist=from?km(from.ll,c.ll)*1000:0;
   $("sheetMeta").innerHTML='<span>'+esc(genre)+'</span>'+(from?'<b aria-label="'+esc(from.name)+'から'+fmtLen(dist)+'">'+svg("pin")+(me?"":/駅$/.test(from.name)?"駅から ":"")+fmtLen(dist)+'</b>':'');
   var ad=$("sheetAddr"); ad.hidden=true; ad.textContent="";
   addrOf(c,t,function(a){ if(routeTo===c){ ad.textContent=a; ad.hidden=false; } });
   // 経路（段差・坂）の判定。目的地が別のエリアなら、そのエリアのデータを読んでから判定し直す
   var R=null, why="";
-  if(!inArea){
+  if(!mlit){
     why="この場所の段差・道幅・坂の調査データは、まだありません。お店の情報は OpenStreetMap の登録内容です";
-    // 別の国交省データの地区ならそれを読んで判定し直す。どの地区でもなければ周りの施設を OpenStreetMap から読む
+    // 別の国交省データの地区ならそれを読んで判定し直す。どの地区でもなければ、周りのピンと、この場所の OSM の登録内容を読む
     if(!c.looked){ c.looked=true; getGraph([c.ll[0],c.ll[1],c.ll[0],c.ll[1]]).then(function(g){
       if(routeTo!==c) return;
       if(g&&g!==area) return setArea(g);
-      if(g||c.tags||!c.osmId) return;
-      return osmTags(c.osmId).then(function(tg){ if(tg&&routeTo===c){ c.tags=tg; judge(c); } });
+      if(g) return;
+      return Promise.all([inArea?null:osmPins([c.ll[0]-0.01,c.ll[1]-0.01,c.ll[0]+0.01,c.ll[1]+0.01]),c.tags||!c.osmId?null:osmTags(c.osmId)]).then(function(r){
+        if(routeTo!==c) return; if(r[1]) c.tags=r[1];
+        if(r[0]&&r[0]!==area) setArea(r[0]); else judge(c); });
     }).catch(function(){}); }
   } else { var pr=planRoute(c,originOf()); if(pr.why) why=pr.why; else R=routeStatus(pr,it.wheel[2]==="ok"); }
   var status=1, issues=[], len=0, unkLen=0, oldest="9999", unkRatio=1, mins=0;
@@ -1343,8 +1370,10 @@ function search(q){
   var bare=q.replace(NEAR_WORDS," ").trim()||q;
   // 見ている辺りの施設：国交省データの地区なら取り込み済みのもの。ほかの地域で「カフェ」などの種類なら、Nominatim で見ている範囲のその種類を探す
   var g=GENRES.filter(function(x){ return x[3]&&x[0].test(bare); })[0];
-  var mineP=area&&inBox(area.bbox,vc)?Promise.resolve(mine=local(q,area))
-    :g?nominatim(g[3],bb,40).then(function(a){ return mine=a.filter(function(c){ return inBox(bb,c.ll); }); }).catch(function(){ return []; }):Promise.resolve([]);
+  // 「この辺り」（全国のピン）にあるトイレ・車椅子OKの施設も候補にする
+  var here=area&&inBox(area.bbox,vc)?local(q,area):[];
+  var mineP=area&&!area.osm&&inBox(area.bbox,vc)?Promise.resolve(mine=here)
+    :g?nominatim(g[3],bb,40).then(function(a){ return mine=here.concat(a.filter(function(c){ return inBox(bb,c.ll); })); }).catch(function(){ return mine=here; }):Promise.resolve(mine=here);
   settle([mineP.then(function(){ return []; }),photon(bare,bb),g?Promise.resolve([]):nominatim(bare,bb),gsi(q)]).then(function(nearRs){
     nearRs=nearRs.filter(function(c){ return inBox(bb,c.ll); });
     if(mine.length+nearRs.length>=3) return nearRs;
