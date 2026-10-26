@@ -853,7 +853,10 @@ function pinCand(pr){
 var showNet=ls("net")==="1";
 function setNet(on){ showNet=on; ls("net",on?"1":null); ["links","links-unknown"].forEach(function(id){ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",on?"visible":"none"); });
   var b=$("btnLegend"); b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on)); }
-map.once("style.load",function(){ loadArea(); });
+map.once("style.load",function(){
+  // 初めて開いたときは、検索欄の下に日本全体が収まるように合わせる
+  if(!lastView) map.fitBounds([[128.5,30.5],[146,45.6]],{padding:{top:document.querySelector(".chips").getBoundingClientRect().bottom+8,bottom:16,left:16,right:64},duration:0});
+  loadArea(); });
 // 検索欄と下のパネルに隠れないように経路を地図に収める
 function fitRoute(b){
   var wide=window.innerWidth>=900, top=document.querySelector(".top").getBoundingClientRect().bottom+96;  // 目的地の目印と名前の札の高さぶん余白を足す
