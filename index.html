@@ -529,7 +529,7 @@ var GSI_STYLE={
 var JAPAN={center:[137.2,36.6],zoom:4.3,pitch:0,bearing:0};
 var lastView=(function(){ try{ var v=JSON.parse(ls("view")); return v&&v.center&&isFinite(v.zoom)?v:null; }catch(e){ return null; } })();
 var map = new maplibregl.Map(Object.assign({
-  container:"map", maxPitch:65, minZoom:4, maxZoom:18.5, attributionControl:{compact:true},
+  container:"map", maxPitch:65, minZoom:3, maxZoom:18.5, attributionControl:{compact:true},
   dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
   style:BASE
 },lastView||JAPAN));
@@ -1420,7 +1420,9 @@ function search(q){
   var my=++seq; q=q.trim(); if(!q) return;
   say("探しています…"); $("sugg").hidden=true; $("listHead").hidden=true;
   var bare=q.replace(NEAR_WORDS," ").trim()||q;
-  var g0=GENRES.filter(function(x){ return x[3]&&x[0].test(bare); })[0];
+  // 種類の言葉は、前後が区切り（空白・「の」など）か端にあるときだけ。「新宿駅」の「宿」をホテルと読まない
+  var g0=GENRES.filter(function(x){ var m=x[3]&&bare.match(x[0]); if(!m) return false; var i=m.index, j=i+m[0].length;
+    return i===0||j===bare.length||/[\sのでにへ]/.test(bare.charAt(i-1))||/\s/.test(bare.charAt(j)); })[0];
   // 「金沢 カフェ」「新宿のトイレ」のような地名＋種類は、先に地名の場所を調べて、その周りでその種類を探す
   // 地名として見つからなければ（「ドトールコーヒー」など）、ふつうの名前の検索にする
   var rest0=g0?bare.replace(g0[0]," ").replace(/[のでにへ]\s*$/,"").replace(/^\s*の/,"").trim():"";
