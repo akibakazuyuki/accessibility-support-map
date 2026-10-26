@@ -526,10 +526,10 @@ var GSI_STYLE={
     ]
 };
 // 開いたときの地図：前回見ていた所。初めてなら日本全体（現在地が取れたらそこへ動く）
-var JAPAN={center:[137.5,37.6],zoom:5,pitch:0,bearing:0};
+var JAPAN={center:[137.2,36.6],zoom:4.3,pitch:0,bearing:0};
 var lastView=(function(){ try{ var v=JSON.parse(ls("view")); return v&&v.center&&isFinite(v.zoom)?v:null; }catch(e){ return null; } })();
 var map = new maplibregl.Map(Object.assign({
-  container:"map", maxPitch:65, minZoom:5, maxZoom:18.5, attributionControl:{compact:true},
+  container:"map", maxPitch:65, minZoom:4, maxZoom:18.5, attributionControl:{compact:true},
   dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
   style:BASE
 },lastView||JAPAN));
