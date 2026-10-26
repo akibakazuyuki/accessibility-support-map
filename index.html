@@ -388,7 +388,7 @@ details.adv summary::-webkit-details-marker{display:none}
 <section class="sheet" id="sheet" hidden aria-labelledby="sheetTitle">
   <button class="grab" id="grab" type="button" aria-expanded="false" aria-controls="sheet"><span class="sr">詳しい情報を広げる・戻す</span></button>
   <div class="shead" id="shead">
-    <div class="head"><h2 id="sheetTitle">赤羽駅周辺</h2><button class="ibtn" id="fav" type="button" aria-label="お気に入り" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg></button><button class="ibtn" id="closeCard" type="button" aria-label="閉じる" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="head"><h2 id="sheetTitle"></h2><button class="ibtn" id="fav" type="button" aria-label="お気に入り" aria-pressed="false" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/></svg></button><button class="ibtn" id="closeCard" type="button" aria-label="閉じる" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <p class="meta" id="sheetMeta"></p>
     <p class="addr" id="sheetAddr" hidden></p>
   </div>
@@ -525,11 +525,14 @@ var GSI_STYLE={
         paint:{"text-color":"#4b5563","text-halo-color":"#ffffff","text-halo-width":2}}
     ]
 };
-var map = new maplibregl.Map({
-  container:"map", center:[AKABANE[1],AKABANE[0]], zoom:15.7, pitch:48, bearing:-18, maxPitch:65, minZoom:5, maxZoom:18.5, attributionControl:{compact:true},
+// 開いたときの地図：前回見ていた所。初めてなら日本全体（現在地が取れたらそこへ動く）
+var JAPAN={center:[137.5,37.6],zoom:5,pitch:0,bearing:0};
+var lastView=(function(){ try{ var v=JSON.parse(ls("view")); return v&&v.center&&isFinite(v.zoom)?v:null; }catch(e){ return null; } })();
+var map = new maplibregl.Map(Object.assign({
+  container:"map", maxPitch:65, minZoom:5, maxZoom:18.5, attributionControl:{compact:true},
   dragRotate:false, localIdeographFontFamily:'"M PLUS Rounded 1c","Hiragino Sans","Yu Gothic",sans-serif',
   style:BASE
-});
+},lastView||JAPAN));
 var usedGsi=false;
 map.on("error",function(){ if(!usedGsi&&!map.isStyleLoaded()){ usedGsi=true; map.setStyle(GSI_STYLE); } });
 // 地名は日本語で出し、地図のお店アイコンは間引いて、こちらのピンを見やすくする
@@ -744,8 +747,15 @@ function originOf(){
   if(area.origin) return {ll:area.origin.ll,name:area.origin.name};
   var b=area.bbox; return {ll:[(b[0]+b[2])/2,(b[1]+b[3])/2],name:area.name+"の中心"};
 }
+// 最初は地図の真ん中の地区。地区の外なら全国のピン（広く見ているときは空にして、近づいたら読む）
 function loadArea(){
-  getGraph([AKABANE[0],AKABANE[1],AKABANE[0],AKABANE[1]]).then(function(A){ if(!A) throw new Error("no area"); setArea(A); })
+  var c=map.getCenter();
+  getGraph([c.lat,c.lng,c.lat,c.lng]).then(function(A){
+    if(A) return A;
+    if(map.getZoom()>=12) return osmPins(viewBox());
+    return {area:"osm:none",osm:true,name:"この辺り",bbox:null,nodes:{},links:[],pois:[],places:[],
+      sources:[{id:"osm",name:"OpenStreetMap（車椅子・トイレ・エレベーターの登録）",url:"https://www.openstreetmap.org/copyright"}]};
+  }).then(function(A){ setArea(A); startLocate(); })
     .catch(function(){ $("sheetText").textContent="段差・道幅・坂の情報を読み込めませんでした。通信状況を確かめて開き直してください。"; });
 }
 // 地図を別の国交省データの地区へ動かしたら、その地区の歩道とピンに切り替える。地区の外では全国のピンを出す
@@ -1292,18 +1302,26 @@ function placeMe(acc){
   if(!meMarker){ var el=document.createElement("div"); el.className="me"; el.setAttribute("aria-label","現在地"); meMarker=new maplibregl.Marker({element:el}).setLngLat([me[1],me[0]]).addTo(map); }
   else meMarker.setLngLat([me[1],me[0]]);
 }
-function locate(){
+function locate(quiet){
   if(!navigator.geolocation){ say("この端末では現在地を使えません"); return; }
   say("現在地を探しています…");
   navigator.geolocation.getCurrentPosition(function(p){
     me=[p.coords.latitude,p.coords.longitude]; placeMe(p.coords.accuracy); say("");
-    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7)});
-  }, function(){ say("現在地が取れなかったので、赤羽駅周辺を表示しています"); goHome(); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+    if(quiet&&(routeTo||nav)) return;  // 開いた直後にもう場所を選んでいたら、地図は動かさない
+    map.flyTo({center:[me[1],me[0]],zoom:Math.max(map.getZoom(),15.7),pitch:Math.max(map.getPitch(),48)});
+  }, function(){ if(quiet){ say(""); return; } say("現在地が取れませんでした"); setTimeout(function(){ say(""); },4000); }, {enableHighAccuracy:true,timeout:10000,maximumAge:60000});
 }
+// 開いたとき：位置情報が許可済みなら現在地へ。初めて開いたとき（前回の場所がない）は許可を尋ねる。断られていたら何もしない
+function startLocate(){
+  if(!navigator.geolocation) return;
+  function go(st){ if(st==="granted"||(st!=="denied"&&!lastView)) locate(true); }
+  if(navigator.permissions&&navigator.permissions.query) navigator.permissions.query({name:"geolocation"}).then(function(r){ go(r.state); },function(){ go(""); });
+  else go("");
+}
+map.on("moveend",function(){ var c=map.getCenter(); ls("view",JSON.stringify({center:[+c.lng.toFixed(5),+c.lat.toFixed(5)],zoom:+map.getZoom().toFixed(2),pitch:Math.round(map.getPitch()),bearing:Math.round(map.getBearing())})); });
 $("btnLocate").onclick=function(){ if(nav&&nav.on){ nav.follow=true; follow(); renderNav(); } else locate(); };
 // 案内中に地図を指で動かしたら、追いかけるのをやめる（「現在地に戻る」で再開）
 map.on("dragstart",function(){ if(nav&&nav.on&&nav.follow){ nav.follow=false; renderNav(); } });
-function goHome(){ map.flyTo({center:[AKABANE[1],AKABANE[0]],zoom:15.7,pitch:48}); }
 
 // ---- 場所の検索 ----
 // 1) いま見ている辺りの施設を名前と種類で探す（国交省データの地区は取り込み済みのもの、ほかは OpenStreetMap をその場で読む）
