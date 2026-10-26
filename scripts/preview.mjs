@@ -8,6 +8,7 @@ for (const [name, opt] of [["0_open_nolocation", {}], ["0b_open_osaka", { geoloc
   const c0 = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, serviceWorkers: "block", locale: "ja-JP", ...opt });
   const p0 = await c0.newPage(); p0.on("pageerror", e => console.log("pageerror", String(e)));
   await p0.goto("http://127.0.0.1:8080/", { waitUntil: "networkidle" }); await p0.waitForTimeout(9000);
+  console.log(name, await p0.evaluate(() => JSON.stringify({ ih: innerHeight, iw: innerWidth, map: document.getElementById("map").getBoundingClientRect().height, cv: document.querySelector("#map canvas")?.clientHeight, view: localStorage.getItem("view") })));
   await p0.screenshot({ path: `preview/${name}.png` }); await c0.close();
 }
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, serviceWorkers: "block", locale: "ja-JP", geolocation: { latitude: 35.7772, longitude: 139.7199, accuracy: 40 }, permissions: ["geolocation"] });
